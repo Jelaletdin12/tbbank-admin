@@ -1,0 +1,55 @@
+{
+  "common": {
+    "loading": "Ýüklenýär...",
+    "error": "Ýalňyşlyk ýüze çykdy",
+    "save": "Ýatda sakla",
+    "cancel": "Ýatyr",
+    "confirm": "Tassykla",
+    "delete": "Poz",
+    "edit": "Düzelt",
+    "close": "Ýap",
+    "back": "Yza",
+    "next": "Öňe",
+    "search": "Gözle",
+    "noData": "Maglumat ýok"
+  },
+  "auth": {
+    "signIn": "Giriş",
+    "signOut": "Çykyş",
+    "email": "E-poçta",
+    "password": "Açar söz",
+    "emailPlaceholder": "admin@tbbank.tm",
+    "passwordPlaceholder": "Açar sözüňizi giriziň",
+    "forgotPassword": "Açar sözi unutdyňyzmy?",
+    "signingIn": "Girýär...",
+    "welcomeBack": "Hoş geldiňiz",
+    "signInSubtitle": "Admin paneline giriş",
+    "invalidCredentials": "E-poçta ýa-da açar söz ýalňyş",
+    "emailRequired": "E-poçta hökmanydyr",
+    "passwordRequired": "Açar söz hökmanydyr",
+    "emailInvalid": "Dogry e-poçta girizin"
+  },
+  "nav": {
+    "dashboard": "Dolandyryş paneli",
+    "accounts": "Hasaplar",
+    "transactions": "Geçirimler",
+    "customers": "Müşderiler",
+    "loans": "Karzlar",
+    "reports": "Hasabatlar",
+    "settings": "Sazlamalar"
+  },
+  "theme": {
+    "light": "Açyk",
+    "dark": "Garaňky",
+    "system": "Ulgam"
+  },
+  "lang": {
+    "en": "English",
+    "ru": "Русский",
+    "tk": "Türkmen"
+  },
+  "dashboard": {
+    "title": "Dolandyryş paneli",
+    "subtitle": "TBBank Admin paneliňize hoş geldiňiz"
+  }
+}

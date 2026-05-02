@@ -1,0 +1,55 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "search": "Search",
+    "noData": "No data available"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "admin@tbbank.tm",
+    "passwordPlaceholder": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "signingIn": "Signing in...",
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to your admin account",
+    "invalidCredentials": "Invalid email or password",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "emailInvalid": "Please enter a valid email"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "accounts": "Accounts",
+    "transactions": "Transactions",
+    "customers": "Customers",
+    "loans": "Loans",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "lang": {
+    "en": "English",
+    "ru": "Русский",
+    "tk": "Türkmen"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome to TBBank Admin Panel"
+  }
+}

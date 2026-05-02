@@ -1,0 +1,55 @@
+{
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Произошла ошибка",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "close": "Закрыть",
+    "back": "Назад",
+    "next": "Далее",
+    "search": "Поиск",
+    "noData": "Нет данных"
+  },
+  "auth": {
+    "signIn": "Войти",
+    "signOut": "Выйти",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "emailPlaceholder": "admin@tbbank.tm",
+    "passwordPlaceholder": "Введите пароль",
+    "forgotPassword": "Забыли пароль?",
+    "signingIn": "Вход...",
+    "welcomeBack": "Добро пожаловать",
+    "signInSubtitle": "Войдите в панель администратора",
+    "invalidCredentials": "Неверный email или пароль",
+    "emailRequired": "Введите email",
+    "passwordRequired": "Введите пароль",
+    "emailInvalid": "Введите корректный email"
+  },
+  "nav": {
+    "dashboard": "Панель управления",
+    "accounts": "Счета",
+    "transactions": "Транзакции",
+    "customers": "Клиенты",
+    "loans": "Кредиты",
+    "reports": "Отчёты",
+    "settings": "Настройки"
+  },
+  "theme": {
+    "light": "Светлая",
+    "dark": "Тёмная",
+    "system": "Системная"
+  },
+  "lang": {
+    "en": "English",
+    "ru": "Русский",
+    "tk": "Türkmen"
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "subtitle": "Добро пожаловать в TBBank Admin"
+  }
+}
