@@ -13,8 +13,8 @@ export interface LoginResponse {
 // Mock credentials
 const MOCK_USERS: Array<{ email: string; password: string; user: AuthUser; token: string }> = [
   {
-    email: 'admin@tbbank.tm',
-    password: 'Admin123!',
+    email: 'jelaletdin',
+    password: '123',
     token: 'mock-jwt-token-admin-xyz123',
     user: {
       id: '1',

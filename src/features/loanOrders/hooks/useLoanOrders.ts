@@ -1,0 +1,70 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import {
+  fetchLoanOrders,
+  createLoanOrder,
+  updateLoanOrder,
+  deleteLoanOrder,
+  type LoanOrdersParams,
+  type CreateLoanOrderPayload,
+} from '../api/loanOrdersApi'
+
+const LOAN_ORDERS_KEY = 'loan-orders'
+
+export function useLoanOrders(params: LoanOrdersParams) {
+  return useQuery({
+    queryKey: [LOAN_ORDERS_KEY, params],
+    queryFn: () => fetchLoanOrders(params),
+    placeholderData: (prev) => prev,
+  })
+}
+
+export function useCreateLoanOrder() {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateLoanOrderPayload) => createLoanOrder(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
+      toast.success(t('loanOrders.createSuccess', 'Karz sargyt üstünlikli döredildi'))
+    },
+    onError: () => {
+      toast.error(t('loanOrders.createError', 'Karz sargyt döretmekde säwlik ýüze çykdy'))
+    },
+  })
+}
+
+export function useUpdateLoanOrder() {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateLoanOrderPayload> }) =>
+      updateLoanOrder(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
+      toast.success(t('loanOrders.updateSuccess', 'Karz sargyt üstünlikli üýtgedildi'))
+    },
+    onError: () => {
+      toast.error(t('loanOrders.updateError', 'Karz sargyt üýtgetmekde säwlik ýüze çykdy'))
+    },
+  })
+}
+
+export function useDeleteLoanOrder() {
+  const { t } = useTranslation()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteLoanOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
+      toast.success(t('loanOrders.deleteSuccess', 'Karz sargyt üstünlikli pozuldy'))
+    },
+    onError: () => {
+      toast.error(t('loanOrders.deleteError', 'Karz sargyt pozmakda säwlik ýüze çykdy'))
+    },
+  })
+}
