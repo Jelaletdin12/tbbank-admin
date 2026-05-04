@@ -31,7 +31,7 @@ export function TableSearchInput({
         className={cn(
           'h-9 w-64 rounded-md border border-border bg-background pl-9 pr-3',
           'text-sm text-foreground placeholder:text-muted-foreground',
-          'focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent',
+          'focus:outline-none focus:ring-1 focus:ring-ring focus:border-transparent',
           'transition-colors'
         )}
       />

@@ -44,7 +44,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
       </p>
       <button
         onClick={onCreate}
-        className="px-4 py-2 rounded-lg border border-border text-sm text-foreground hover:bg-muted/60 transition-colors"
+        className="px-4 py-2 rounded-md border border-border text-sm text-foreground hover:bg-muted/60 transition-colors"
       >
         {t(
           "loanPaidOffLetters.createButton",
@@ -179,13 +179,13 @@ export default function LoanPaidOffLettersPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 justify-end">
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t("common.view", "Görmek")}
             >
               <Eye size={15} />
             </button>
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t("common.edit", "Üýtgetmek")}
             >
               <Pencil size={15} />
@@ -193,7 +193,7 @@ export default function LoanPaidOffLettersPage() {
             <button
               onClick={() => handleDelete(row.original.id)}
               disabled={deleteMutation.isPending}
-              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              className="p-1.5 cursor-pointer rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
               title={t("common.delete", "Pozmak")}
             >
               <Trash2 size={15} />

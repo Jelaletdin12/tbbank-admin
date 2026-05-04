@@ -8,6 +8,7 @@ import {
   deleteLoanOrder,
   type LoanOrdersParams,
   type CreateLoanOrderPayload,
+  getLoanOrderById,
 } from '../api/loanOrdersApi'
 
 const LOAN_ORDERS_KEY = 'loan-orders'
@@ -66,5 +67,13 @@ export function useDeleteLoanOrder() {
     onError: () => {
       toast.error(t('loanOrders.deleteError', 'Karz sargyt pozmakda säwlik ýüze çykdy'))
     },
+  })
+}
+
+export function useLoanOrderById(id: string) {
+  return useQuery({
+    queryKey: ['loanOrders', id],
+    queryFn: () => getLoanOrderById(id),
+    enabled: !!id,
   })
 }

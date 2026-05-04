@@ -10,7 +10,7 @@ interface I18nState {
 export const useI18nStore = create<I18nState>()(
   persist(
     (set) => ({
-      language: (localStorage.getItem('tbbank-lang') as SupportedLanguage) ?? 'en',
+      language: i18n.language as SupportedLanguage,
       setLanguage: (language) => {
         i18n.changeLanguage(language)
         set({ language })

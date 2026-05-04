@@ -4,13 +4,14 @@ import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 
-
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const LoanOrdersPage = lazy(() => import("@/pages/loanOrders"));
 const LoanOrderMobilesPage = lazy(() => import("@/pages/loanOrderMobiles"));
 const LoanRemainingPage = lazy(() => import("@/pages/loanRemaining"));
 const LoanPaidOffLettersPage = lazy(() => import("@/pages/loanPaidOffLetters"));
+const LoanOrderCreatePage = lazy(() => import("@/pages/loanOrderCreate"));
+const LoanOrderViewPage = lazy(() => import("@/pages/loanOrderView"));
 
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -65,7 +66,7 @@ export const router = createBrowserRouter([
 
           // ── KARZ BÖLÜMI ──────────────────────────────────────────────────
           {
-            path: "/resources/loan-orders",
+            path: "/loan-orders",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanOrdersPage />
@@ -73,8 +74,24 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            // Sidebar: /resources/loan-order-mobiles
-            path: "/resources/loan-order-mobiles",
+            path: "/loan-orders/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-orders/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            // Sidebar: /loan-order-mobiles
+            path: "/loan-order-mobiles",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanOrderMobilesPage />
@@ -82,8 +99,8 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            // Sidebar: /resources/loan-remaining
-            path: "/resources/loan-remaining",
+            // Sidebar: /loan-remaining
+            path: "/loan-remaining",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanRemainingPage />
@@ -91,8 +108,8 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            // Sidebar: /resources/loan-paid-off-letters
-            path: "/resources/loan-paid-off-letters",
+            // Sidebar: /loan-paid-off-letters
+            path: "/loan-paid-off-letters",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanPaidOffLettersPage />

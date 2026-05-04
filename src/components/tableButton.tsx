@@ -25,7 +25,7 @@ export function TableActionButton({
       disabled={disabled}
       variant={variant === 'destructive' ? 'destructive' : variant === 'secondary' ? 'secondary' : 'default'}
       className={cn(
-        'font-medium text-sm h-9 px-4 transition-colors shadow-sm',
+        'font-medium text-sm h-9 px-4 transition-colors shadow-sm cursor-pointer',
         className
       )}
     >

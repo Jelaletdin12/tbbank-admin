@@ -82,7 +82,7 @@ function FormInput({
       <Input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-background border-input focus-visible:ring-primary"
+        className="bg-background border-input focus-visible:ring-primary h-11"
         {...props}
       />
     </div>
@@ -106,8 +106,12 @@ export default function AuthPage() {
     }
     
     loginMutation.mutate({ email: username, password }, {
-      onError: () => {
-        toast.error(t("Server Error", "An error occurred during login"));
+      onSuccess: () => {
+        toast.success(t("Success login", "Login successful"));
+      },
+      onError: (error: any) => {
+        const message = error?.response?.data?.message || t("Server Error", "An error occurred during login");
+        toast.error(message);
       }
     });
   };
@@ -124,7 +128,8 @@ export default function AuthPage() {
         <LeftPanel />
 
         <div className="w-full md:w-[45%] flex flex-col bg-background">
-          <div className="flex-1 flex flex-col justify-center px-8 sm:px-12 py-10 overflow-y-auto">
+          <div className="flex-1 flex flex-col justify-center items-center px-8 sm:px-12 py-10 overflow-y-auto">
+            <div className="w-full max-w-[400px]">
             {view === "login" && (
               <>
                 <h2 className="text-[22px] font-normal text-foreground text-center mb-2 tracking-wide uppercase">
@@ -154,14 +159,14 @@ export default function AuthPage() {
                   </span>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <Button onClick={handleLogin} disabled={loginMutation.isPending}>
-                    {loginMutation.isPending ? t("Loading") + "..." : t("Login")}
-                  </Button>
-                  <Button variant="outline" onClick={() => setView("register")}>
-                    {t("Register")}
-                  </Button>
-                </div>
+                  <div className="flex flex-col gap-3">
+                    <Button onClick={handleLogin} disabled={loginMutation.isPending} className="h-11">
+                      {loginMutation.isPending ? t("Loading") + "..." : t("Login")}
+                    </Button>
+                    <Button variant="outline" onClick={() => setView("register")} className="h-11">
+                      {t("Register")}
+                    </Button>
+                  </div>
 
                 <div className="text-center mt-8">
                   <span className="text-[13px] text-muted-foreground underline cursor-pointer hover:text-foreground transition-colors">
@@ -203,10 +208,10 @@ export default function AuthPage() {
                 />
 
                 <div className="flex flex-col gap-3 mt-4">
-                  <Button onClick={handleOtherSubmit}>
+                  <Button onClick={handleOtherSubmit} className="h-11">
                     {t("Register")}
                   </Button>
-                  <Button variant="outline" onClick={() => setView("login")}>
+                  <Button variant="outline" onClick={() => setView("login")} className="h-11">
                     {t("Go to login page")}
                   </Button>
                 </div>
@@ -233,10 +238,10 @@ export default function AuthPage() {
                 />
 
                 <div className="mt-4 flex flex-col gap-3">
-                  <Button onClick={handleOtherSubmit}>
+                  <Button onClick={handleOtherSubmit} className="h-11">
                     {t("Submit")}
                   </Button>
-                  <Button variant="outline" onClick={() => setView("login")}>
+                  <Button variant="outline" onClick={() => setView("login")} className="h-11">
                     {t("Go to login page")}
                   </Button>
                 </div>
@@ -248,6 +253,7 @@ export default function AuthPage() {
                 </div>
               </>
             )}
+            </div>
           </div>
         </div>
       </div>

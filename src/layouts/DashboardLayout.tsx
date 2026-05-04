@@ -340,27 +340,27 @@ function AppSidebar() {
         {
           title: t('Loan department', 'KARZ BÖLÜMI'),
           items: [
-            { title: t('Loan orders', 'Karz sargytlary'), url: '/resources/loan-orders' },
-            { title: t('Loan order (Mobile)', 'Karz sargyt (Mobile)'), url: '/resources/loan-order-mobiles' },
-            { title: t('Loan balance', 'Karzyň galyndysy'), url: '/resources/loan-remaining' },
-            { title: t('Certificates of loan repayment', 'Karzyň ýapylandygy barada güwanamalar'), url: '/resources/loan-paid-off-letters' },
+            { title: t('Loan orders', 'Karz sargytlary'), url: '/loan-orders' },
+            { title: t('Loan order (Mobile)', 'Karz sargyt (Mobile)'), url: '/loan-order-mobiles' },
+            { title: t('Loan balance', 'Karzyň galyndysy'), url: '/loan-remaining' },
+            { title: t('Certificates of loan repayment', 'Karzyň ýapylandygy barada güwanamalar'), url: '/loan-paid-off-letters' },
           ],
         },
         {
           title: t('Card department', 'KART BÖLÜMI'),
           items: [
-            { title: t('Order new card', 'Täze kart açmak'), url: '/resources/card-new' },
-            { title: t('Card transactions', 'Kart hereketleri'), url: '/resources/card-transactions' },
-            { title: t('Card requisites', 'Kart rekwizitler'), url: '/resources/card-requisites' },
-            { title: t('Card balances', 'Kart galyndylary'), url: '/resources/card-balances' },
-            { title: t('Card pins', 'Kart pin bukjalar'), url: '/resources/card-pins' },
+            { title: t('Order new card', 'Täze kart açmak'), url: '/card-new' },
+            { title: t('Card transactions', 'Kart hereketleri'), url: '/card-transactions' },
+            { title: t('Card requisites', 'Kart rekwizitler'), url: '/card-requisites' },
+            { title: t('Card balances', 'Kart galyndylary'), url: '/card-balances' },
+            { title: t('Card pins', 'Kart pin bukjalar'), url: '/card-pins' },
           ],
         },
         {
           title: t('International payments', 'HALKARA TÖLEGLER'),
           items: [
-            { title: t('Visa/Master payments', 'Visa/Master tölegleri'), url: '/resources/intl-payments/visa-master' },
-            { title: t('Sber payments', 'Sber tölegleri'), url: '/resources/intl-payments/sber' },
+            { title: t('Visa/Master payments', 'Visa/Master tölegleri'), url: '/intl-payments/visa-master' },
+            { title: t('Sber payments', 'Sber tölegleri'), url: '/intl-payments/sber' },
           ],
         },
       ],
@@ -388,7 +388,7 @@ function AppSidebar() {
         {
           title: t('Loan', 'KARZ'),
           items: [
-            { title: t('Loan Types', 'Karz görnüşleri'), url: '/settings/loan/types' },
+            { title: t('Loan types', 'Karz görnüşleri'), url: '/settings/loan/types' },
             { title: t('Required Documents', 'Karz gerekli resminamalary'), url: '/settings/loan/documents' },
           ],
         },
@@ -396,13 +396,13 @@ function AppSidebar() {
           title: t('Card', 'KART'),
           items: [
             { title: t('Card Issuance Reasons', 'Kartyň çykarylmagynyň sebäpleri'), url: '/settings/card/reasons' },
-            { title: t('Card Types', 'Kart görnüşleri'), url: '/settings/card/types' },
+            { title: t('Card types', 'Kart görnüşleri'), url: '/settings/card/types' },
           ],
         },
         {
           title: t('Location', 'LOKASIÝA'),
           items: [
-            { title: t('Districts', 'Etraplar'), url: '/settings/location/districts' },
+            { title: t('Provinces', 'Etraplar'), url: '/settings/location/districts' },
             { title: t('Branches', 'Şahamçalar'), url: '/settings/location/branches' },
           ],
         },
@@ -492,6 +492,10 @@ export function DashboardLayout() {
             <main className="flex-1 p-6 overflow-auto">
               <Outlet />
             </main>
+              {/* Footer */}
+            <div className="text-center text-xs text-muted-foreground/40 pt-2 pb-6">
+              © 2026 TBBANK.GOV.TM.
+            </div>
           </div>
         </div>
       </SidebarProvider>

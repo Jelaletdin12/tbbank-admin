@@ -28,21 +28,9 @@ const COLUMN_IDS = [
 
 // ─── Filter options ────────────────────────────────────────────────────────────
 
-const REGION_OPTIONS = [
-  { value: 'Balkan',  label: 'Balkan'  },
-  { value: 'Ahal',    label: 'Ahal'    },
-  { value: 'Daşoguz', label: 'Daşoguz' },
-  { value: 'Lebap',   label: 'Lebap'   },
-  { value: 'Mary',    label: 'Mary'    },
-  { value: 'Aşgabat', label: 'Aşgabat' },
-]
-
-const STATUS_OPTIONS: { value: LoanOrderMobileStatus; label: string }[] = [
-  { value: 'GARAŞYLÝAR',        label: 'GARAŞYLÝAR'        },
-  { value: 'KANAGATLANDYRYLAN', label: 'KANAGATLANDYRYLAN' },
-  { value: 'RED_EDILDI',        label: 'RED EDILDI'        },
-  { value: 'IŞLENÝÄR',          label: 'IŞLENÝÄR'          },
-]
+// ─── Filter options (Internal keys/values) ───────────────────────────────────
+const REGION_OPTIONS = ['Balkan', 'Ahal', 'Daşoguz', 'Lebap', 'Mary', 'Aşgabat']
+const STATUS_OPTIONS: LoanOrderMobileStatus[] = ['GARAŞYLÝAR', 'KANAGATLANDYRYLAN', 'RED_EDILDI', 'IŞLENÝÄR']
 
 // ─── Page Component ────────────────────────────────────────────────────────────
 
@@ -105,7 +93,7 @@ export default function LoanOrderMobilesPage() {
       {
         id: 'id',
         accessorKey: 'id',
-        header: t('ID', 'ID'),
+        header: t('loanOrderMobiles.columns.id', 'ID'),
         cell: ({ row }) => (
           <span className="text-xs font-mono text-muted-foreground">{row.original.id}</span>
         ),
@@ -189,13 +177,13 @@ export default function LoanOrderMobilesPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 justify-end">
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.view', 'Görmek')}
             >
               <Eye size={15} />
             </button>
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.edit', 'Üýtgetmek')}
             >
               <Pencil size={15} />
@@ -203,7 +191,7 @@ export default function LoanOrderMobilesPage() {
             <button
               onClick={() => handleDelete(row.original.id)}
               disabled={deleteMutation.isPending}
-              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              className="p-1.5 cursor-pointer rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
               title={t('common.delete', 'Pozmak')}
             >
               <Trash2 size={15} />
@@ -227,12 +215,12 @@ export default function LoanOrderMobilesPage() {
       {
         id: 'region',
         label: t('loanOrderMobiles.filters.region', 'WELAÝAT'),
-        options: REGION_OPTIONS,
+        options: REGION_OPTIONS.map((v) => ({ value: v, label: t(v) })),
       },
       {
         id: 'status',
         label: t('loanOrderMobiles.filters.status', 'STATUS'),
-        options: STATUS_OPTIONS,
+        options: STATUS_OPTIONS.map((v) => ({ value: v, label: t(`loanOrderStatus.${v}`) })),
       },
       {
         id: 'branch',
@@ -266,7 +254,7 @@ export default function LoanOrderMobilesPage() {
         <DataTableToolbar
           searchValue={search}
           onSearchChange={(v) => { setSearch(v); setPage(1) }}
-          searchPlaceholder={t('loanOrderMobiles.searchPlaceholder', 'Gözlemek')}
+          searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={toggleableColumns}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

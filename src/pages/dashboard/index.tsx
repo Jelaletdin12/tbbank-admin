@@ -13,7 +13,7 @@ export default function DashboardPage() {
       <main className="grid gap-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          <div className="p-6 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden">
+          <div className="p-6 bg-card rounded-md border border-border shadow-sm flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-medium text-muted-foreground">{t('Loan orders (all)', 'Karz sargytlary (ählisi)')}</h3>
               <div className="bg-accent text-xs px-2 py-1 rounded text-muted-foreground">30 gün</div>
@@ -30,7 +30,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-card rounded-lg border border-border shadow-sm flex flex-col relative overflow-hidden">
+          <div className="p-6 bg-card rounded-md border border-border shadow-sm flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-medium text-muted-foreground">{t('Loan orders (all)', 'Karz sargytlary (ählisi)')}</h3>
               <div className="bg-accent text-xs px-2 py-1 rounded text-muted-foreground">30 gün</div>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-card rounded-lg border border-border shadow-sm flex flex-col">
+          <div className="p-6 bg-card rounded-md border border-border shadow-sm flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-medium text-muted-foreground">{t('Loan orders (all)', 'Karz sargytlary (ählisi)')}</h3>
               <div className="text-xs text-muted-foreground">(6,968 jemi)</div>

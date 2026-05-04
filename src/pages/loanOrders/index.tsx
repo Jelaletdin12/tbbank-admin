@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
@@ -38,12 +39,13 @@ const STATUS_OPTIONS: { value: LoanOrderStatus; label: string }[] = [
 
 export default function LoanOrdersPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const deleteMutation = useDeleteLoanOrder()
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch]               = useState('')
   const [page, setPage]                   = useState(1)
-  const [perPage, setPerPage]             = useState(25)
+  const [perPage, setPerPage]             = useState(10)
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [columnOrder, setColumnOrder]     = useState<string[]>([...COLUMN_IDS])
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([
@@ -180,13 +182,14 @@ export default function LoanOrdersPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 justify-end">
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.view', 'View')}
+              onClick={() => navigate(`/loan-orders/${row.original.id}`)}
             >
               <Eye size={15} />
             </button>
             <button
-              className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.edit', 'Edit')}
             >
               <Pencil size={15} />
@@ -194,7 +197,7 @@ export default function LoanOrdersPage() {
             <button
               onClick={() => handleDelete(row.original.id)}
               disabled={deleteMutation.isPending}
-              className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+              className="p-1.5 cursor-pointer rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
               title={t('common.delete', 'Delete')}
             >
               <Trash2 size={15} />
@@ -272,7 +275,7 @@ export default function LoanOrdersPage() {
           onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
           actionLabel={t('loanOrders.createButton', 'Karz sargyt dörediñ')}
           onAction={() => {
-            // navigate to create page or open modal
+            navigate('/loan-orders/create')
           }}
         />
 

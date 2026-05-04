@@ -8,7 +8,18 @@ import tk from './locales/tk.json'
 export const SUPPORTED_LANGUAGES = ['en', 'ru', 'tk'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 
-const savedLang = localStorage.getItem('tbbank-lang') as SupportedLanguage | null
+const savedStorage = localStorage.getItem('tbbank-lang')
+let savedLang: string | null = null
+
+if (savedStorage) {
+  try {
+    const parsed = JSON.parse(savedStorage)
+    savedLang = parsed.state?.language
+  } catch {
+    savedLang = savedStorage
+  }
+}
+
 const defaultLang: SupportedLanguage =
   SUPPORTED_LANGUAGES.includes(savedLang as SupportedLanguage) ? (savedLang as SupportedLanguage) : 'en'
 

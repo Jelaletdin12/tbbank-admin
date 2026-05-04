@@ -133,7 +133,7 @@ function ToggleColumnsDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border',
+          'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border cursor-pointer',
           'text-sm text-muted-foreground bg-background',
           'hover:bg-muted/50 hover:text-foreground transition-colors',
           open && 'bg-muted/50 text-foreground border-ring'
@@ -144,7 +144,7 @@ function ToggleColumnsDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-52 bg-card border border-border rounded-lg shadow-lg z-50 py-2">
+        <div className="absolute right-0 mt-1.5 w-52 bg-card border border-border rounded-md shadow-lg z-50 py-2">
           <p className="px-3 pb-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
             {t('table.toggleColumns', 'Toggle Columns')}
           </p>
@@ -193,7 +193,7 @@ function DateFilterButton() {
   return (
     <button
       className={cn(
-        'flex items-center h-9 px-3 rounded-md border border-border',
+        'flex items-center h-9 px-3 rounded-md border border-border cursor-pointer',
         'text-muted-foreground bg-background',
         'hover:bg-muted/50 hover:text-foreground transition-colors'
       )}
@@ -240,7 +240,7 @@ function FilterDropdown({
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border',
+          'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border cursor-pointer',
           'text-muted-foreground bg-background',
           'hover:bg-muted/50 hover:text-foreground transition-colors',
           open && 'bg-muted/50 text-foreground border-ring',
@@ -258,7 +258,7 @@ function FilterDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1.5 w-64 bg-card border border-border rounded-lg shadow-lg z-50 py-3">
+        <div className="absolute right-0 mt-1.5 w-64 bg-card border border-border rounded-md shadow-lg z-50 py-3">
           <div className="flex items-center justify-between px-3 pb-2 border-b border-border mb-2">
             <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
               {t('table.filters', 'Filters')}

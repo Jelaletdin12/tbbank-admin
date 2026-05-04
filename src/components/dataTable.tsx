@@ -161,7 +161,7 @@ function SelectAllDropdown({
       </button>
 
       {open && (
-        <div className="absolute top-10 left-0 z-50 w-52 bg-card border border-border rounded-lg shadow-lg py-1">
+        <div className="absolute top-10 left-0 z-50 w-52 bg-card border border-border rounded-md shadow-lg py-1">
           <button
             onClick={() => {
               onSelectPage(true)
@@ -370,7 +370,7 @@ export function DataTable<TData>({
       <div
         className={cn(
           'border border-border overflow-hidden',
-          showBanner ? 'rounded-b-lg rounded-t-none' : 'rounded-lg'
+          showBanner ? 'rounded-b-lg rounded-t-none' : 'rounded-md'
         )}
       >
         <Table>
