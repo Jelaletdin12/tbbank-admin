@@ -66,10 +66,7 @@ export default function DashboardPage() {
           </div>
 
         </div>
-        
-        <div className="text-center text-xs text-muted-foreground mt-8">
-          © 2026 TBBANK.GOV.TM.
-        </div>
+       
       </main>
     </div>
   )

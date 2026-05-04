@@ -273,7 +273,7 @@ export default function LoanOrdersPage() {
           perPageOptions={[10, 25, 50, 100]}
           perPage={perPage}
           onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
-          actionLabel={t('loanOrders.createButton', 'Karz sargyt dörediñ')}
+          actionLabel={t('loanOrderMobiles.createButton', 'Karz sargyt dörediñ')}
           onAction={() => {
             navigate('/loan-orders/create')
           }}

@@ -492,7 +492,7 @@ export function DashboardLayout() {
             <main className="flex-1 p-6 overflow-auto">
               <Outlet />
             </main>
-              {/* Footer */}
+            {/* Footer */}
             <div className="text-center text-xs text-muted-foreground/40 pt-2 pb-6">
               © 2026 TBBANK.GOV.TM.
             </div>
