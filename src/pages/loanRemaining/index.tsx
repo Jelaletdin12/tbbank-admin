@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
@@ -16,6 +17,7 @@ const COLUMN_IDS = ['id', 'passportSeries', 'passportNumber', 'loanAccount'] as 
 
 export default function LoanRemainingPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const deleteMutation = useDeleteLoanRemaining()
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -99,12 +101,14 @@ export default function LoanRemainingPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 justify-end">
             <button
+              onClick={() => navigate(`/loan-remaining/${row.original.id}`)}
               className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.view', 'Görmek')}
             >
               <Eye size={15} />
             </button>
             <button
+              onClick={() => navigate(`/loan-remaining/${row.original.id}/edit`)}
               className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.edit', 'Üýtgetmek')}
             >
@@ -164,7 +168,7 @@ export default function LoanRemainingPage() {
           onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
           actionLabel={t('loanRemaining.createButton', 'Karzyň galyndysy dörediň')}
           onAction={() => {
-            // navigate to create page or open modal
+            navigate('/loan-remaining/create')
           }}
         />
 

@@ -8,11 +8,17 @@ import LoanOrderEditPage from "@/pages/loanOrderEdit";
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const LoanOrdersPage = lazy(() => import("@/pages/loanOrders"));
-const LoanOrderMobilesPage = lazy(() => import("@/pages/loanOrderMobiles"));
+const LoanOrderMobilesPage = lazy(() => import("@/pages/loanOrderMobile"));
 const LoanRemainingPage = lazy(() => import("@/pages/loanRemaining"));
+const LoanRemainingCreatePage = lazy(() => import("@/pages/loanRemainingCreate"));
+const LoanRemainingViewPage = lazy(() => import("@/pages/loanRemainingView"));
+const LoanRemainingEditPage = lazy(() => import("@/pages/loanRemainingEdit"));
 const LoanPaidOffLettersPage = lazy(() => import("@/pages/loanPaidOffLetters"));
 const LoanOrderCreatePage = lazy(() => import("@/pages/loanOrderCreate"));
 const LoanOrderViewPage = lazy(() => import("@/pages/loanOrderView"));
+const LoanOrderMobileViewPage = lazy(() => import("@/pages/loanOrderMobileView"));
+const LoanOrderMobileEditPage = lazy(() => import("@/pages/loanOrderMobileEdit"));
+const LoanOrderMobileCreatePage = lazy(() => import("@/pages/loanOrderMobileCreate"));
 
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -81,7 +87,6 @@ export const router = createBrowserRouter([
                 <LoanOrderViewPage />
               </Suspense>
             ),
-            
           },
           {
             path: "/loan-orders/create",
@@ -109,11 +114,59 @@ export const router = createBrowserRouter([
             ),
           },
           {
+            path: "/loan-order-mobiles/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderMobileViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-order-mobiles/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderMobileCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-order-mobiles/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderMobileEditPage />
+              </Suspense>
+            ),
+          },
+          {
             // Sidebar: /loan-remaining
             path: "/loan-remaining",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanRemainingPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-remaining/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanRemainingCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-remaining/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanRemainingViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-remaining/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanRemainingEditPage />
               </Suspense>
             ),
           },

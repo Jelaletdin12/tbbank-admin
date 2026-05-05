@@ -5,7 +5,11 @@ import { useTranslation } from 'react-i18next'
 import {
   fetchLoanOrderMobiles,
   deleteLoanOrderMobile,
+  getLoanOrderMobileById,
+  createLoanOrderMobile,
+  updateLoanOrderMobile,
   type LoanOrderMobileListParams,
+  type LoanOrderMobilePayload,
 } from '../api/loanOrderMobilesApi'
 
 // ─── Query keys ────────────────────────────────────────────────────────────────
@@ -14,6 +18,8 @@ export const loanOrderMobileKeys = {
   all: ['loanOrderMobiles'] as const,
   lists: () => [...loanOrderMobileKeys.all, 'list'] as const,
   list: (params: LoanOrderMobileListParams) => [...loanOrderMobileKeys.lists(), params] as const,
+  details: () => [...loanOrderMobileKeys.all, 'detail'] as const,
+  detail: (id: string) => [...loanOrderMobileKeys.details(), id] as const,
 }
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────
@@ -37,6 +43,48 @@ export function useDeleteLoanOrderMobile() {
     },
     onError: () => {
       toast.error(t('loanOrderMobiles.deleteError', 'Pozmak başartmady, gaýtadan synanyşyň'))
+    },
+  })
+}
+
+export function useLoanOrderMobileById(id: string) {
+  return useQuery({
+    queryKey: loanOrderMobileKeys.detail(id),
+    queryFn: () => getLoanOrderMobileById(id),
+    enabled: !!id,
+  })
+}
+
+export function useCreateLoanOrderMobile() {
+  const queryClient = useQueryClient()
+  const { t } = useTranslation()
+
+  return useMutation({
+    mutationFn: (payload: LoanOrderMobilePayload) => createLoanOrderMobile(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.lists() })
+      toast.success(t('loanOrderMobiles.createSuccess', 'Sargyt üstünlikli döredildi'))
+    },
+    onError: () => {
+      toast.error(t('loanOrderMobiles.createError', 'Sargyt döretmek başartmady'))
+    },
+  })
+}
+
+export function useUpdateLoanOrderMobile() {
+  const queryClient = useQueryClient()
+  const { t } = useTranslation()
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<LoanOrderMobilePayload> }) =>
+      updateLoanOrderMobile(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.detail(variables.id) })
+      toast.success(t('loanOrderMobiles.updateSuccess', 'Sargyt üstünlikli üýtgedildi'))
+    },
+    onError: () => {
+      toast.error(t('loanOrderMobiles.updateError', 'Üýtgetmek başartmady'))
     },
   })
 }

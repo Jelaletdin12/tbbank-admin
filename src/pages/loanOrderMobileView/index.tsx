@@ -1,8 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Trash2, Pencil, Download, ChevronRight, Eye } from 'lucide-react'
-import { useLoanOrderById, useDeleteLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
+import { useLoanOrderMobileById, useDeleteLoanOrderMobile } from '@/features/loanOrderMobiles/hooks/useLoanOrderMobiles'
 import { LoanOrderStatusBadge } from '@/features/loanOrders/components/loanOrderStatusBadge'
+import { CreditCardVisual } from '@/components/creditCardVisual'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 
@@ -116,7 +117,7 @@ function AuditRow({ id, action, by, target, status, date }: AuditRowProps) {
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function LoanOrderViewSkeleton() {
+function LoanOrderMobilesViewSkeleton() {
   return (
     <div className="flex flex-col gap-4">
       <Skeleton className="h-7 w-64" />
@@ -134,28 +135,28 @@ function LoanOrderViewSkeleton() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function LoanOrderViewPage() {
+export default function LoanOrderMobilesViewPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
-  const deleteMutation = useDeleteLoanOrder()
+  const deleteMutation = useDeleteLoanOrderMobile()
 
-  const { data: order, isLoading } = useLoanOrderById(id!)
+  const { data: order, isLoading } = useLoanOrderMobileById(id!)
 
   const handleDelete = () => {
-    if (!window.confirm(t('loanOrders.deleteConfirm', 'Bu sargyt pozulsynmy?'))) return
+    if (!window.confirm(t('loanOrderMobiles.deleteConfirm', 'Bu sargyt pozulsynmy?'))) return
     deleteMutation.mutate(id!, {
       onSuccess: () => {
-        toast.success(t('loanOrders.deleteSuccess', 'Sargyt pozuldy'))
-        navigate('/loan-orders')
+        toast.success(t('loanOrderMobiles.deleteSuccess', 'Sargyt pozuldy'))
+        navigate('/loan-order-mobiles')
       },
       onError: () => {
-        toast.error(t('loanOrders.deleteError', 'Pozma wagty ýalňyşlyk ýüze çykdy'))
+        toast.error(t('loanOrderMobiles.deleteError', 'Pozma wagty ýalňyşlyk ýüze çykdy'))
       },
     })
   }
 
-  if (isLoading) return <LoanOrderViewSkeleton />
+  if (isLoading) return <LoanOrderMobilesViewSkeleton />
 
   if (!order) {
     return (
@@ -171,7 +172,7 @@ export default function LoanOrderViewPage() {
       id: '44548',
       action: t('audit.actions.view', 'Görmek'),
       by: order.createdBy ?? '',
-      target: `${t('loanOrders.title', 'Karz sargyt')}: ${order.id}`,
+      target: `${t('loanOrderMobiles.title', 'Karz sargyt')}: ${order.id}`,
       status: 'FINISHED',
       date: order.createdAt ?? '',
     },
@@ -182,7 +183,7 @@ export default function LoanOrderViewPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-xl font-semibold text-foreground">
-          {t('loanOrders.view.title', 'Karz sargyt giriş')}: {order.id}
+          {t('loanOrderMobiles.view.title', 'Karz sargyt giriş')}: {order.id}
         </h1>
         <div className="flex items-center gap-1.5">
           <button
@@ -194,7 +195,7 @@ export default function LoanOrderViewPage() {
             <Trash2 size={16} />
           </button>
           <button
-            onClick={() => navigate(`/loan-orders/${order.id}/edit`)}
+            onClick={() => navigate(`/loan-order-mobiles/${order.id}/edit`)}
             className="p-2 rounded-md cursor-pointer hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             title={t('common.edit', 'Redaktirle')}
           >
@@ -206,10 +207,6 @@ export default function LoanOrderViewPage() {
       {/* ── Basic Info ─────────────────────────────────────────────────────── */}
       <div className="bg-card border border-border rounded-xl overflow-hidden mb-6">
         <InfoRow label="ID" value={order.id} />
-        <InfoRow
-          label={t('loanOrders.columns.createdAt', 'Döredilen wagty')}
-          value={order.createdAt}
-        />
         {/* Status row — special render */}
         <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border">
           <span className="text-sm text-muted-foreground">
@@ -218,15 +215,29 @@ export default function LoanOrderViewPage() {
           <LoanOrderStatusBadge status={order.status} />
         </div>
         <InfoRow
-          label={t('loanOrders.fields.amount', 'Berlik')}
-          value={order.amount ? String(order.amount) : undefined}
+          label={t('loanOrders.columns.createdAt', 'Döredilen wagty')}
+          value={order.createdAt}
         />
-        <InfoRow
-          label={t('loanOrders.fields.createdBy', 'Sargyt eden')}
-          value={order.createdBy ?? undefined}
-          isLink
-        />
+        <InfoRow label={t('loanOrders.columns.branch', 'Şahamça')} value={order.branch} isLink />
+        <InfoRow label={t('loanOrders.fields.note', 'Bellik')} value={order.note || '-'} />
       </div>
+
+      {/* ── Card ───────────────────────────────────────────────────────────── */}
+      {(order.cardNumber || order.cardName) && (
+        <Section title={t('loanOrders.sections.card', 'Kart')}>
+          <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-b border-border flex items-center justify-center">
+             <CreditCardVisual 
+               cardNumber={order.cardNumber}
+               cardName={order.cardName}
+               expMonth={order.cardExpMonth}
+               expYear={order.cardExpYear}
+               variant="primary"
+             />
+          </div>
+          <InfoRow label={t('loanOrders.fields.cardNumber', 'Kart belgisi')} value={order.cardNumber} />
+          <InfoRow label={t('loanOrders.fields.cardName', 'Kartdaky ady')} value={order.cardName} />
+        </Section>
+      )}
 
       {/* ── Loan ───────────────────────────────────────────────────────────── */}
       <Section title={t('loanOrders.sections.loan', 'Karz')}>
@@ -236,7 +247,7 @@ export default function LoanOrderViewPage() {
           isLink
         />
         <InfoRow
-          label={t('loanOrders.fields.loanAmount', 'Karz mukdary')}
+          label={t('loanOrders.fields.loanAmount', 'Karz möçberi')}
           value={order.loanAmount ? String(order.loanAmount) : undefined}
         />
       </Section>
@@ -244,18 +255,13 @@ export default function LoanOrderViewPage() {
       {/* ── Location ───────────────────────────────────────────────────────── */}
       <Section title={t('loanOrders.sections.location', 'Lokasiýa')}>
         <InfoRow label={t('loanOrders.columns.region', 'Welaýat')} value={order.region} />
-        <InfoRow
-          label={t('loanOrders.columns.branch', 'Şahamça')}
-          value={order.branch}
-          isLink
-        />
       </Section>
 
       {/* ── Personal Info ──────────────────────────────────────────────────── */}
       <Section title={t('loanOrders.sections.personal', 'Şahsy maglumatlar')}>
         <InfoRow
           label={t('loanOrders.fields.fullName', 'Doly ady')}
-          value={order.fullName ?? `${order.firstName} ${order.lastName}`}
+          value={`${order.firstName} ${order.lastName} ${order.patronicName || ''}`.trim()}
         />
         <InfoRow
           label={t('loanOrders.fields.education', 'Bilimi')}
@@ -263,19 +269,24 @@ export default function LoanOrderViewPage() {
         />
         <InfoRow
           label={t('loanOrders.fields.maritalStatus', 'Maşgala ýagdaýy')}
-          value={order.maritalStatus ?? undefined}
+          value={order.marriageStatus ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.birthDate', 'Doglan güni')}
-          value={order.birthDate ?? undefined}
+          value={order.dateOfBirth ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.registeredAddress', 'Ýazgy edilen salgyňyz')}
-          value={order.registeredAddress ?? undefined}
+          value={order.residence ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.currentAddress', 'Häzirki ýaşaýyş ýeri')}
-          value={order.currentAddress ?? undefined}
+          value={order.currentResidence ?? undefined}
+        />
+        <InfoRow
+          label={t('loanOrders.fields.loanHistory', 'Karz taryhy')}
+          value={order.loanHistory ?? undefined}
+          isLink
         />
       </Section>
 
@@ -288,7 +299,7 @@ export default function LoanOrderViewPage() {
         <InfoRow label={t('loanOrders.columns.phone', 'Telefon')} value={order.phone} />
         <InfoRow
           label={t('loanOrders.fields.phoneAlt', 'Telefon goşmaça')}
-          value={order.phoneAlt ?? undefined}
+          value={order.phoneAdditional ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.homePhone', 'Öý telefony')}
@@ -300,11 +311,11 @@ export default function LoanOrderViewPage() {
       <Section title={t('loanOrders.sections.employment', 'Iş')}>
         <InfoRow
           label={t('loanOrders.fields.employer', 'Işleýän edaranyň/kärhananyn ady')}
-          value={order.employer ?? undefined}
+          value={order.workCompany ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.deptPhone', 'Işgärler bölüminiň iş belgisi')}
-          value={order.deptPhone ?? undefined}
+          value={order.workHrPhone ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.workRegion', 'Işleýän welaýatyňyz')}
@@ -312,7 +323,7 @@ export default function LoanOrderViewPage() {
         />
         <InfoRow
           label={t('loanOrders.fields.workCity', 'Işleýän etrabyňyz')}
-          value={order.workCity ?? undefined}
+          value={order.workProvince ?? undefined}
           isLink
         />
         <InfoRow
@@ -325,7 +336,7 @@ export default function LoanOrderViewPage() {
         />
         <InfoRow
           label={t('loanOrders.fields.employedSince', 'Işe başlan wagtyňyz')}
-          value={order.employedSince ?? undefined}
+          value={order.workStartedAt ?? undefined}
         />
       </Section>
 
@@ -337,11 +348,11 @@ export default function LoanOrderViewPage() {
         />
         <InfoRow
           label={t('loanOrders.fields.passportIssuedBy', 'Kim tarapyndan berildi')}
-          value={order.passportIssuedBy ?? undefined}
+          value={order.passportGivenBy ?? undefined}
         />
         <InfoRow
           label={t('loanOrders.fields.passportBirthPlace', 'Doglan ýeri (pasport)')}
-          value={order.passportBirthPlace ?? undefined}
+          value={order.bornPlace ?? undefined}
         />
         <PassportImage
           label={t('loanOrders.fields.passportPage1', 'Pasport (sahypa 1)')}
@@ -360,6 +371,35 @@ export default function LoanOrderViewPage() {
           src={order.passportPage32Url ?? undefined}
         />
       </Section>
+
+      {/* ── Guarantor ──────────────────────────────────────────────────────── */}
+      {(order.guarantor1Name || order.guarantor1CardNumber) && (
+        <Section title={t('loanOrders.sections.guarantor', '1. Zamun')}>
+          <InfoRow
+            label={t('loanOrders.fields.guarantorName', 'Zamunyň doly ady')}
+            value={`${order.guarantor1Name || ''} ${order.guarantor1Surname || ''} ${order.guarantor1Patronic || ''}`.trim()}
+          />
+          <InfoRow
+            label={t('loanOrders.fields.guarantorPassport', 'Pasport')}
+            value={`${order.guarantor1PassportSerie || ''} ${order.guarantor1PassportNumber || ''}`.trim()}
+          />
+          <InfoRow
+            label={t('loanOrders.fields.guarantorSalary', 'Ortaca zähmet haky')}
+            value={order.guarantor1Salary ? String(order.guarantor1Salary) : undefined}
+          />
+          {order.guarantor1CardNumber && (
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-border flex items-center justify-center">
+              <CreditCardVisual 
+                cardNumber={order.guarantor1CardNumber}
+                cardName={order.guarantor1CardName}
+                expMonth={order.guarantor1CardExpMonth}
+                expYear={order.guarantor1CardExpYear}
+                variant="secondary"
+              />
+            </div>
+          )}
+        </Section>
+      )}
 
       {/* ── Audit Log ──────────────────────────────────────────────────────── */}
       <div className="mb-6">

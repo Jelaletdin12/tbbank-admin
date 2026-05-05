@@ -7,11 +7,9 @@ Bu doküman, projenin büyümesiyle yapının bozulmaması ve projede çalışac
 - **State Management:** `zustand`
   - **Path:** `src/app/store/` (Örn: `authStore.ts`, `themeStore.ts`, `i18nStore.ts`)
   - Sadece global state (kullanıcı oturumu, tema, dil vb.) için kullanılmalıdır. Component içi basit stateler için `useState` kullanın.
-  
 - **Data Fetching & Caching:** `@tanstack/react-query`
   - **Path:** `src/features/[feature-name]/hooks/` (Örn: `src/features/auth/hooks/useLogin.ts`)
   - Bütün API istekleri custom hook'lar içerisine sarmalanmalı ve doğrudan component içinde `useQuery` veya `useMutation` yazılmamalıdır.
-  
 - **HTTP Client:** `axios`
   - **Path:** `src/lib/api/client.ts`
   - Tüm istekler merkezi axios instance'ı üzerinden yapılmalıdır. Interceptor'lar (token ekleme, hata yakalama vb.) bu dosyada yönetilir.
@@ -52,6 +50,7 @@ Bu doküman, projenin büyümesiyle yapının bozulmaması ve projede çalışac
   - İsimlendirmeler açıklayıcı olmalı (Örn: `handleData` yerine `submitLoginForm`).
 
 ## 4. Dosya Yapısı Özeti
+
 ```text
 src/
 ├── app/             # Global provider'lar, store'lar ve router konfigürasyonları
@@ -69,6 +68,7 @@ src/
 ```
 
 ## AI / Agent İçin Katı Talimatlar (System Instructions)
+
 1. Yeni bir bileşen veya özellik ekleneceğinde her zaman önce `src/features/` altına eklenip eklenmeyeceğini değerlendir.
 2. UI bileşeni oluştururken önce `src/components/ui/` dizininde mevcut bir yapı olup olmadığını kontrol et.
 3. Asla `any` tipi tanımlama. TypeScript hatalarını doğru tipler (interface/type) yazarak çöz.
@@ -93,3 +93,4 @@ src/
      pages/
        [Feature]CreatePage.tsx ← <[Feature]Form mode="create" />
        [Feature]EditPage.tsx   ← id fetch → <[Feature]Form mode="edit" initialData={data} loanOrderId={id} />
+     ```

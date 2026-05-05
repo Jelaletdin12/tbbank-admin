@@ -19,8 +19,11 @@ export interface LoanOrder {
   lastName: string
   phone: string
   status: LoanOrderStatus
+  note?: string | null
 
   // ── Detail fields ─────────────────────────────────────────────────────────
+  loanAmount?: number | null
+  loanHistory?: string | null
   patronicName?: string | null
   education?: string | null
   marriageStatus?: string | null
@@ -52,6 +55,40 @@ export interface LoanOrder {
   position?: string | null
   salary?: number | null
   workStartedAt?: string | null
+
+  // Card (Zähmet haky)
+  cardNumber?: string | null
+  cardName?: string | null
+  cardExpMonth?: string | null
+  cardExpYear?: string | null
+
+  // Guarantor (Zamun)
+  guarantor1Name?: string | null
+  guarantor1Surname?: string | null
+  guarantor1Patronic?: string | null
+  guarantor1PassportSerie?: string | null
+  guarantor1PassportNumber?: string | null
+  guarantor1CardNumber?: string | null
+  guarantor1CardName?: string | null
+  guarantor1CardExpMonth?: string | null
+  guarantor1CardExpYear?: string | null
+  guarantor1Salary?: number | null
+
+  // ── Restored fields from previous version ───────────────────────────────
+  amount?: number | null
+  createdBy?: string | null
+  fullName?: string | null
+  maritalStatus?: string | null
+  birthDate?: string | null
+  registeredAddress?: string | null
+  currentAddress?: string | null
+  phoneAlt?: string | null
+  employer?: string | null
+  deptPhone?: string | null
+  workCity?: string | null
+  employedSince?: string | null
+  passportIssuedBy?: string | null
+  passportBirthPlace?: string | null
 }
 
 export interface LoanOrdersParams {
@@ -100,6 +137,26 @@ export interface LoanOrderPayload {
   position: string
   salary: number
   workStartedAt: string
+
+  note?: string
+  loanAmount?: number
+  loanHistory?: string
+
+  cardNumber?: string
+  cardName?: string
+  cardExpMonth?: string
+  cardExpYear?: string
+
+  guarantor1Name?: string
+  guarantor1Surname?: string
+  guarantor1Patronic?: string
+  guarantor1PassportSerie?: string
+  guarantor1PassportNumber?: string
+  guarantor1CardNumber?: string
+  guarantor1CardName?: string
+  guarantor1CardExpMonth?: string
+  guarantor1CardExpYear?: string
+  guarantor1Salary?: number
 }
 
 // ─── Mock ─────────────────────────────────────────────────────────────────────

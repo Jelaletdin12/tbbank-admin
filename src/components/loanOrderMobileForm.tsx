@@ -5,8 +5,8 @@ import { toast } from 'sonner'
 import { FormInput } from '@/components/formInput'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useCreateLoanOrder, useUpdateLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
-import type { LoanOrder, LoanOrderPayload } from '@/features/loanOrders/api/loanOrdersApi'
+import { useCreateLoanOrderMobile, useUpdateLoanOrderMobile } from '@/features/loanOrderMobiles/hooks/useLoanOrderMobiles'
+import type { LoanOrderMobile, LoanOrderMobilePayload } from '@/features/loanOrderMobiles/api/loanOrderMobilesApi'
 
 // ─── Section Wrapper ──────────────────────────────────────────────────────────
 
@@ -120,6 +120,27 @@ interface FormState {
   passportPage23: File | null
   passportPage89: File | null
   passportPage32: File | null
+
+  // New fields
+  note: string
+  loanAmount: string
+  loanHistory: string
+
+  cardNumber: string
+  cardName: string
+  cardExpMonth: string
+  cardExpYear: string
+
+  guarantor1Name: string
+  guarantor1Surname: string
+  guarantor1Patronic: string
+  guarantor1PassportSerie: string
+  guarantor1PassportNumber: string
+  guarantor1CardNumber: string
+  guarantor1CardName: string
+  guarantor1CardExpMonth: string
+  guarantor1CardExpYear: string
+  guarantor1Salary: string
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
@@ -157,11 +178,31 @@ const INITIAL_STATE: FormState = {
   passportPage23: null,
   passportPage89: null,
   passportPage32: null,
+
+  note: '',
+  loanAmount: '',
+  loanHistory: '',
+
+  cardNumber: '',
+  cardName: '',
+  cardExpMonth: '',
+  cardExpYear: '',
+
+  guarantor1Name: '',
+  guarantor1Surname: '',
+  guarantor1Patronic: '',
+  guarantor1PassportSerie: '',
+  guarantor1PassportNumber: '',
+  guarantor1CardNumber: '',
+  guarantor1CardName: '',
+  guarantor1CardExpMonth: '',
+  guarantor1CardExpYear: '',
+  guarantor1Salary: '',
 }
 
 // ─── Map LoanOrder → FormState (edit modunda başlangıç değerleri) ─────────────
 
-function mapToFormState(order: LoanOrder): FormState {
+function mapToFormState(order: LoanOrderMobile): FormState {
   return {
     status:              order.status             ?? 'GARAŞYLÝAR',
     loanType:            order.loanType           ?? '',
@@ -196,6 +237,26 @@ function mapToFormState(order: LoanOrder): FormState {
     passportPage23: null,
     passportPage89: null,
     passportPage32: null,
+
+    note:                order.note ?? '',
+    loanAmount:          order.loanAmount != null ? String(order.loanAmount) : '',
+    loanHistory:         order.loanHistory ?? '',
+
+    cardNumber:          order.cardNumber ?? '',
+    cardName:            order.cardName ?? '',
+    cardExpMonth:        order.cardExpMonth ?? '',
+    cardExpYear:         order.cardExpYear ?? '',
+
+    guarantor1Name:      order.guarantor1Name ?? '',
+    guarantor1Surname:   order.guarantor1Surname ?? '',
+    guarantor1Patronic:  order.guarantor1Patronic ?? '',
+    guarantor1PassportSerie:  order.guarantor1PassportSerie ?? '',
+    guarantor1PassportNumber: order.guarantor1PassportNumber ?? '',
+    guarantor1CardNumber:     order.guarantor1CardNumber ?? '',
+    guarantor1CardName:       order.guarantor1CardName ?? '',
+    guarantor1CardExpMonth:   order.guarantor1CardExpMonth ?? '',
+    guarantor1CardExpYear:    order.guarantor1CardExpYear ?? '',
+    guarantor1Salary:    order.guarantor1Salary != null ? String(order.guarantor1Salary) : '',
   }
 }
 
@@ -234,6 +295,22 @@ function validate(
   req('salary',              t('Salary')                || 'Zähmet haky')
   req('workStartedAt',       t('Work started at')       || 'Işe başlan wagty')
 
+  req('loanAmount',          t('Loan amount')           || 'Karz möçberi')
+  req('cardNumber',          t('Card number')           || 'Kart belgisi')
+  req('cardName',            t('Card name')             || 'Kartdaky ady')
+  req('cardExpMonth',        t('Card exp month')        || 'Kart Möhleti (aý)')
+  req('cardExpYear',         t('Card exp year')         || 'Kart Möhleti (ýyl)')
+
+  req('guarantor1Name',      t('Guarantor name')        || 'Zamunyň ady')
+  req('guarantor1Surname',   t('Guarantor surname')     || 'Zamunyň familiýasy')
+  req('guarantor1PassportSerie', t('Guarantor passport serie') || 'Pasport seriýasy (Zamun)')
+  req('guarantor1PassportNumber', t('Guarantor passport number') || 'Pasport belgisi (Zamun)')
+  req('guarantor1CardNumber',t('Guarantor card number') || 'Kart belgisi (Zamun)')
+  req('guarantor1CardName',  t('Guarantor card name')   || 'Kartdaky ady (Zamun)')
+  req('guarantor1CardExpMonth', t('Guarantor card exp month') || 'Möhleti (aý) (Zamun)')
+  req('guarantor1CardExpYear',  t('Guarantor card exp year')  || 'Möhleti (ýyl) (Zamun)')
+  req('guarantor1Salary',    t('Guarantor salary')      || 'Ortaca zähmet haky (Zamun)')
+
   if (form.phone && form.phone.replace(/\D/g, '').length < 8) {
     errors.phone = 'Telefon belgisi nädogry'
   }
@@ -249,20 +326,20 @@ function validate(
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
-interface LoanOrderFormProps {
+interface LoanOrderMobileFormProps {
   mode: 'create' | 'edit'
-  initialData?: LoanOrder
+  initialData?: LoanOrderMobile
   loanOrderId?: string
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormProps) {
+export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrderMobileFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const createMutation = useCreateLoanOrder()
-  const updateMutation = useUpdateLoanOrder()
+  const createMutation = useCreateLoanOrderMobile()
+  const updateMutation = useUpdateLoanOrderMobile()
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -293,7 +370,7 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
       return
     }
 
-    const payload: LoanOrderPayload = {
+    const payload: LoanOrderMobilePayload = {
       status:              form.status,
       loanType:            form.loanType,
       region:              form.region,
@@ -322,16 +399,33 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
       position:            form.position,
       salary:              Number(form.salary),
       workStartedAt:       form.workStartedAt,
+      note:                form.note || undefined,
+      loanAmount:          Number(form.loanAmount) || undefined,
+      loanHistory:         form.loanHistory || undefined,
+      cardNumber:          form.cardNumber || undefined,
+      cardName:            form.cardName || undefined,
+      cardExpMonth:        form.cardExpMonth || undefined,
+      cardExpYear:         form.cardExpYear || undefined,
+      guarantor1Name:      form.guarantor1Name || undefined,
+      guarantor1Surname:   form.guarantor1Surname || undefined,
+      guarantor1Patronic:  form.guarantor1Patronic || undefined,
+      guarantor1PassportSerie:  form.guarantor1PassportSerie || undefined,
+      guarantor1PassportNumber: form.guarantor1PassportNumber || undefined,
+      guarantor1CardNumber:     form.guarantor1CardNumber || undefined,
+      guarantor1CardName:       form.guarantor1CardName || undefined,
+      guarantor1CardExpMonth:   form.guarantor1CardExpMonth || undefined,
+      guarantor1CardExpYear:    form.guarantor1CardExpYear || undefined,
+      guarantor1Salary:    Number(form.guarantor1Salary) || undefined,
     }
 
     if (mode === 'create') {
       createMutation.mutate(payload, {
-        onSuccess: () => navigate('/loan-orders'),
+        onSuccess: () => navigate('/loan-order-mobiles'),
       })
     } else {
       updateMutation.mutate(
         { id: loanOrderId!, payload },
-        { onSuccess: () => navigate('/loan-orders') }
+        { onSuccess: () => navigate('/loan-order-mobiles') }
       )
     }
   }
@@ -350,8 +444,8 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
 
       {/* ── Status ─────────────────────────────────────────────────────────── */}
       <Section title={t('New Loan Order') || 'Täze Karz sargyt'}>
-        <div className={grid2}>
-          <div id="field-status">
+        <div className="flex flex-col gap-6">
+          <div id="field-status" className="max-w-md">
             <FormInput
               type="select"
               label={t('Status') || 'Status'}
@@ -363,22 +457,44 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
               placeholder="Saýlaň"
             />
           </div>
+          <div id="field-note">
+            <FormInput
+              type="text"
+              label={t('Note') || 'Bellik'}
+              value={form.note}
+              onChange={(v) => set('note', v)}
+              placeholder={t('Note') || 'Bellik'}
+            />
+          </div>
         </div>
       </Section>
 
       {/* ── Loan Type ──────────────────────────────────────────────────────── */}
       <Section title={t('Loan') || 'Karz'}>
-        <div id="field-loanType">
-          <FormInput
-            type="searchable-select"
-            label={t('Loan type') || 'Karz görnüşi'}
-            required
-            value={form.loanType}
-            onChange={(v) => set('loanType', v)}
-            options={LOAN_TYPE_OPTIONS}
-            placeholder="Saýlamak üçin basyň"
-            error={errors.loanType}
-          />
+        <div className={grid2}>
+          <div id="field-loanType">
+            <FormInput
+              type="searchable-select"
+              label={t('Loan type') || 'Karz görnüşi'}
+              required
+              value={form.loanType}
+              onChange={(v) => set('loanType', v)}
+              options={LOAN_TYPE_OPTIONS}
+              placeholder="Saýlamak üçin basyň"
+              error={errors.loanType}
+            />
+          </div>
+          <div id="field-loanAmount">
+            <FormInput
+              type="number"
+              label={t('Loan amount') || 'Karz möçberi'}
+              required
+              value={form.loanAmount}
+              onChange={(v) => set('loanAmount', v)}
+              placeholder="Karz möçberi"
+              error={errors.loanAmount}
+            />
+          </div>
         </div>
       </Section>
 
@@ -507,6 +623,69 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
                 placeholder={t('Current Residence') || 'Häzirki ýaşaýyş ýeri'}
               />
             </div>
+          </div>
+
+          <div id="field-loanHistory" className="max-w-md">
+            <FormInput
+              type="searchable-select"
+              label={t('Loan history') || 'Karz taryhy'}
+              value={form.loanHistory}
+              onChange={(v) => set('loanHistory', v)}
+              options={[]}
+              placeholder="Saýlamak üçin basyň"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Card ───────────────────────────────────────────────────────────── */}
+      <Section title={t('Card (Salary)') || 'Kart (Zähmet haky)'}>
+        <div className={grid4}>
+          <div id="field-cardNumber">
+            <FormInput
+              type="text"
+              label={t('Card number') || 'Kart belgisi'}
+              required
+              value={form.cardNumber}
+              onChange={(v) => set('cardNumber', v)}
+              placeholder="Kart belgisi"
+              error={errors.cardNumber}
+            />
+          </div>
+          <div id="field-cardName">
+            <FormInput
+              type="text"
+              label={t('Card name') || 'Kartdaky ady'}
+              required
+              value={form.cardName}
+              onChange={(v) => set('cardName', v)}
+              placeholder="Kartdaky ady"
+              error={errors.cardName}
+            />
+          </div>
+          <div id="field-cardExpMonth">
+            <FormInput
+              type="searchable-select"
+              label={t('Card exp month') || 'Kart Möhleti (aý)'}
+              required
+              value={form.cardExpMonth}
+              onChange={(v) => set('cardExpMonth', v)}
+              options={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1).padStart(2, '0') }))}
+              placeholder="Saýlamak üçin basyň"
+              error={errors.cardExpMonth}
+            />
+          </div>
+          <div id="field-cardExpYear">
+            <FormInput
+              type="searchable-select"
+              label={t('Card exp year') || 'Kart Möhleti (ýyl)'}
+              required
+              value={form.cardExpYear}
+              onChange={(v) => set('cardExpYear', v)}
+              options={Array.from({ length: 15 }, (_, i) => ({ value: String(new Date().getFullYear() + i), label: String(new Date().getFullYear() + i) }))}
+              placeholder="Saýlamak üçin basyň"
+              error={errors.cardExpYear}
+            />
           </div>
         </div>
       </Section>
@@ -825,6 +1004,134 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
               onFileChange={(f) => set('passportPage32', f)}
               placeholder="Faýl saýlaň ýa-da salmak üçin basyň"
             />
+          </div>
+        </div>
+      </Section>
+
+      {/* ── Zamun ──────────────────────────────────────────────────────────── */}
+      <Section title={t('1. Guarantor') || '1. Zamun'}>
+        <div className="flex flex-col gap-6">
+          <div className={grid3}>
+            <div id="field-guarantor1Name">
+              <FormInput
+                type="text"
+                label={t('Guarantor name') || 'Zamunyň ady'}
+                required
+                value={form.guarantor1Name}
+                onChange={(v) => set('guarantor1Name', v)}
+                placeholder="Zamunyň ady"
+                error={errors.guarantor1Name}
+              />
+            </div>
+            <div id="field-guarantor1Surname">
+              <FormInput
+                type="text"
+                label={t('Guarantor surname') || 'Zamunyň familiýasy'}
+                required
+                value={form.guarantor1Surname}
+                onChange={(v) => set('guarantor1Surname', v)}
+                placeholder="Zamunyň familiýasy"
+                error={errors.guarantor1Surname}
+              />
+            </div>
+            <div id="field-guarantor1Patronic">
+              <FormInput
+                type="text"
+                label={t('Guarantor patronic') || 'Zamunyň atasynyň ady'}
+                value={form.guarantor1Patronic}
+                onChange={(v) => set('guarantor1Patronic', v)}
+                placeholder="Zamunyň atasynyň ady"
+              />
+            </div>
+          </div>
+
+          <div className={grid2}>
+            <div id="field-guarantor1PassportSerie">
+              <FormInput
+                type="searchable-select"
+                label={t('Passport serie') || 'Pasport seriýasy'}
+                required
+                value={form.guarantor1PassportSerie}
+                onChange={(v) => set('guarantor1PassportSerie', v)}
+                options={PASSPORT_SERIES_OPTIONS}
+                placeholder="Saýlamak üçin basyň"
+                error={errors.guarantor1PassportSerie}
+              />
+            </div>
+            <div id="field-guarantor1PassportNumber">
+              <FormInput
+                type="text"
+                label={t('Passport number') || 'Pasport belgisi'}
+                required
+                value={form.guarantor1PassportNumber}
+                onChange={(v) => set('guarantor1PassportNumber', v)}
+                placeholder="Pasport belgisi"
+                error={errors.guarantor1PassportNumber}
+              />
+            </div>
+          </div>
+
+          <div className={grid4}>
+            <div id="field-guarantor1CardNumber">
+              <FormInput
+                type="text"
+                label={t('Card number') || 'Kart belgisi'}
+                required
+                value={form.guarantor1CardNumber}
+                onChange={(v) => set('guarantor1CardNumber', v)}
+                placeholder="Kart belgisi"
+                error={errors.guarantor1CardNumber}
+              />
+            </div>
+            <div id="field-guarantor1CardName">
+              <FormInput
+                type="text"
+                label={t('Card name') || 'Kartdaky ady'}
+                required
+                value={form.guarantor1CardName}
+                onChange={(v) => set('guarantor1CardName', v)}
+                placeholder="Kartdaky ady"
+                error={errors.guarantor1CardName}
+              />
+            </div>
+            <div id="field-guarantor1CardExpMonth">
+              <FormInput
+                type="searchable-select"
+                label={t('Card exp month') || 'Möhleti (aý)'}
+                required
+                value={form.guarantor1CardExpMonth}
+                onChange={(v) => set('guarantor1CardExpMonth', v)}
+                options={Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1).padStart(2, '0'), label: String(i + 1).padStart(2, '0') }))}
+                placeholder="Saýlamak üçin basyň"
+                error={errors.guarantor1CardExpMonth}
+              />
+            </div>
+            <div id="field-guarantor1CardExpYear">
+              <FormInput
+                type="searchable-select"
+                label={t('Card exp year') || 'Möhleti (ýyl)'}
+                required
+                value={form.guarantor1CardExpYear}
+                onChange={(v) => set('guarantor1CardExpYear', v)}
+                options={Array.from({ length: 15 }, (_, i) => ({ value: String(new Date().getFullYear() + i), label: String(new Date().getFullYear() + i) }))}
+                placeholder="Saýlamak üçin basyň"
+                error={errors.guarantor1CardExpYear}
+              />
+            </div>
+          </div>
+
+          <div className={grid2}>
+            <div id="field-guarantor1Salary">
+              <FormInput
+                type="number"
+                label={t('Guarantor salary') || 'Ortaca zähmet haky'}
+                required
+                value={form.guarantor1Salary}
+                onChange={(v) => set('guarantor1Salary', v)}
+                placeholder="Ortaca zähmet haky"
+                error={errors.guarantor1Salary}
+              />
+            </div>
           </div>
         </div>
       </Section>

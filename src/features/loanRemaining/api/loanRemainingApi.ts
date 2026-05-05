@@ -9,6 +9,8 @@ export interface LoanRemaining {
   loanAccount: string
 }
 
+export type LoanRemainingPayload = Omit<LoanRemaining, 'id'>
+
 export interface LoanRemainingListParams {
   search?: string
   page?: number
@@ -80,4 +82,39 @@ export async function deleteLoanRemaining(id: number): Promise<void> {
     return
   }
   await apiClient.delete(`/nova-loan-remaining-orders/${id}`)
+}
+
+export async function fetchLoanRemainingById(id: number): Promise<LoanRemaining> {
+  if (USE_MOCK) {
+    const item = MOCK_DATA.find((r) => r.id === id)
+    if (!item) throw new Error('Not found')
+    return item
+  }
+  const { data } = await apiClient.get<LoanRemaining>(`/nova-loan-remaining-orders/${id}`)
+  return data
+}
+
+export async function createLoanRemaining(payload: LoanRemainingPayload): Promise<LoanRemaining> {
+  if (USE_MOCK) {
+    const newItem: LoanRemaining = {
+      id: Math.max(0, ...MOCK_DATA.map((d) => d.id)) + 1,
+      ...payload,
+    }
+    MOCK_DATA.unshift(newItem)
+    return newItem
+  }
+  const { data } = await apiClient.post<LoanRemaining>('/nova-loan-remaining-orders', payload)
+  return data
+}
+
+export async function updateLoanRemaining(id: number, payload: LoanRemainingPayload): Promise<LoanRemaining> {
+  if (USE_MOCK) {
+    const idx = MOCK_DATA.findIndex((r) => r.id === id)
+    if (idx === -1) throw new Error('Not found')
+    const updated = { ...MOCK_DATA[idx], ...payload }
+    MOCK_DATA[idx] = updated
+    return updated
+  }
+  const { data } = await apiClient.put<LoanRemaining>(`/nova-loan-remaining-orders/${id}`, payload)
+  return data
 }

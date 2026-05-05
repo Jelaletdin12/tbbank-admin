@@ -1,9 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -11,7 +13,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarProvider,
-  SidebarHeader,
+  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/app/store/authStore'
 import { useThemeStore } from '@/app/store/themeStore'
@@ -43,7 +46,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
 import { cn } from '@/lib/utils'
-import Icon from "@/assets/icon.svg"
+import Icon from '@/assets/icon.svg'
 
 // ─── Collapsible wrappers ──────────────────────────────────────────────────────
 
@@ -51,215 +54,64 @@ const Collapsible = CollapsiblePrimitive.Root
 const CollapsibleTrigger = CollapsiblePrimitive.Trigger
 const CollapsibleContent = CollapsiblePrimitive.Content
 
-// ─── Header ───────────────────────────────────────────────────────────────────
-
-function DashboardHeader() {
-  const { t } = useTranslation()
-  const location = useLocation()
-  const { theme, toggleTheme } = useThemeStore()
-  const { language, setLanguage } = useI18nStore()
-  const user = useAuthStore((s) => s.user)
-  const logout = useAuthStore((s) => s.clearAuth)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [langMenuOpen, setLangMenuOpen] = useState(false)
-
-  const languages = [
-    { code: 'en', label: 'English' },
-    { code: 'ru', label: 'Русский' },
-    { code: 'tk', label: 'Türkmençe' },
-  ] as const
-
-  const generateBreadcrumbs = () => {
-    const paths = location.pathname.split('/').filter(Boolean)
-    if (paths.length === 0 || (paths.length === 1 && paths[0] === 'dashboard')) {
-      return (
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{t('Dashboard', 'Baş sahypa')}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      )
-    }
-
-    return (
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/dashboard">Dashboards</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        {paths.map((path, index) => {
-          const isLast = index === paths.length - 1
-          const url = `/${paths.slice(0, index + 1).join('/')}`
-          const formattedPath = path
-            .replace(/-/g, ' ')
-            .split(' ')
-            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ')
-          const title = t(formattedPath, formattedPath)
-
-          return (
-            <React.Fragment key={url}>
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{title}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link to={url}>{title}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
-            </React.Fragment>
-          )
-        })}
-      </BreadcrumbList>
-    )
-  }
-
-  return (
-    <header className="h-14 border-b border-border bg-background flex items-center justify-between px-6 sticky top-0 z-30">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Breadcrumb>{generateBreadcrumbs()}</Breadcrumb>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {/* Language Switcher */}
-        <div className="relative">
-          <button
-            onClick={() => setLangMenuOpen(!langMenuOpen)}
-            className="flex items-center gap-2 p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Toggle language"
-          >
-            <Globe size={18} />
-            <span className="text-sm font-medium uppercase">{language}</span>
-          </button>
-
-          {langMenuOpen && (
-            <div className="absolute right-0 mt-1 w-32 bg-card border border-border rounded-md shadow-md py-1 z-50">
-              {languages.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => {
-                    setLanguage(lang.code)
-                    setLangMenuOpen(false)
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                    language === lang.code
-                      ? 'text-primary font-medium bg-accent/50'
-                      : 'text-foreground'
-                  }`}
-                >
-                  {lang.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Toggle theme"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        <button className="p-2 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors relative">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </button>
-
-        <div className="relative">
-          <button
-            className="flex items-center gap-2 hover:bg-accent py-1.5 px-3 rounded-md transition-colors"
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-          >
-            <span className="text-sm font-medium text-foreground">{user?.name || 'Admin'}</span>
-            <ChevronDown size={14} className="text-muted-foreground" />
-          </button>
-
-          {userMenuOpen && (
-            <div className="absolute right-0 mt-1 w-48 bg-card border border-border rounded-md shadow-md py-1 z-50">
-              <button
-                onClick={logout}
-                className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-accent transition-colors"
-              >
-                {t('Logout', 'Çykmak')}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  )
-}
-
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type NavSubSubItem = { title: string; url: string }
 type NavSubItem = { title: string; url?: string; items?: NavSubSubItem[] }
-type NavItem = { title: string; url?: string; icon: React.ElementType; items?: NavSubItem[] }
+type NavItem = {
+  title: string
+  url?: string
+  icon: React.ElementType
+  items?: NavSubItem[]
+}
 
-/**
- * Checks if a nav item (or any of its children) matches the current path.
- */
-function isNavItemActive(item: NavItem | NavSubItem, pathname: string): boolean {
-  if ('url' in item && item.url) {
-    if (pathname === item.url) return true
-  }
-  if (item.items) {
-    return item.items.some((child) => isNavItemActive(child, pathname))
-  }
+// ─── Nav helpers ──────────────────────────────────────────────────────────────
+
+function isActiveItem(item: NavItem | NavSubItem, pathname: string): boolean {
+  if ('url' in item && item.url && pathname === item.url) return true
+  if (item.items) return item.items.some((c) => isActiveItem(c, pathname))
   return false
 }
 
-/**
- * Sub-sub-level collapsible: renders a category header (non-link)
- * with its leaf link items inside a Radix Collapsible.
- *
- * Using Radix Collapsible instead of Accordion eliminates the
- * --radix-accordion-content-height measurement bug that causes
- * nested accordions to show incorrect heights.
- */
-function NavSubGroup({
-  subItem,
-  pathname,
-}: {
-  subItem: NavSubItem
-  pathname: string
-}) {
-  const isActive = subItem.items?.some((s) => pathname === s.url) ?? false
-  const [open, setOpen] = useState(isActive)
+// ─── Sub-sub collapsible (3rd level) ──────────────────────────────────────────
+
+function NavSubGroup({ subItem, pathname }: { subItem: NavSubItem; pathname: string }) {
+  const active = subItem.items?.some((s) => pathname === s.url) ?? false
+  const [open, setOpen] = useState(active)
+
+  useEffect(() => {
+    if (active) setOpen(true)
+  }, [active])
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
         <button
           className={cn(
-            'group flex w-full items-center justify-between px-2 py-1.5',
-            'text-xs font-semibold uppercase tracking-wider',
-            'text-sidebar-foreground/60 hover:text-sidebar-foreground',
-            'transition-colors rounded-sm',
+            'flex w-full items-center justify-between px-2 py-1.5 mt-1',
+            'text-[10px] font-bold uppercase tracking-widest select-none',
+            'text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors duration-150 rounded-sm',
           )}
         >
           <span>{subItem.title}</span>
           <ChevronRight
-            size={12}
+            size={10}
             className={cn('transition-transform duration-200', open && 'rotate-90')}
           />
         </button>
       </CollapsibleTrigger>
 
-      {/* No overflow:hidden animation — content renders at natural height */}
-      <CollapsibleContent>
-        <SidebarMenuSub className="border-l-0 pl-2 pr-0 mt-0">
-          {subItem.items?.map((subSubItem, i) => (
+      <CollapsibleContent
+        className={cn(
+          'overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up',
+        )}
+      >
+        <SidebarMenuSub className="border-l border-sidebar-border/50 ml-2 pl-2 mt-0.5 gap-0.5">
+          {subItem.items?.map((item, i) => (
             <SidebarMenuSubItem key={i}>
-              <SidebarMenuSubButton asChild isActive={pathname === subSubItem.url} size='sm'>
-                <Link to={subSubItem.url}>
-                  <span>{subSubItem.title}</span>
+              <SidebarMenuSubButton asChild isActive={pathname === item.url} size="sm">
+                <Link to={item.url}>
+                  <span>{item.title}</span>
                 </Link>
               </SidebarMenuSubButton>
             </SidebarMenuSubItem>
@@ -270,45 +122,46 @@ function NavSubGroup({
   )
 }
 
-/**
- * Top-level nav item that has children (both sub-groups and direct links).
- */
+// ─── Top-level collapsible nav item ──────────────────────────────────────────
+
 function NavGroupItem({ item }: { item: NavItem }) {
-  const pathname = useLocation().pathname
-  const isActive = isNavItemActive(item, pathname)
-  const [open, setOpen] = useState(isActive)
+  const { pathname } = useLocation()
+  const { state } = useSidebar() // 'expanded' | 'collapsed'
+  const collapsed = state === 'collapsed'
+  const active = isActiveItem(item, pathname)
+  const [open, setOpen] = useState(active)
+
+  useEffect(() => {
+    if (active && !collapsed) setOpen(true)
+  }, [active, collapsed])
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
+    <Collapsible open={!collapsed && open} onOpenChange={(v) => !collapsed && setOpen(v)}>
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
-          <SidebarMenuButton  isActive={isActive} tooltip={item.title}>
+          <SidebarMenuButton isActive={active} tooltip={item.title}>
             <item.icon />
             <span>{item.title}</span>
             <ChevronRight
-              size={12}
+              size={14}
               className={cn(
-                'ml-auto transition-transform duration-200',
-                open && 'rotate-90',
+                'ml-auto shrink-0 transition-transform duration-200',
+                'group-data-[collapsible=icon]:hidden', // hide when icon-only
+                open && !collapsed && 'rotate-90',
               )}
             />
           </SidebarMenuButton>
         </CollapsibleTrigger>
       </SidebarMenuItem>
 
-      <CollapsibleContent>
+      <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
         <SidebarMenuSub>
-          {item.items?.map((subItem, subIndex) => {
-            // Sub-item has further children → render as collapsible group
+          {item.items?.map((subItem, i) => {
             if (subItem.items) {
-              return (
-                <NavSubGroup key={subIndex} subItem={subItem} pathname={pathname} />
-              )
+              return <NavSubGroup key={i} subItem={subItem} pathname={pathname} />
             }
-
-            // Sub-item is a direct link
             return (
-              <SidebarMenuSubItem key={subIndex}>
+              <SidebarMenuSubItem key={i}>
                 <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
                   <Link to={subItem.url ?? '#'}>
                     <span>{subItem.title}</span>
@@ -323,9 +176,11 @@ function NavGroupItem({ item }: { item: NavItem }) {
   )
 }
 
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
+
 function AppSidebar() {
   const { t } = useTranslation()
-  const location = useLocation()
+  const { pathname } = useLocation()
 
   const navItems: NavItem[] = [
     {
@@ -343,7 +198,7 @@ function AppSidebar() {
             { title: t('Loan orders', 'Karz sargytlary'), url: '/loan-orders' },
             { title: t('Loan order (Mobile)', 'Karz sargyt (Mobile)'), url: '/loan-order-mobiles' },
             { title: t('Loan balance', 'Karzyň galyndysy'), url: '/loan-remaining' },
-            { title: t('Certificates of loan repayment', 'Karzyň ýapylandygy barada güwanamalar'), url: '/loan-paid-off-letters' },
+            { title: t('Certificates', 'Karzyň ýapylandygy barada güwanamalar'), url: '/loan-paid-off-letters' },
           ],
         },
         {
@@ -389,7 +244,7 @@ function AppSidebar() {
           title: t('Loan', 'KARZ'),
           items: [
             { title: t('Loan types', 'Karz görnüşleri'), url: '/settings/loan/types' },
-            { title: t('Required Documents', 'Karz gerekli resminamalary'), url: '/settings/loan/documents' },
+            { title: t('Required Documents', 'Gerekli resminamalar'), url: '/settings/loan/documents' },
           ],
         },
         {
@@ -441,41 +296,243 @@ function AppSidebar() {
   ]
 
   return (
-    <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="h-14 flex items-center px-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2 font-bold text-lg text-sidebar-primary">
-          <img className='h-10' src={Icon} alt="" />
-          <span>TBBANK</span>
-        </div>
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+      {/* Logo */}
+      <SidebarHeader className="h-14 flex-row items-center px-4 border-b border-sidebar-border gap-2.5 overflow-hidden">
+        <img className="h-8 w-8 shrink-0" src={Icon} alt="" />
+        <span className="font-bold text-base tracking-tight text-sidebar-foreground whitespace-nowrap group-data-[collapsible=icon]:hidden transition-opacity duration-200">
+          TBBANK
+        </span>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarMenu className="mt-4 gap-1 px-2 text-sm">
-          {navItems.map((item, index) => {
-            // Leaf item (no children)
+      {/* Nav */}
+      <SidebarContent className="px-2 py-3">
+        <SidebarMenu className="gap-0.5">
+          {navItems.map((item, i) => {
+            // Leaf item
             if (!item.items) {
               return (
-                <SidebarMenuItem key={index}>
+                <SidebarMenuItem key={i}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.url}
+                    isActive={pathname === item.url}
                     tooltip={item.title}
-                    className='text-sm'
                   >
                     <Link to={item.url ?? '#'}>
                       <item.icon />
-                      <span className='text-sm'>{item.title}</span>
+                      <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )
             }
 
-            return <NavGroupItem key={index} item={item}  />
+            return <NavGroupItem key={i} item={item} />
           })}
         </SidebarMenu>
       </SidebarContent>
+
+      {/* Footer */}
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
+        <span className="text-[10px] text-sidebar-foreground/25 group-data-[collapsible=icon]:hidden">
+          TBBANK v2.0
+        </span>
+        <span className="text-[10px] text-sidebar-foreground/25 hidden group-data-[collapsible=icon]:block text-center">
+          v2
+        </span>
+      </SidebarFooter>
     </Sidebar>
+  )
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
+function DashboardHeader() {
+  const { t } = useTranslation()
+  const location = useLocation()
+  const { theme, toggleTheme } = useThemeStore()
+  const { language, setLanguage } = useI18nStore()
+  const user = useAuthStore((s) => s.user)
+  const logout = useAuthStore((s) => s.clearAuth)
+
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  const langMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) setLangMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const languages = [
+    { code: 'en', label: 'English' },
+    { code: 'ru', label: 'Русский' },
+    { code: 'tk', label: 'Türkmençe' },
+  ] as const
+
+  const generateBreadcrumbs = () => {
+    const paths = location.pathname.split('/').filter(Boolean)
+    if (paths.length === 0 || (paths.length === 1 && paths[0] === 'dashboard')) {
+      return (
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbPage>{t('Dashboard', 'Baş sahypa')}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      )
+    }
+    return (
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink asChild>
+            <Link to="/dashboard">Dashboard</Link>
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        {paths.map((path, index) => {
+          const isLast = index === paths.length - 1
+          const url = `/${paths.slice(0, index + 1).join('/')}`
+          const formatted = path
+            .replace(/-/g, ' ')
+            .split(' ')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ')
+          const title = t(formatted, formatted)
+          return (
+            <React.Fragment key={url}>
+              <BreadcrumbItem>
+                {isLast ? (
+                  <BreadcrumbPage>{title}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link to={url}>{title}</Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+              {!isLast && <BreadcrumbSeparator />}
+            </React.Fragment>
+          )
+        })}
+      </BreadcrumbList>
+    )
+  }
+
+  return (
+    <header className="h-14 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-30 gap-3">
+      {/* Left: sidebar trigger + breadcrumb */}
+      <div className="flex items-center gap-2 min-w-0">
+        {/*
+          SidebarTrigger handles BOTH:
+          - Desktop: toggles collapsed/expanded (collapsible="icon")
+          - Mobile: opens the Sheet overlay
+          No custom mobile hamburger needed.
+        */}
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-accent -ml-1 transition-colors" />
+
+        <div className="text-sm text-muted-foreground min-w-0 truncate">
+          <Breadcrumb>{generateBreadcrumbs()}</Breadcrumb>
+        </div>
+      </div>
+
+      {/* Right: actions */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Language */}
+        <div className="relative" ref={langMenuRef}>
+          <button
+            onClick={() => setLangMenuOpen((p) => !p)}
+            className="flex items-center gap-1.5 h-8 px-2.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Globe size={16} />
+            <span className="uppercase font-medium text-xs hidden sm:block">{language}</span>
+          </button>
+          <div
+            className={cn(
+              'absolute right-0 mt-1.5 w-36 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
+              'transition-all duration-150 origin-top-right',
+              langMenuOpen
+                ? 'opacity-100 scale-100 pointer-events-auto'
+                : 'opacity-0 scale-95 pointer-events-none',
+            )}
+          >
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => { setLanguage(lang.code); setLangMenuOpen(false) }}
+                className={cn(
+                  'w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors',
+                  language === lang.code ? 'text-primary font-medium' : 'text-foreground',
+                )}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Theme */}
+        <button
+          onClick={toggleTheme}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+
+        {/* Notifications */}
+        <button className="relative flex items-center justify-center w-8 h-8 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
+          <Bell size={16} />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-destructive rounded-full ring-1 ring-background" />
+        </button>
+
+        {/* User menu */}
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setUserMenuOpen((p) => !p)}
+            className="flex items-center gap-2 h-8 pl-2 pr-2.5 rounded-md hover:bg-accent transition-colors ml-1"
+          >
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary shrink-0">
+              {(user?.name ?? 'A').charAt(0).toUpperCase()}
+            </div>
+            <span className="text-sm font-medium text-foreground hidden sm:block max-w-[100px] truncate">
+              {user?.name ?? 'Admin'}
+            </span>
+            <ChevronDown
+              size={13}
+              className={cn(
+                'text-muted-foreground transition-transform duration-200',
+                userMenuOpen && 'rotate-180',
+              )}
+            />
+          </button>
+
+          <div
+            className={cn(
+              'absolute right-0 mt-1.5 w-44 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
+              'transition-all duration-150 origin-top-right',
+              userMenuOpen
+                ? 'opacity-100 scale-100 pointer-events-auto'
+                : 'opacity-0 scale-95 pointer-events-none',
+            )}
+          >
+            <div className="px-3 py-2 border-b border-border mb-1">
+              <p className="text-xs font-medium text-foreground truncate">{user?.name ?? 'Admin'}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{user?.email ?? ''}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="w-full text-left flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-accent transition-colors"
+            >
+              {t('Logout', 'Çykmak')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
   )
 }
 
@@ -485,16 +542,18 @@ export function DashboardLayout() {
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-background text-foreground">
+        <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
           <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0">
+
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             <DashboardHeader />
-            <main className="flex-1 p-6 overflow-auto">
+
+            <main className="flex-1 p-4 md:p-6 overflow-auto">
               <Outlet />
             </main>
-            {/* Footer */}
-            <div className="text-center text-xs text-muted-foreground/40 pt-2 pb-6">
-              © 2026 TBBANK.GOV.TM.
+
+            <div className="text-center text-[11px] text-muted-foreground/30 py-3 border-t border-border/50">
+              © 2026 TBBANK.GOV.TM
             </div>
           </div>
         </div>

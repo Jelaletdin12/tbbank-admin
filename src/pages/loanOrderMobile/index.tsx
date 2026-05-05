@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
 
 import { DataTable } from '@/components/dataTable'
@@ -36,6 +37,7 @@ const STATUS_OPTIONS: LoanOrderMobileStatus[] = ['GARAŞYLÝAR', 'KANAGATLANDYRY
 
 export default function LoanOrderMobilesPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const deleteMutation = useDeleteLoanOrderMobile()
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -175,19 +177,21 @@ export default function LoanOrderMobilesPage() {
         header: '',
         enableHiding: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 justify-end">
-            <button
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t('common.view', 'Görmek')}
-            >
-              <Eye size={15} />
-            </button>
-            <button
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t('common.edit', 'Üýtgetmek')}
-            >
-              <Pencil size={15} />
-            </button>
+            <div className="flex items-center gap-1.5 justify-end">
+              <button
+                onClick={() => navigate(`/loan-order-mobiles/${row.original.id}`)}
+                className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                title={t('common.view', 'Görmek')}
+              >
+                <Eye size={15} />
+              </button>
+              <button
+                onClick={() => navigate(`/loan-order-mobiles/${row.original.id}/edit`)}
+                className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                title={t('common.edit', 'Üýtgetmek')}
+              >
+                <Pencil size={15} />
+              </button>
             <button
               onClick={() => handleDelete(row.original.id)}
               disabled={deleteMutation.isPending}
@@ -201,7 +205,7 @@ export default function LoanOrderMobilesPage() {
         size: 100,
       },
     ],
-    [t, handleDelete, deleteMutation.isPending],
+    [t, handleDelete, deleteMutation.isPending, navigate],
   )
 
   // ── Column meta for toolbar ────────────────────────────────────────────────
@@ -269,7 +273,7 @@ export default function LoanOrderMobilesPage() {
           onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
           actionLabel={t('loanOrderMobiles.createButton', 'Karz sargyt dörediň')}
           onAction={() => {
-            // navigate to create page or open modal
+            navigate('/loan-order-mobiles/create')
           }}
         />
 
