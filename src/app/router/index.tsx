@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import LoanOrderEditPage from "@/pages/loanOrderEdit";
 
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
@@ -80,12 +81,21 @@ export const router = createBrowserRouter([
                 <LoanOrderViewPage />
               </Suspense>
             ),
+            
           },
           {
             path: "/loan-orders/create",
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanOrderCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-orders/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanOrderEditPage />
               </Suspense>
             ),
           },

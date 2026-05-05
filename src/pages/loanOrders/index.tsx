@@ -191,6 +191,7 @@ export default function LoanOrdersPage() {
             <button
               className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
               title={t('common.edit', 'Edit')}
+              onClick={() => navigate(`/loan-orders/${row.original.id}/edit`)}
             >
               <Pencil size={15} />
             </button>

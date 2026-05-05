@@ -1,31 +1,6 @@
 import { apiClient } from '@/lib/api/client'
 
-const MOCK_DATA: LoanOrder[] = [
-  {
-    id: 'L-1001',
-    loanType: 'Ipoteka karzy',
-    createdAt: '2024-03-20 10:30',
-    region: 'Aşgabat',
-    branch: 'Merkezi şahamça',
-    firstName: 'Aman',
-    lastName: 'Amanow',
-    phone: '+993 65 112233',
-    status: 'GARAŞYLÝAR',
-  },
-  {
-    id: 'L-1002',
-    loanType: 'Sarp ediş karzy',
-    createdAt: '2024-03-19 14:15',
-    region: 'Mary',
-    branch: 'Mary-1 şahamçasy',
-    firstName: 'Oguljan',
-    lastName: 'Berdiýewa',
-    phone: '+993 61 445566',
-    status: 'IŞLENÝÄR',
-  }
-];
-
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type LoanOrderStatus =
   | 'GARAŞYLÝAR'
@@ -34,6 +9,7 @@ export type LoanOrderStatus =
   | 'IŞLENÝÄR'
 
 export interface LoanOrder {
+  // ── List fields ──────────────────────────────────────────────────────────
   id: string
   loanType: string
   createdAt: string
@@ -43,6 +19,39 @@ export interface LoanOrder {
   lastName: string
   phone: string
   status: LoanOrderStatus
+
+  // ── Detail fields ─────────────────────────────────────────────────────────
+  patronicName?: string | null
+  education?: string | null
+  marriageStatus?: string | null
+  dateOfBirth?: string | null
+  residence?: string | null
+  currentResidence?: string | null
+
+  // Passport
+  passportSerie?: string | null
+  passportNumber?: string | null
+  passportDateOfIssue?: string | null
+  passportGivenBy?: string | null
+  bornPlace?: string | null
+  passportPage1Url?: string | null
+  passportPage23Url?: string | null
+  passportPage89Url?: string | null
+  passportPage32Url?: string | null
+
+  // Contact
+  email?: string | null
+  phoneAdditional?: string | null
+  homePhone?: string | null
+
+  // Employment
+  workCompany?: string | null
+  workHrPhone?: string | null
+  workRegion?: string | null
+  workProvince?: string | null
+  position?: string | null
+  salary?: number | null
+  workStartedAt?: string | null
 }
 
 export interface LoanOrdersParams {
@@ -62,18 +71,7 @@ export interface LoanOrdersResponse {
   perPage: number
 }
 
-export interface CreateLoanOrderPayload {
-  loanType: string
-  region: string
-  branch: string
-  firstName: string
-  lastName: string
-  phone: string
-}
-
-// Add this to your existing loanOrdersApi.ts
-
-export interface LoanOrderCreatePayload {
+export interface LoanOrderPayload {
   status: string
   loanType: string
   region: string
@@ -104,133 +102,80 @@ export interface LoanOrderCreatePayload {
   workStartedAt: string
 }
 
+// ─── Mock ─────────────────────────────────────────────────────────────────────
+
+const MOCK_DATA: LoanOrder[] = [
+  {
+    id: 'L-1001',
+    loanType: 'Ipoteka karzy',
+    createdAt: '2024-03-20 10:30',
+    region: 'Aşgabat',
+    branch: 'Merkezi şahamça',
+    firstName: 'Aman',
+    lastName: 'Amanow',
+    phone: '+993 65 112233',
+    status: 'GARAŞYLÝAR',
+  },
+  {
+    id: 'L-1002',
+    loanType: 'Sarp ediş karzy',
+    createdAt: '2024-03-19 14:15',
+    region: 'Mary',
+    branch: 'Mary-1 şahamçasy',
+    firstName: 'Oguljan',
+    lastName: 'Berdiýewa',
+    phone: '+993 61 445566',
+    status: 'IŞLENÝÄR',
+  },
+]
+
 // ─── API Functions ────────────────────────────────────────────────────────────
 
 export async function fetchLoanOrders(
   params: LoanOrdersParams
 ): Promise<LoanOrdersResponse> {
-  // Hakyky API ýok wagty simulator (800ms garaşdyrýar)
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const page = params.page || 1;
-  const perPage = params.perPage || 25;
-
-  // Gözleg (search) logic-ni simulirlemek (optional)
-  const filtered = MOCK_DATA.filter(item => 
-    !params.search || 
-    item.firstName.toLowerCase().includes(params.search.toLowerCase()) ||
-    item.id.toLowerCase().includes(params.search.toLowerCase())
-  );
-
-  // Sayfalama mantığı (slice)
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
-  const paginatedData = filtered.slice(start, end);
-
+  // Mock — real API hazır bolanda aşakdaky commentden çykar
+  await new Promise((resolve) => setTimeout(resolve, 800))
+  const page = params.page || 1
+  const perPage = params.perPage || 25
+  const filtered = MOCK_DATA.filter(
+    (item) =>
+      !params.search ||
+      item.firstName.toLowerCase().includes(params.search.toLowerCase()) ||
+      item.id.toLowerCase().includes(params.search.toLowerCase())
+  )
+  const start = (page - 1) * perPage
   return {
-    data: paginatedData,
+    data: filtered.slice(start, start + perPage),
     total: filtered.length,
     page,
     perPage,
-  };
+  }
+
+  // const { data } = await apiClient.get<LoanOrdersResponse>('/loan-orders', { params })
+  // return data
 }
 
-// export async function fetchLoanOrders(
-//   params: LoanOrdersParams
-// ): Promise<LoanOrdersResponse> {
-//   const { data } = await apiClient.get<LoanOrdersResponse>(
-//     '/resources/loan-orders',
-//     { params }
-//   )
-//   return data
-// }
+export async function getLoanOrderById(id: string): Promise<LoanOrder> {
+  const { data } = await apiClient.get<LoanOrder>(`/loan-orders/${id}`)
+  return data
+}
 
 export async function createLoanOrder(
-  payload: CreateLoanOrderPayload
+  payload: LoanOrderPayload
 ): Promise<LoanOrder> {
-  const { data } = await apiClient.post<LoanOrder>(
-    '/resources/loan-orders',
-    payload
-  )
+  const { data } = await apiClient.post<LoanOrder>('/loan-orders', payload)
   return data
 }
 
 export async function updateLoanOrder(
   id: string,
-  payload: Partial<CreateLoanOrderPayload>
+  payload: Partial<LoanOrderPayload>
 ): Promise<LoanOrder> {
-  const { data } = await apiClient.put<LoanOrder>(
-    `/resources/loan-orders/${id}`,
-    payload
-  )
+  const { data } = await apiClient.put<LoanOrder>(`/loan-orders/${id}`, payload)
   return data
 }
 
 export async function deleteLoanOrder(id: string): Promise<void> {
-  await apiClient.delete(`/resources/loan-orders/${id}`)
-}
-
-// ─── Extend this into your existing loanOrdersApi.ts ─────────────────────────
-// Add the fields below to your existing LoanOrder interface.
-// The list page already uses: id, loanType, createdAt, region, branch,
-// firstName, lastName, phone, status.
-
-export interface LoanOrder {
-  // ── List fields (already exist) ──────────────────────────────────────────
-  id: string
-  loanType: string
-  createdAt: string
-  region: string
-  branch: string
-  firstName: string
-  lastName: string
-  phone: string
-  status: LoanOrderStatus
-
-  // ── Detail-only fields ────────────────────────────────────────────────────
-  amount?: string | null
-  loanAmount?: string | null
-  createdBy?: string | null
-
-  // Personal
-  fullName?: string | null
-  education?: string | null
-  maritalStatus?: string | null
-  birthDate?: string | null
-  registeredAddress?: string | null
-  currentAddress?: string | null
-
-  // Contacts
-  email?: string | null
-  phoneAlt?: string | null
-  homePhone?: string | null
-
-  // Employment
-  employer?: string | null
-  deptPhone?: string | null
-  workRegion?: string | null
-  workCity?: string | null
-  position?: string | null
-  salary?: string | null
-  employedSince?: string | null
-
-  // Passport
-  passportNumber?: string | null
-  passportIssuedBy?: string | null
-  passportBirthPlace?: string | null
-  passportPage1Url?: string | null
-  passportPage23Url?: string | null
-  passportPage89Url?: string | null
-  passportPage32Url?: string | null
-}
-
-
-
-
-// ─── Add this function to your existing loanOrdersApi.ts ──────────────────────
-// import { apiClient } from '@/lib/api/client'
-
-export async function getLoanOrderById(id: string): Promise<LoanOrder> {
-  const { data } = await apiClient.get<LoanOrder>(`/loan-orders/${id}`)
-  return data
+  await apiClient.delete(`/loan-orders/${id}`)
 }

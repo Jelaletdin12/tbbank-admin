@@ -3,12 +3,12 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import {
   fetchLoanOrders,
+  getLoanOrderById,
   createLoanOrder,
   updateLoanOrder,
   deleteLoanOrder,
   type LoanOrdersParams,
-  type CreateLoanOrderPayload,
-  getLoanOrderById,
+  type LoanOrderPayload,
 } from '../api/loanOrdersApi'
 
 const LOAN_ORDERS_KEY = 'loan-orders'
@@ -21,12 +21,20 @@ export function useLoanOrders(params: LoanOrdersParams) {
   })
 }
 
+export function useLoanOrderById(id: string) {
+  return useQuery({
+    queryKey: [LOAN_ORDERS_KEY, id],
+    queryFn: () => getLoanOrderById(id),
+    enabled: !!id,
+  })
+}
+
 export function useCreateLoanOrder() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload: CreateLoanOrderPayload) => createLoanOrder(payload),
+    mutationFn: (payload: LoanOrderPayload) => createLoanOrder(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
       toast.success(t('loanOrders.createSuccess', 'Karz sargyt üstünlikli döredildi'))
@@ -42,7 +50,7 @@ export function useUpdateLoanOrder() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<CreateLoanOrderPayload> }) =>
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<LoanOrderPayload> }) =>
       updateLoanOrder(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
@@ -67,13 +75,5 @@ export function useDeleteLoanOrder() {
     onError: () => {
       toast.error(t('loanOrders.deleteError', 'Karz sargyt pozmakda säwlik ýüze çykdy'))
     },
-  })
-}
-
-export function useLoanOrderById(id: string) {
-  return useQuery({
-    queryKey: ['loanOrders', id],
-    queryFn: () => getLoanOrderById(id),
-    enabled: !!id,
   })
 }

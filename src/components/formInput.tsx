@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import * as CollapsiblePrimitive from '@radix-ui/react-collapsible'
 import { Check, ChevronsUpDown, Search, X, Eye, EyeOff, Upload, Hash } from 'lucide-react'
 
@@ -529,6 +529,8 @@ function SearchableSelect({
 
 // ─── FileInput ────────────────────────────────────────────────────────────────
 
+// ─── FileInput ────────────────────────────────────────────────────────────────
+
 function FileInput({
   label,
   required,
@@ -540,17 +542,23 @@ function FileInput({
   className,
   placeholder = 'Faýl saýlaň ýa-da salmak üçin basyň',
 }: FormInputProps) {
-  const inputRef               = useRef<HTMLInputElement>(null)
+  const inputRef                = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview]   = useState<string | null>(null)
 
+  // fileValue prop'u değişince preview'i güncelle + memory leak önle
+  useEffect(() => {
+    if (fileValue?.type.startsWith('image/')) {
+      const url = URL.createObjectURL(fileValue)
+      setPreview(url)
+      return () => URL.revokeObjectURL(url)
+    }
+    setPreview(null)
+  }, [fileValue])
+
+  // handleFile sadece onFileChange'i çağırıyor — preview useEffect hallediyor
   const handleFile = (file: File | null) => {
     onFileChange?.(file)
-    if (file?.type.startsWith('image/')) {
-      setPreview(URL.createObjectURL(file))
-    } else {
-      setPreview(null)
-    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -578,25 +586,34 @@ function FileInput({
           'min-h-[88px] rounded-md border-2 border-dashed cursor-pointer select-none',
           'transition-all duration-200',
           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2',
-          dragOver        && 'border-primary bg-primary/5 scale-[1.01]',
-          error           ? 'border-destructive/60' : 'border-border',
+          dragOver         && 'border-primary bg-primary/5 scale-[1.01]',
+          error            ? 'border-destructive/60' : 'border-border',
           !dragOver && !error && 'hover:border-primary/50 hover:bg-muted/20',
-          disabled        && 'opacity-50 cursor-not-allowed pointer-events-none',
-          fileValue && isImage && '!border-solid !border-border p-0 overflow-hidden',
+          disabled         && 'opacity-50 cursor-not-allowed pointer-events-none',
+          fileValue && isImage && '!border-solid !border-border overflow-hidden',
         )}
       >
         {fileValue && isImage && preview ? (
           <>
-            <img src={preview} alt="preview" className="w-full h-32 object-cover" />
-            <Button
-              type="button"
-              size="icon"
-              variant="secondary"
-              onClick={(e) => { e.stopPropagation(); handleFile(null) }}
-              className="absolute top-2 right-2 h-6 w-6 rounded-full border border-border shadow-sm"
-            >
-              <X size={11} />
-            </Button>
+            <img
+              src={preview}
+              alt="preview"
+              className="w-full max-h-56 object-contain bg-muted/30 p-2"
+            />
+            <div className="w-full flex items-center justify-between px-3 py-2 bg-muted/40 border-t border-border">
+              <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                {fileValue.name}
+              </span>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={(e) => { e.stopPropagation(); handleFile(null) }}
+                className="h-6 w-6 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <X size={13} />
+              </Button>
+            </div>
           </>
         ) : fileValue ? (
           <div className="flex flex-col items-center gap-1.5 p-4">

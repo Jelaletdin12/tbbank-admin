@@ -75,3 +75,21 @@ src/
 4. Mutation'lardan (POST, PUT, DELETE) sonra `onSuccess` ve `onError` bloklarında mutlaka `sonner` ile bildirim göster.
 5. Kullanıcıya dönen her metni `i18n` dosyalarına ekle ve `t('anahtar')` şeklinde çağır. Hard-coded string kullanma.
 6. Kod yazarken temiz, okunabilir ve modüler bir yaklaşım benimse.
+7. **Create ve Edit sayfaları için Shared Form Component kullan:**
+   - Bir özelliğin create ve edit sayfaları aynı form alanlarını (field) kullanıyorsa, her ikisi için ayrı ayrı form yazmak **yasaktır**.
+   - Bunun yerine `src/features/[feature]/components/[Feature]Form.tsx` adında tek bir shared form component'i oluştur ve `mode: 'create' | 'edit'` prop'u ile davranışı ayarla.
+   - Create ve Edit sayfaları (`pages/`) sadece bu component'i çağıran birer **wrapper** olmalıdır.
+   - Edit sayfası `useParams()` ile URL'den `id` alır, ilgili hook ile veriyi fetch eder ve `initialData` prop'u olarak form'a geçer.
+   - Validation, form state, submit logic — hepsi shared component içinde tek yerde yönetilir.
+   - Örnek yapı:
+     ```
+     features/[feature]/
+       components/
+         [Feature]Form.tsx     ← mode="create" | mode="edit", shared form
+       hooks/
+         use[Feature]s.ts      ← useCreate, useUpdate, useGetById hook'ları
+       api/
+         [feature]Api.ts       ← payload tipleri burada tanımlanır
+     pages/
+       [Feature]CreatePage.tsx ← <[Feature]Form mode="create" />
+       [Feature]EditPage.tsx   ← id fetch → <[Feature]Form mode="edit" initialData={data} loanOrderId={id} />
