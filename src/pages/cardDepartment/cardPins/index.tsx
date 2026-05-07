@@ -176,12 +176,17 @@ export default function CardPinsPage() {
   ];
 
   const columnMeta = columns
-    .filter((c) => "accessorKey" in c && c.id !== "actions")
-    .map((c) => ({
-      id: ("accessorKey" in c ? String(c.accessorKey) : c.id) as string,
-      label:
-        typeof c.header === "string" ? c.header : String(c.accessorKey ?? ""),
-    }));
+    .filter((c) => ("accessorKey" in c || "id" in c) && c.id !== "actions")
+    .map((c) => {
+      const id = ("accessorKey" in c ? String(c.accessorKey) : c.id) as string;
+      const label =
+        typeof c.header === "string"
+          ? c.header
+          : "accessorKey" in c
+            ? String(c.accessorKey)
+            : id;
+      return { id, label };
+    });
 
   return (
     <div className="space-y-4">

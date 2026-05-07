@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCardPin, useDeleteCardPin } from '@/features/cardPins/hooks/useCardPins'
 import type { CardPinStatus } from '@/features/cardPins/api/cardPinApi'

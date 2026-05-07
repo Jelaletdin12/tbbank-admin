@@ -93,6 +93,10 @@ const VisaMasterPaymentsPage = lazy(() => import("@/pages/internationalPayments/
 const VisaMasterPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsCreate"));
 const VisaMasterPaymentViewPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsView"));
 const VisaMasterPaymentEditPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsEdit"));
+const SberPaymentPage = lazy(() => import("@/pages/internationalPayments/sberPayments"));
+const SberPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/sberPaymentsCreate"));
+const SberPaymentViewPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsView"));
+const SberPaymentEditPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsEdit"));
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -442,6 +446,38 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <VisaMasterPaymentEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /sber-payments
+            path: "/sber-payments",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SberPaymentPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/sber-payments/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SberPaymentCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/sber-payments/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SberPaymentViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/sber-payments/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <SberPaymentEditPage />
               </Suspense>
             ),
           },

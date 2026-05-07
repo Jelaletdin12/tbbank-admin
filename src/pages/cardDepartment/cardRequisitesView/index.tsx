@@ -78,7 +78,7 @@ function PassportImageRow({ label, url }: { label: string; url?: string }) {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
             >
               <DownloadCloud size={13} />
-              {('Download', 'Göçürip al')}
+              {( 'Göçürip al')}
             </a>
           </>
         ) : (

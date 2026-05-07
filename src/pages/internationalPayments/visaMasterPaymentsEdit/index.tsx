@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { IntlPaymentForm } from '@/features/visaMasterPayments/components/IntlPaymentForm'
+import { IntlPaymentForm } from '@/features/visaMasterPayments/components/intlPaymentForm'
 import { useIntlPayment, useUpdateIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
 import type { IntlPaymentUpdatePayload } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
 import { Spinner } from '@/components/ui/spinner'

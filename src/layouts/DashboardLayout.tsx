@@ -215,7 +215,7 @@ function AppSidebar() {
           title: t('International payments', 'HALKARA TÖLEGLER'),
           items: [
             { title: t('Visa/Master payments', 'Visa/Master tölegleri'), url: '/visa-master' },
-            { title: t('Sber payments', 'Sber tölegleri'), url: '/sber' },
+            { title: t('Sber payments', 'Sber tölegleri'), url: '/sber-payments' },
           ],
         },
       ],
