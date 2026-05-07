@@ -3,23 +3,96 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import LoanOrderEditPage from "@/pages/loanOrderEdit";
 
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
-const LoanOrdersPage = lazy(() => import("@/pages/loanOrders"));
-const LoanOrderMobilesPage = lazy(() => import("@/pages/loanOrderMobile"));
-const LoanRemainingPage = lazy(() => import("@/pages/loanRemaining"));
-const LoanRemainingCreatePage = lazy(() => import("@/pages/loanRemainingCreate"));
-const LoanRemainingViewPage = lazy(() => import("@/pages/loanRemainingView"));
-const LoanRemainingEditPage = lazy(() => import("@/pages/loanRemainingEdit"));
-const LoanPaidOffLettersPage = lazy(() => import("@/pages/loanPaidOffLetters"));
-const LoanOrderCreatePage = lazy(() => import("@/pages/loanOrderCreate"));
-const LoanOrderViewPage = lazy(() => import("@/pages/loanOrderView"));
-const LoanOrderMobileViewPage = lazy(() => import("@/pages/loanOrderMobileView"));
-const LoanOrderMobileEditPage = lazy(() => import("@/pages/loanOrderMobileEdit"));
-const LoanOrderMobileCreatePage = lazy(() => import("@/pages/loanOrderMobileCreate"));
+const LoanOrdersPage = lazy(() => import("@/pages/loanDepartment/loanOrders"));
+const LoanOrderMobilesPage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderMobile"),
+);
+const LoanRemainingPage = lazy(
+  () => import("@/pages/loanDepartment/loanRemaining"),
+);
+const LoanRemainingCreatePage = lazy(
+  () => import("@/pages/loanDepartment/loanRemainingCreate"),
+);
+const LoanRemainingViewPage = lazy(
+  () => import("@/pages/loanDepartment/loanRemainingView"),
+);
+const LoanRemainingEditPage = lazy(
+  () => import("@/pages/loanDepartment/loanRemainingEdit"),
+);
+const LoanPaidOffLettersPage = lazy(
+  () => import("@/pages/loanDepartment/loanPaidOffLetters"),
+);
+const LoanOrderCreatePage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderCreate"),
+);
+const LoanOrderViewPage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderView"),
+);
+const LoanOrderMobileViewPage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderMobileView"),
+);
+const LoanOrderMobileEditPage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderMobileEdit"),
+);
+const LoanOrderMobileCreatePage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderMobileCreate"),
+);
+const LoanOrderEditPage = lazy(
+  () => import("@/pages/loanDepartment/loanOrderEdit"),
+);
+const OrderNewCardPage = lazy(
+  () => import("@/pages/cardDepartment/orderNewCard"),
+);
+const OrderNewCardCreatePage = lazy(
+  () => import("@/pages/cardDepartment/orderNewCardCreate"),
+);
+const OrderNewCardViewPage = lazy(
+  () => import("@/pages/cardDepartment/orderNewCardView"),
+);
+const OrderNewCardEditPage = lazy(
+  () => import("@/pages/cardDepartment/orderNewCardEdit"),
+);
+const CardTransactionsPage = lazy(
+  () => import("@/pages/cardDepartment/cardTransactions"),
+);
+const CardTransactionViewPage = lazy(
+  () => import("@/pages/cardDepartment/cardTransactionsView"),
+);
+const CardTransactionCreatePage = lazy(
+  () => import("@/pages/cardDepartment/cardTransactionsCreate"),
+);
+const CardTransactionEditPage = lazy(
+  () => import("@/pages/cardDepartment/cardTransactionsEdit"),
+);
 
+const CardRequisitesPage = lazy(
+  () => import("@/pages/cardDepartment/cardRequisites"),
+);
+const CardRequisiteViewPage = lazy(
+  () => import("@/pages/cardDepartment/cardRequisitesView"),
+);
+const CardRequisiteCreatePage = lazy(
+  () => import("@/pages/cardDepartment/cardRequisitesCreate"),
+);
+const CardRequisiteEditPage = lazy(
+  () => import("@/pages/cardDepartment/cardRequisitesEdit"),
+);
+const CardBalancePage = lazy(() => import("@/pages/cardDepartment/cardBalance"));
+const CardBalanceCreatePage = lazy(() => import("@/pages/cardDepartment/cardBalanceCreate"));
+const CardBalanceViewPage = lazy(() => import("@/pages/cardDepartment/cardBalanceView"));
+const CardBalanceEditPage = lazy(() => import("@/pages/cardDepartment/cardBalanceEdit"));
+const CardPinsPage = lazy(() => import("@/pages/cardDepartment/cardPins"));
+const CardPinsCreatePage = lazy(() => import("@/pages/cardDepartment/cardPinsCreate"));
+const CardPinsViewPage = lazy(() => import("@/pages/cardDepartment/cardPinsView"));
+const CardPinsEditPage = lazy(() => import("@/pages/cardDepartment/cardPinsEdit"));
+
+const VisaMasterPaymentsPage = lazy(() => import("@/pages/internationalPayments/visaMasterPayments"));
+const VisaMasterPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsCreate"));
+const VisaMasterPaymentViewPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsView"));
+const VisaMasterPaymentEditPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsEdit"));
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -176,6 +249,199 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanPaidOffLettersPage />
+              </Suspense>
+            ),
+          },
+          {
+            // Sidebar: /order-new-card
+            path: "/order-new-card",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OrderNewCardPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/order-new-card/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OrderNewCardCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/order-new-card/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OrderNewCardViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/order-new-card/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OrderNewCardEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-transactions",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTransactionsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-transactions/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTransactionCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-transactions/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTransactionViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-transactions/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTransactionEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-requisites",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardRequisitesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-requisites/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardRequisiteCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-requisites/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardRequisiteViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-requisites/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardRequisiteEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-balances",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardBalancePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-balances/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardBalanceCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-balances/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardBalanceViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-balances/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardBalanceEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-pins",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardPinsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-pins/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardPinsCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-pins/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardPinsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/card-pins/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardPinsEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /visa-master-payments
+            path: "/visa-master",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterPaymentsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/visa-master-payments/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterPaymentCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/visa-master-payments/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterPaymentViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/visa-master-payments/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterPaymentEditPage />
               </Suspense>
             ),
           },

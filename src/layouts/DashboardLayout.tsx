@@ -204,7 +204,7 @@ function AppSidebar() {
         {
           title: t('Card department', 'KART BÖLÜMI'),
           items: [
-            { title: t('Order new card', 'Täze kart açmak'), url: '/card-new' },
+            { title: t('Order new card', 'Täze kart açmak'), url: '/order-new-card' },
             { title: t('Card transactions', 'Kart hereketleri'), url: '/card-transactions' },
             { title: t('Card requisites', 'Kart rekwizitler'), url: '/card-requisites' },
             { title: t('Card balances', 'Kart galyndylary'), url: '/card-balances' },
@@ -214,8 +214,8 @@ function AppSidebar() {
         {
           title: t('International payments', 'HALKARA TÖLEGLER'),
           items: [
-            { title: t('Visa/Master payments', 'Visa/Master tölegleri'), url: '/intl-payments/visa-master' },
-            { title: t('Sber payments', 'Sber tölegleri'), url: '/intl-payments/sber' },
+            { title: t('Visa/Master payments', 'Visa/Master tölegleri'), url: '/visa-master' },
+            { title: t('Sber payments', 'Sber tölegleri'), url: '/sber' },
           ],
         },
       ],
