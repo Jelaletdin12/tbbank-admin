@@ -6,9 +6,10 @@ import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
 import { useNavigate } from 'react-router-dom'
 import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ColumnMeta, type FilterField, type ActiveFilter } from '@/components/dataTableToolbar'
-import { StatusBadge, PaidStatusBadge } from '@/features/sberPayments/components/statusBadge'
 import { useSberPaymentOrders, useDeleteSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
-import { WELAYATLAR, STATUSES, type SberPaymentOrder } from '@/features/sberPayments/api/sberPaymentsApi'
+import { type SberPaymentOrder, WELAYATLAR, STATUSES, type PaymentStatus, type PaymentPaidStatus } from '@/features/sberPayments/api/sberPaymentsApi'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 
 import {
   Select,
@@ -17,6 +18,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  GARASYLYYAR: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  KANAGATLANDYRYLAN: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  RET_EDILEN: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+ 
+} satisfies Record<PaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+const PAID_STATUS_CONFIG = {
+  Tolenmedik: {
+    label:   'Tölmedi',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+  Tolendi: {
+    label:   'Tölendi',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+} satisfies Record<PaymentPaidStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function PaymentPaidStatusBadge({ status }: { status: PaymentPaidStatus }) {
+  const cfg = PAID_STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
+
+function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
 
 // ─── Column Definitions ───────────────────────────────────────────────────────
 
@@ -131,12 +179,12 @@ export default function SberPaymentsListPage() {
           <ArrowUpDown size={12} />
         </button>
       ),
-      cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+      cell: ({ row }) => <PaymentStatusBadge status={row.getValue('status')} />,
     },
     {
       accessorKey: 'paidStatus',
       header: 'Tolenen (sul ay)',
-      cell: ({ row }) => <PaidStatusBadge status={row.getValue('paidStatus')} />,
+      cell: ({ row }) => <PaymentPaidStatusBadge status={row.getValue('paidStatus')} />,
     },
     {
       id: 'actions',
@@ -298,15 +346,6 @@ export default function SberPaymentsListPage() {
         totalCount={data?.pagination.totalCount ?? 0}
         onPageChange={setPage}
       />
-      
-      {/* Pagination Info */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          {data?.pagination.currentPage && data?.pagination.perPage && data?.pagination.totalCount
-            ? `${(data.pagination.currentPage - 1) * data.pagination.perPage + 1}-${Math.min(data.pagination.currentPage * data.pagination.perPage, data.pagination.totalCount)} of ${data.pagination.totalCount}`
-            : ''}
-        </span>
-      </div>
     </div>
   )
 }

@@ -16,24 +16,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<IntlPaymentStatus, { label: string; className: string }> = {
-  pending:  { label: 'Garaşylýar', className: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
-  approved: { label: 'Tassyklandy', className: 'bg-green-500/20 text-green-500 border-green-500/30' },
-  rejected: { label: 'Ret edildi',  className: 'bg-red-500/20 text-red-500 border-red-500/30' },
+const STATUS_MAP: Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant }> = {
+  pending:  { label: 'Garaşylýar', variant: 'warning' },
+  approved: { label: 'Tassyklandy', variant: 'success' },
+  rejected: { label: 'Ret edildi',  variant: 'error' },
 }
 
-function StatusBadge({ status }: { status: IntlPaymentStatus }) {
+function PaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
   const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending
   return (
-    <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border', cfg.className)}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-      {cfg.label}
-    </span>
+    <StatusBadge label={cfg.label} variant={cfg.variant} />
   )
 }
 
@@ -144,7 +141,7 @@ export default function IntlPaymentViewPage() {
   ]
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className=" mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div /> {/* breadcrumb handled by layout */}
@@ -193,7 +190,7 @@ export default function IntlPaymentViewPage() {
             <span className="font-mono">{data.id}</span>
           </FieldRow>
           <FieldRow label={t('intlPayment.status', 'Status')}>
-            <StatusBadge status={data.status} />
+            <PaymentStatusBadge status={data.status} />
           </FieldRow>
           <FieldRow label={t('intlPayment.tilowanMonth', 'Tölewan (Aý/aý)')}>
             {data.created_at}

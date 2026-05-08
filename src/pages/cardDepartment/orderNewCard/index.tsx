@@ -1,22 +1,60 @@
 import { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
-import type { VisibilityState } from '@tanstack/react-table'
+import { Eye, Pencil, Trash2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react'
+import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
 
 import { DataTable } from '@/components/dataTable'
-import { DataTableToolbar } from '@/components/dataTableToolbar'
-import type { ActiveFilter, FilterField } from '@/components/dataTableToolbar'
+import { DataTableToolbar, type ActiveFilter, type FilterField } from '@/components/dataTableToolbar'
 import {
   useCardOrders,
   useDeleteCardOrder,
   useProvinces,
   useBranches,
 } from '@/features/orderNewCard/hooks/useOrderNewCard'
-import { useCardOrderColumns } from '@/features/orderNewCard/components/orderNewCardTable'
-import type { CardOrderStatus } from '@/features/orderNewCard/api/orderNewCardApi'
+import type { CardOrderListItem, CardOrderStatus } from '@/features/orderNewCard/api/orderNewCardApi'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 
-// ─── Column meta list (for toolbar toggle) ────────────────────────────────────
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  PENDING: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  APPROVED: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  REJECTED: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+} satisfies Record<CardOrderStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function OrderNewCardStatusBadge({ status }: { status: CardOrderStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
+
+
+
+// ─── Coloured text helper ─────────────────────────────────────────────────────
+
+function HighlightText({ value, variant }: { value: string; variant: 'teal' | 'cyan' | 'muted' }) {
+  const cls =
+    variant === 'teal' ? 'text-teal-400 font-semibold' :
+    variant === 'cyan' ? 'text-cyan-400 font-semibold' :
+    'text-muted-foreground'
+  return <span className={cls}>{value}</span>
+}
+
+// ─── Column meta (toolbar toggle) ────────────────────────────────────────────
 
 const COLUMN_META = [
   { id: 'id',                 label: 'ID'              },
@@ -29,13 +67,18 @@ const COLUMN_META = [
   { id: 'status',             label: 'Status'          },
 ]
 
+const SPECIAL_BRANCHES = [
+  'Köpetdag', 'Türkmenabat', 'Türkmenbaşy',
+  'Seýdi', 'Çandybil', 'Balkan', 'Baş bank',
+]
+
 const DEFAULT_ORDER = COLUMN_META.map((c) => c.id)
 
 // ─── CardOrdersPage ───────────────────────────────────────────────────────────
 
 export default function CardOrdersPage() {
-  const { t }    = useTranslation()
-  const navigate = useNavigate()
+  const { t }      = useTranslation()
+  const navigate   = useNavigate()
   const deleteMutation = useDeleteCardOrder()
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -55,7 +98,7 @@ export default function CardOrdersPage() {
   const { data: provincesData } = useProvinces()
   const { data: branchesData }  = useBranches(provinceId ? Number(provinceId) : undefined)
 
-  // ── Data ───────────────────────────────────────────────────────────────────
+  // ── Query params ───────────────────────────────────────────────────────────
   const queryParams = useMemo(() => {
     const filterMap = Object.fromEntries(activeFilters.map((f) => [f.fieldId, f.value]))
     return {
@@ -73,12 +116,11 @@ export default function CardOrdersPage() {
   // ── Handlers ───────────────────────────────────────────────────────────────
   const handleFilterChange = useCallback((fieldId: string, value: string) => {
     setActiveFilters((prev) => {
-      const newFilters = prev.map((f) => (f.fieldId === fieldId ? { ...f, value } : f))
-      // Reset branch if province changes
+      const updated = prev.map((f) => (f.fieldId === fieldId ? { ...f, value } : f))
       if (fieldId === 'provinceId') {
-        return newFilters.map((f) => (f.fieldId === 'branchId' ? { ...f, value: '' } : f))
+        return updated.map((f) => (f.fieldId === 'branchId' ? { ...f, value: '' } : f))
       }
-      return newFilters
+      return updated
     })
     setPage(1)
   }, [])
@@ -97,15 +139,83 @@ export default function CardOrdersPage() {
   )
 
   // ── Columns ────────────────────────────────────────────────────────────────
-  const baseColumns = useCardOrderColumns()
-  const columns = useMemo(
+  const columns = useMemo<ColumnDef<CardOrderListItem>[]>(
     () => [
-      ...baseColumns,
+      {
+        accessorKey: 'id',
+        header: t('cardOrder.col.id', 'ID'),
+        cell: ({ row }) => (
+          <Link
+            to={`/order-new-card/${row.original.id}`}
+            className="font-mono text-xs text-primary hover:underline"
+          >
+            {row.original.id}
+          </Link>
+        ),
+        size: 130,
+      },
+      {
+        accessorKey: 'issuanceReasonName',
+        header: t('cardOrder.col.reason', 'Sebäp'),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">{row.original.issuanceReasonName}</span>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: t('cardOrder.col.createdAt', 'Döredilen wagty'),
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground whitespace-nowrap">{row.original.createdAt}</span>
+        ),
+        size: 160,
+      },
+      {
+        accessorKey: 'cardTypeName',
+        header: t('cardOrder.col.cardType', 'Görnüşi'),
+        cell: ({ row }) => (
+          <HighlightText
+            value={row.original.cardTypeName}
+            variant={row.original.cardTypeName === 'Altyn Asyr' ? 'cyan' : 'teal'}
+          />
+        ),
+      },
+      {
+        accessorKey: 'provinceName',
+        header: t('cardOrder.col.province', 'Welaýat'),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">{row.original.provinceName}</span>
+        ),
+      },
+      {
+        accessorKey: 'branchName',
+        header: t('cardOrder.col.branch', 'Şahamça'),
+        cell: ({ row }) => (
+          <HighlightText
+            value={row.original.branchName}
+            variant={SPECIAL_BRANCHES.includes(row.original.branchName) ? 'cyan' : 'muted'}
+          />
+        ),
+      },
+      {
+        id: 'fullName',
+        header: t('cardOrder.col.name', 'Ady'),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">
+            {row.original.lastName} {row.original.firstName}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: t('cardOrder.col.status', 'Status'),
+        cell: ({ row }) => <OrderNewCardStatusBadge status={row.original.status} />,
+        size: 130,
+      },
       {
         id: 'actions',
         header: '',
         enableHiding: false,
-        cell: ({ row }: { row: any }) => (
+        cell: ({ row }) => (
           <div className="flex items-center gap-1.5 justify-end">
             <button
               className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
@@ -134,44 +244,44 @@ export default function CardOrdersPage() {
         size: 100,
       },
     ],
-    [baseColumns, t, navigate, handleDelete, deleteMutation.isPending]
+    [t, navigate, handleDelete, deleteMutation.isPending]
   )
 
   // ── Filter fields ──────────────────────────────────────────────────────────
-  const filterFields: FilterField[] = useMemo(() => [
-    {
-      id:      'status',
-      label:   t('cardOrder.col.status', 'Status'),
-      options: [
-        { value: 'PENDING',  label: t('cardOrder.status.pending',  'Garaşylýar') },
-        { value: 'APPROVED', label: t('cardOrder.status.approved', 'Tassyklandy') },
-        { value: 'REJECTED', label: t('cardOrder.status.rejected', 'Ýatyryldy') },
-      ],
-    },
-    {
-      id:      'provinceId',
-      label:   t('cardOrder.col.province', 'Welaýat'),
-      options: provincesData?.map(p => ({ value: String(p.id), label: p.name })) || [],
-    },
-    {
-      id:      'branchId',
-      label:   t('cardOrder.col.branch', 'Şahamça'),
-      options: branchesData?.map(b => ({ value: String(b.id), label: b.name })) || [],
-    },
-  ], [t, provincesData, branchesData])
+  const filterFields = useMemo<FilterField[]>(
+    () => [
+      {
+        id:      'status',
+        label:   t('cardOrder.col.status', 'Status'),
+        options: [
+          { value: 'PENDING',  label: t('cardOrder.status.pending',  'Garaşylýar')  },
+          { value: 'APPROVED', label: t('cardOrder.status.approved', 'Tassyklandy') },
+          { value: 'REJECTED', label: t('cardOrder.status.rejected', 'Ýatyryldy')   },
+        ],
+      },
+      {
+        id:      'provinceId',
+        label:   t('cardOrder.col.province', 'Welaýat'),
+        options: provincesData?.map((p) => ({ value: String(p.id), label: p.name })) ?? [],
+      },
+      {
+        id:      'branchId',
+        label:   t('cardOrder.col.branch', 'Şahamça'),
+        options: branchesData?.map((b) => ({ value: String(b.id), label: b.name })) ?? [],
+      },
+    ],
+    [t, provincesData, branchesData]
+  )
 
-  // ── Render ────────────────────────────────────────────────────────────────
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground tracking-tight">
           {t('cardOrder.title', 'Kart sargytlary')}
         </h1>
       </div>
 
-      {/* Table Card */}
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
           searchValue={search}

@@ -1,17 +1,33 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
-
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ActiveFilter, type FilterField } from '@/components/dataTableToolbar'
-import { LoanOrderStatusBadge } from '@/features/loanOrders/components/loanOrderStatusBadge'
 import {
   useLoanOrderMobiles,
   useDeleteLoanOrderMobile,
 } from '@/features/loanOrderMobiles/hooks/useLoanOrderMobiles'
 import type { LoanOrderMobile, LoanOrderMobileStatus } from '@/features/loanOrderMobiles/api/loanOrderMobilesApi'
+
+
+
+// ─── Status Badge (inline) ────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  GARAŞYLÝAR:        { label: 'Garaşylýar',        variant: 'warning' as StatusBadgeVariant, icon: AlertCircle  },
+  KANAGATLANDYRYLAN: { label: 'Kanagatlandyrylan', variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
+  RED_EDILDI:        { label: 'Red edildi',         variant: 'error'   as StatusBadgeVariant, icon: XCircle      },
+  IŞLENÝÄR:          { label: 'Işlenýär',           variant: 'info'    as StatusBadgeVariant, icon: Loader2      },
+} satisfies Record<LoanOrderMobileStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function LoanOrderStatusBadge({ status }: { status: LoanOrderMobileStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
 
 // ─── Column IDs ────────────────────────────────────────────────────────────────
 

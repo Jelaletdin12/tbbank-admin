@@ -1,14 +1,29 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2, AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
 
 import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ActiveFilter, type FilterField } from '@/components/dataTableToolbar'
-import { LoanOrderStatusBadge } from '@/features/loanOrders/components/loanOrderStatusBadge'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { useLoanOrders, useDeleteLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
 import type { LoanOrder, LoanOrderStatus } from '@/features/loanOrders/api/loanOrdersApi'
+
+// ─── Status Badge (inline) ────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  GARAŞYLÝAR:        { label: 'Garaşylýar',        variant: 'warning' as StatusBadgeVariant, icon: AlertCircle  },
+  KANAGATLANDYRYLAN: { label: 'Kanagatlandyrylan', variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
+  RED_EDILDI:        { label: 'Red edildi',         variant: 'error'   as StatusBadgeVariant, icon: XCircle      },
+  IŞLENÝÄR:          { label: 'Işlenýär',           variant: 'info'    as StatusBadgeVariant, icon: Loader2      },
+} satisfies Record<LoanOrderStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function LoanOrderStatusBadge({ status }: { status: LoanOrderStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
 
 // ─── Column meta for toggle dropdown ─────────────────────────────────────────
 
@@ -20,19 +35,19 @@ const COLUMN_IDS = [
 // ─── Filter fields ────────────────────────────────────────────────────────────
 
 const REGION_OPTIONS = [
-  { value: 'Balkan',   label: 'Balkan'   },
-  { value: 'Ahal',     label: 'Ahal'     },
-  { value: 'Daşoguz',  label: 'Daşoguz'  },
-  { value: 'Lebap',    label: 'Lebap'    },
-  { value: 'Mary',     label: 'Mary'     },
-  { value: 'Aşgabat',  label: 'Aşgabat'  },
+  { value: 'Balkan',  label: 'Balkan'  },
+  { value: 'Ahal',    label: 'Ahal'    },
+  { value: 'Daşoguz', label: 'Daşoguz' },
+  { value: 'Lebap',   label: 'Lebap'   },
+  { value: 'Mary',    label: 'Mary'    },
+  { value: 'Aşgabat', label: 'Aşgabat' },
 ]
 
 const STATUS_OPTIONS: { value: LoanOrderStatus; label: string }[] = [
-  { value: 'GARAŞYLÝAR',        label: 'GARAŞYLÝAR'        },
-  { value: 'KANAGATLANDYRYLAN', label: 'KANAGATLANDYRYLAN' },
-  { value: 'RED_EDILDI',        label: 'RED EDILDI'        },
-  { value: 'IŞLENÝÄR',          label: 'IŞLENÝÄR'          },
+  { value: 'GARAŞYLÝAR',        label: 'Garaşylýar'        },
+  { value: 'KANAGATLANDYRYLAN', label: 'Kanagatlandyrylan' },
+  { value: 'RED_EDILDI',        label: 'Red edildi'        },
+  { value: 'IŞLENÝÄR',          label: 'Işlenýär'          },
 ]
 
 // ─── Page Component ───────────────────────────────────────────────────────────
@@ -42,7 +57,6 @@ export default function LoanOrdersPage() {
   const navigate = useNavigate()
   const deleteMutation = useDeleteLoanOrder()
 
-  // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch]               = useState('')
   const [page, setPage]                   = useState(1)
   const [perPage, setPerPage]             = useState(10)
@@ -55,7 +69,6 @@ export default function LoanOrdersPage() {
     { fieldId: 'archived', value: '' },
   ])
 
-  // ── Query params ───────────────────────────────────────────────────────────
   const queryParams = useMemo(() => {
     const filterMap = Object.fromEntries(activeFilters.map((f) => [f.fieldId, f.value]))
     return {
@@ -70,10 +83,8 @@ export default function LoanOrdersPage() {
   }, [search, activeFilters, page, perPage])
 
   const { data, isLoading } = useLoanOrders(queryParams)
-
   const totalPages = data ? Math.ceil(data.total / perPage) : 1
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleFilterChange = useCallback((fieldId: string, value: string) => {
     setActiveFilters((prev) => prev.map((f) => (f.fieldId === fieldId ? { ...f, value } : f)))
     setPage(1)
@@ -92,7 +103,6 @@ export default function LoanOrdersPage() {
     [deleteMutation, t]
   )
 
-  // ── Columns ────────────────────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<LoanOrder>[]>(
     () => [
       {
@@ -208,10 +218,9 @@ export default function LoanOrdersPage() {
         size: 100,
       },
     ],
-    [t, handleDelete, deleteMutation.isPending]
+    [t, navigate, handleDelete, deleteMutation.isPending]
   )
 
-  // ── Column meta for toolbar ────────────────────────────────────────────────
   const toggleableColumns = useMemo(
     () => COLUMN_IDS.map((id) => ({ id, label: t(`loanOrders.columns.${id}`, id) })),
     [t]
@@ -246,17 +255,14 @@ export default function LoanOrdersPage() {
     [t]
   )
 
-  // ─────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">
           {t('loanOrders.title', 'Karz sargytlary')}
         </h1>
       </div>
 
-      {/* Table Card */}
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
           searchValue={search}
@@ -275,9 +281,7 @@ export default function LoanOrdersPage() {
           perPage={perPage}
           onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
           actionLabel={t('loanOrderMobiles.createButton', 'Karz sargyt dörediñ')}
-          onAction={() => {
-            navigate('/loan-orders/create')
-          }}
+          onAction={() => navigate('/loan-orders/create')}
         />
 
         <DataTable

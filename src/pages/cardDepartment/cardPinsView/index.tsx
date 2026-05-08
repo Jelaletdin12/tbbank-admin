@@ -16,24 +16,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { cn } from '@/lib/utils'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<CardPinStatus, { label: string; className: string }> = {
-  pending:  { label: 'Garaşylýar', className: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' },
-  approved: { label: 'Tassyklandy', className: 'bg-green-500/20 text-green-500 border-green-500/30' },
-  rejected: { label: 'Ret edildi', className: 'bg-red-500/20 text-red-500 border-red-500/30' },
-}
+const STATUS_CONFIG = {
+  pending: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  approved: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  rejected: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+} satisfies Record<CardPinStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
 
-function StatusBadge({ status }: { status: CardPinStatus }) {
-  const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border', cfg.className)}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-      {cfg.label}
-    </span>
-  )
+function CardPinStatusBadge({ status }: { status: CardPinStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
 
 // ─── Field row ────────────────────────────────────────────────────────────────
@@ -102,7 +111,7 @@ export default function CardPinViewPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <h1 className="text-xl font-bold text-foreground">
@@ -157,7 +166,7 @@ export default function CardPinViewPage() {
           {data.created_at}
         </FieldRow>
         <FieldRow label={t('cardPin.status', 'Status')}>
-          <StatusBadge status={data.status} />
+          <CardPinStatusBadge status={data.status} />
         </FieldRow>
         <FieldRow label={t('cardPin.note', 'Bellik')}>
           {data.note || '—'}

@@ -193,7 +193,7 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     : t('cardPin.editBtn',   'Kart pin bukja redaktirläň')
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className=" mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-foreground">{title}</h1>
 
       {/* ── Status & Note ────────────────────────────────────────────────── */}

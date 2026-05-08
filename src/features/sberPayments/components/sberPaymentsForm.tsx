@@ -149,7 +149,7 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   }
   
   return (
-    <div className="space-y-8 max-w-4xl pb-8">
+    <div className="space-y-8  pb-8">
       {/* Status Section */}
       <section className="space-y-4">
         <h2 className="text-base font-semibold text-foreground">Status</h2>

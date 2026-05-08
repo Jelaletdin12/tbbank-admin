@@ -2,10 +2,42 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Trash2, Pencil, Download, ChevronRight, Eye } from 'lucide-react'
 import { useLoanOrderMobileById, useDeleteLoanOrderMobile } from '@/features/loanOrderMobiles/hooks/useLoanOrderMobiles'
-import { LoanOrderStatusBadge } from '@/features/loanOrders/components/loanOrderStatusBadge'
 import { CreditCardVisual } from '@/components/creditCardVisual'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import type { LoanOrderMobileStatus } from '@/features/loanOrderMobiles/api/loanOrderMobilesApi'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  GARAŞYLÝAR: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  KANAGATLANDYRYLAN: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  RED_EDILDI: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+  IŞLENÝÄR: {
+    label:   'Işlenýär',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+} satisfies Record<LoanOrderMobileStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function LoanOrderMobileStatusBadge({ status }: { status: LoanOrderMobileStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
 
 // ─── Sub-component Types ──────────────────────────────────────────────────────
 
@@ -212,7 +244,7 @@ export default function LoanOrderMobilesViewPage() {
           <span className="text-sm text-muted-foreground">
             {t('loanOrders.columns.status', 'Status')}
           </span>
-          <LoanOrderStatusBadge status={order.status} />
+          <LoanOrderMobileStatusBadge status={order.status} />
         </div>
         <InfoRow
           label={t('loanOrders.columns.createdAt', 'Döredilen wagty')}

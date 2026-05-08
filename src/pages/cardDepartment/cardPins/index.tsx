@@ -11,7 +11,7 @@ import type {
   CardPinStatus,
 } from "@/features/cardPins/api/cardPinApi";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,38 +22,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<CardPinStatus, { label: string; className: string }> =
-  {
-    pending: {
-      label: "Garaşylýar",
-      className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-    },
-    approved: {
-      label: "Tassyklandy",
-      className: "bg-green-500/20 text-green-400 border-green-500/30",
-    },
-    rejected: {
-      label: "Ret edildi",
-      className: "bg-red-500/20 text-red-400 border-red-500/30",
-    },
-  };
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 
-function StatusBadge({ status }: { status: CardPinStatus }) {
-  const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending;
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
-        cfg.className,
-      )}
-    >
-      {cfg.label}
-    </span>
-  );
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  pending: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  approved: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  rejected: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+} satisfies Record<CardPinStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+
+function CardPinStatusStatusBadge({ status }: { status: CardPinStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -139,7 +137,7 @@ export default function CardPinsPage() {
     {
       accessorKey: "status",
       header: t("cardPin.status", "Status"),
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <CardPinStatusStatusBadge status={row.original.status} />,
     },
     {
       id: "actions",

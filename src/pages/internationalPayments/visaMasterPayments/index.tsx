@@ -19,22 +19,32 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
+import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
+import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
+// ─── Status badge ─────────────────────────────────────────────────────────────
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+const STATUS_CONFIG = {
+  pending: {
+    label:   'Garaşylýar',
+    variant: 'warning' as StatusBadgeVariant,
+    icon:    AlertCircle,
+  },
+  approved: {
+    label:   'Tassyklandy',
+    variant: 'success' as StatusBadgeVariant,
+    icon:    CheckCircle2,
+  },
+  rejected: {
+    label:   'Ýatyryldy',
+    variant: 'error' as StatusBadgeVariant,
+    icon:    XCircle,
+  },
+} satisfies Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
 
-const STATUS_MAP: Record<IntlPaymentStatus, { label: string; className: string }> = {
-  pending:  { label: 'Garaşylýar', className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  approved: { label: 'Tassyklandy', className: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  rejected: { label: 'Ret edildi',  className: 'bg-red-500/20 text-red-400 border-red-500/30' },
-}
-
-function StatusBadge({ status }: { status: IntlPaymentStatus }) {
-  const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending
-  return (
-    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border', cfg.className)}>
-      {cfg.label}
-    </span>
-  )
+function IntlPaymentStatusStatusBadge({ status }: { status: IntlPaymentStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
 
 // ─── Month selector (AÝ TOLEGI) ───────────────────────────────────────────────
@@ -153,7 +163,7 @@ export default function IntlPaymentsPage() {
     {
       accessorKey: 'status',
       header: t('intlPayment.status', 'Status'),
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <IntlPaymentStatusStatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
