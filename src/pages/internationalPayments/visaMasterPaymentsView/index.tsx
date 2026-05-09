@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useState } from 'react'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
-
+import { InfoRow, Section } from '@/components/viewPageComponents'  
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
 const STATUS_MAP: Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant }> = {
@@ -34,27 +34,8 @@ function PaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
   )
 }
 
-// ─── FieldRow ─────────────────────────────────────────────────────────────────
 
-function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-[240px_1fr] items-start py-3 border-b border-border last:border-0 gap-4">
-      <span className="text-sm text-muted-foreground shrink-0">{label}</span>
-      <span className="text-sm text-foreground">{children ?? '—'}</span>
-    </div>
-  )
-}
 
-// ─── Section ──────────────────────────────────────────────────────────────────
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="bg-card border border-border rounded-lg">
-      <h2 className="text-base font-semibold text-foreground px-6 pt-5 pb-3">{title}</h2>
-      <div className="px-6 pb-4">{children}</div>
-    </section>
-  )
-}
 
 // ─── DocFile row ─────────────────────────────────────────────────────────────
 
@@ -183,63 +164,63 @@ export default function IntlPaymentViewPage() {
       {/* Status */}
       <Section title={t('intlPayment.statusSection', 'Status')}>
         <div className="divide-y divide-border">
-          <FieldRow label={t('intlPayment.client', 'Ulanyjy')}>
+          <InfoRow label={t('intlPayment.client', 'Ulanyjy')}>
             <span className="text-primary font-medium">{data.client_label}</span>
-          </FieldRow>
-          <FieldRow label="ID">
+          </InfoRow>
+          <InfoRow label="ID">
             <span className="font-mono">{data.id}</span>
-          </FieldRow>
-          <FieldRow label={t('intlPayment.status', 'Status')}>
+          </InfoRow>
+          <InfoRow label={t('intlPayment.status', 'Status')}>
             <PaymentStatusBadge status={data.status} />
-          </FieldRow>
-          <FieldRow label={t('intlPayment.tilowanMonth', 'Tölewan (Aý/aý)')}>
+          </InfoRow>
+          <InfoRow label={t('intlPayment.tilowanMonth', 'Tölewan (Aý/aý)')}>
             {data.created_at}
-          </FieldRow>
-          <FieldRow label={t('intlPayment.note', 'Bellik')}>
+          </InfoRow>
+          <InfoRow label={t('intlPayment.note', 'Bellik')}>
             {data.note}
-          </FieldRow>
+          </InfoRow>
         </div>
       </Section>
 
       {/* Ýüztumanyň görnüşi */}
       <Section title={t('intlPayment.currencySection', 'Ýüztumanyň görnüşi')}>
         <div className="divide-y divide-border">
-          <FieldRow label={t('intlPayment.currencyType', 'Ýüztumanyň görnüşi')}>
+          <InfoRow label={t('intlPayment.currencyType', 'Ýüztumanyň görnüşi')}>
             {data.currency_type_label}
-          </FieldRow>
+          </InfoRow>
         </div>
       </Section>
 
       {/* Lokasiýa */}
       <Section title={t('intlPayment.locationSection', 'Lokasiýa')}>
         <div className="divide-y divide-border">
-          <FieldRow label={t('intlPayment.province', 'Welaýat')}>{data.province_label}</FieldRow>
-          <FieldRow label={t('intlPayment.branch', 'Şahamça')}>
+          <InfoRow label={t('intlPayment.province', 'Welaýat')}>{data.province_label}</InfoRow>
+          <InfoRow label={t('intlPayment.branch', 'Şahamça')}>
             <span className="text-primary font-medium">{data.branch_label}</span>
-          </FieldRow>
+          </InfoRow>
         </div>
       </Section>
 
       {/* Şahsy maglumatlar */}
       <Section title={t('intlPayment.personalSection', 'Şahsy maglumatlar')}>
         <div className="divide-y divide-border">
-          <FieldRow label={t('intlPayment.passportFirstName', 'Pasportdaky ady')}>{data.passport_first_name}</FieldRow>
-          <FieldRow label={t('intlPayment.passportLastName', 'Pasportdaky familiýa')}>{data.passport_last_name}</FieldRow>
-          <FieldRow label={t('intlPayment.phone', 'Telefon')}>+{data.phone}</FieldRow>
-          <FieldRow label={t('intlPayment.email', 'E-poçta')}>{data.email}</FieldRow>
-          <FieldRow label={t('intlPayment.homeAddress', 'Häzirki ýaşyş ýeri')}>{data.home_address}</FieldRow>
+          <InfoRow label={t('intlPayment.passportFirstName', 'Pasportdaky ady')}>{data.passport_first_name}</InfoRow>
+          <InfoRow label={t('intlPayment.passportLastName', 'Pasportdaky familiýa')}>{data.passport_last_name}</InfoRow>
+          <InfoRow label={t('intlPayment.phone', 'Telefon')}>+{data.phone}</InfoRow>
+          <InfoRow label={t('intlPayment.email', 'E-poçta')}>{data.email}</InfoRow>
+          <InfoRow label={t('intlPayment.homeAddress', 'Häzirki ýaşyş ýeri')}>{data.home_address}</InfoRow>
         </div>
       </Section>
 
       {/* Töleg */}
       <Section title={t('intlPayment.paymentSection', 'Töleg')}>
         <div className="divide-y divide-border mb-4">
-          <FieldRow label={t('intlPayment.payerFullName', 'Töleg upgradyjynyň maglumatlary')}>
+          <InfoRow label={t('intlPayment.payerFullName', 'Töleg upgradyjynyň maglumatlary')}>
             {data.payer_full_name}
-          </FieldRow>
-          <FieldRow label={t('intlPayment.payerAccount', 'Töleg upgradyjynyň goşun hasaby')}>
+          </InfoRow>
+          <InfoRow label={t('intlPayment.payerAccount', 'Töleg upgradyjynyň goşun hasaby')}>
             {data.payer_account_number}
-          </FieldRow>
+          </InfoRow>
         </div>
         {/* Receiver table */}
         <div className="border border-border rounded-lg overflow-hidden">

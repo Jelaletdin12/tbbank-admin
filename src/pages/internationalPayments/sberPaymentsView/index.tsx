@@ -26,6 +26,7 @@ import {
   StatusBadge,
   type StatusBadgeVariant,
 } from "@/components/ui/statusBadge";
+import { InfoRow, Section } from "@/components/viewPageComponents";
 
 const STATUS_CONFIG = {
   GARASYLYYAR: {
@@ -87,50 +88,7 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
 }
 // ─── Info Row Component ───────────────────────────────────────────────────────
 
-function InfoRow({
-  label,
-  value,
-  highlight = false,
-}: {
-  label: string;
-  value: React.ReactNode;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-start py-2.5 border-b border-border last:border-b-0">
-      <span className="w-64 shrink-0 text-sm text-muted-foreground">
-        {label}
-      </span>
-      <span
-        className={cn(
-          "flex-1 text-sm",
-          highlight ? "text-primary font-medium" : "text-foreground",
-        )}
-      >
-        {value || "—"}
-      </span>
-    </div>
-  );
-}
 
-// ─── Section Component ────────────────────────────────────────────────────────
-
-function Section({
-  title,
-  children,
-  className,
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("space-y-1", className)}>
-      <h2 className="text-base font-semibold text-foreground mb-3">{title}</h2>
-      <div className="bg-card rounded-lg border border-border">{children}</div>
-    </div>
-  );
-}
 
 // ─── Document Item Component ──────────────────────────────────────────────────
 
@@ -234,14 +192,12 @@ export default function SberPaymentViewPage() {
       <Section title="Status">
         <div className="px-4">
           <InfoRow label="ID" value={order.id} />
-          <InfoRow
-            label="Status"
-            value={<PaymentStatusBadge status={order.status} />}
-          />
-          <InfoRow
-            label="Tolenen (Sul ay)"
-            value={<PaymentPaidStatusBadge status={order.paidStatus} />}
-          />
+          <InfoRow label="Status">
+            <PaymentStatusBadge status={order.status} />
+          </InfoRow>
+          <InfoRow label="Tolenen (Sul ay)">
+            <PaymentPaidStatusBadge status={order.paidStatus} />
+          </InfoRow>
           <InfoRow label="Bellik" value={order.bellik} />
         </div>
       </Section>
@@ -250,7 +206,7 @@ export default function SberPaymentViewPage() {
       <Section title="Lokasiya">
         <div className="px-4">
           <InfoRow label="Welayat" value={order.welayat} />
-          <InfoRow label="Sahamca" value={order.sahamca} highlight />
+          <InfoRow label="Sahamca" value={order.sahamca} isLink />
         </div>
       </Section>
 
