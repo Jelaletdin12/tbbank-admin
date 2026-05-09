@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { LoanOrderForm } from "@/features/loanOrderMobiles/components/loanOrderForm";
+import { LoanOrderForm } from "@/features/loanOrders/components/loanOrderForm";
 import { useLoanOrderById } from "@/features/loanOrders/hooks/useLoanOrders";
 
 export default function LoanOrderEditPage() {

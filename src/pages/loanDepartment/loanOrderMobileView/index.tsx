@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Trash2, Pencil, Download, ChevronRight, Eye } from "lucide-react";
+import { Trash2, Pencil, ChevronRight } from "lucide-react";
 import {
   useLoanOrderMobileById,
   useDeleteLoanOrderMobile,
