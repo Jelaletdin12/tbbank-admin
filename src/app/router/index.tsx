@@ -97,6 +97,24 @@ const SberPaymentPage = lazy(() => import("@/pages/internationalPayments/sberPay
 const SberPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/sberPaymentsCreate"));
 const SberPaymentViewPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsView"));
 const SberPaymentEditPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsEdit"));
+
+
+
+const OperatorsPage = lazy(() => import("@/pages/users/operators"));
+const OperatorCreatePage = lazy(() => import("@/pages/users/operatorsCreate"));
+const OperatorsViewPage = lazy(() => import("@/pages/users/operatorsView"));
+const OperatorEditPage = lazy(() => import("@/pages/users/operatorsEdit"));
+
+const AllUsersPage = lazy(() => import("@/pages/users/allUsers"));
+const AllUserCreatePage = lazy(() => import("@/pages/users/allUsersCreate"));
+const AllUsersViewPage = lazy(() => import("@/pages/users/allUsersView"));
+const AllUserEditPage = lazy(() => import("@/pages/users/allUsersEdit"));
+
+const ClientsPage = lazy(() => import("@/pages/users/clients"));
+const ClientCreatePage = lazy(() => import("@/pages/users/clientsCreate"));
+const ClientViewPage = lazy(() => import("@/pages/users/clientsView"));
+const ClientEditPage = lazy(() => import("@/pages/users/clientsEdit"));
+
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -478,6 +496,102 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <SberPaymentEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /operators
+            path: "/operators",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OperatorsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/operators/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OperatorCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/operators/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OperatorsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/operators/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OperatorEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /all-users
+            path: "/all-users",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AllUsersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/all-users/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AllUserCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/all-users/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AllUsersViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/all-users/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <AllUserEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /clients
+            path: "/clients",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ClientsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/clients/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ClientCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/clients/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ClientViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/clients/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <ClientEditPage />
               </Suspense>
             ),
           },

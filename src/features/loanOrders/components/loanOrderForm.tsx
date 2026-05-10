@@ -2,13 +2,17 @@ import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { useCreateLoanOrder, useUpdateLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
 import type { LoanOrder, LoanOrderPayload } from '@/features/loanOrders/api/loanOrdersApi'
-
+import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
+import {
+  CircleDot, CreditCard, MapPin, User, Wallet,
+  FileText, Phone, Briefcase, FolderOpen, ShieldCheck
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 // ─── Static options ───────────────────────────────────────────────────────────
 
 const REGION_OPTIONS = [
@@ -237,24 +241,32 @@ interface StepDef {
   id: string
   titleKey: string
   titleFallback: string
-  /** Returns error keys relevant to this step */
+  shortLabel: string
+  icon: LucideIcon
+  subtitle: string
   validate: (form: FormState, mode: 'create' | 'edit') => FormErrors
 }
-
+// 3. STEPS dizisini güncelle
 const STEPS: StepDef[] = [
   {
     id: 'status',
     titleKey: 'Status',
     titleFallback: 'Status',
+    shortLabel: 'Status',
+    icon: CircleDot,
+    subtitle: 'Ýagdaý we bellik',
     validate: () => ({}),
   },
   {
     id: 'loan',
     titleKey: 'Loan',
     titleFallback: 'Karz',
+    shortLabel: 'Karz',
+    icon: Wallet,
+    subtitle: 'Görnüş we möçber',
     validate: (form) => {
       const e: FormErrors = {}
-      if (!form.loanType) e.loanType = 'Karz görnüşi — hökmany'
+      if (!form.loanType)   e.loanType   = 'Karz görnüşi — hökmany'
       if (!form.loanAmount) e.loanAmount = 'Karz möçberi — hökmany'
       return e
     },
@@ -263,6 +275,9 @@ const STEPS: StepDef[] = [
     id: 'location',
     titleKey: 'Location',
     titleFallback: 'Lokasiýa',
+    shortLabel: 'Lokasiýa',
+    icon: MapPin,
+    subtitle: 'Welaýat we şahamça',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.region) e.region = 'Welaýat — hökmany'
@@ -274,6 +289,9 @@ const STEPS: StepDef[] = [
     id: 'personal',
     titleKey: 'Personal data',
     titleFallback: 'Şahsy maglumatlar',
+    shortLabel: 'Şahsy',
+    icon: User,
+    subtitle: 'At, bilim, maşgala',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.firstName)      e.firstName      = 'Ady — hökmany'
@@ -289,6 +307,9 @@ const STEPS: StepDef[] = [
     id: 'card',
     titleKey: 'Card (Salary)',
     titleFallback: 'Kart (Zähmet haky)',
+    shortLabel: 'Kart',
+    icon: CreditCard,
+    subtitle: 'Zähmet haky karty',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.cardNumber)   e.cardNumber   = 'Kart belgisi — hökmany'
@@ -302,6 +323,9 @@ const STEPS: StepDef[] = [
     id: 'passport',
     titleKey: 'Passport',
     titleFallback: 'Pasport',
+    shortLabel: 'Pasport',
+    icon: FileText,
+    subtitle: 'Seriýa, belgisi, senesi',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.passportSerie)       e.passportSerie       = 'Pasport seriýasy — hökmany'
@@ -315,6 +339,9 @@ const STEPS: StepDef[] = [
     id: 'contact',
     titleKey: 'Contact data',
     titleFallback: 'Habarlaşmak',
+    shortLabel: 'Habarlaşmak',
+    icon: Phone,
+    subtitle: 'Telefon we e-poçta',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.phone) {
@@ -329,6 +356,9 @@ const STEPS: StepDef[] = [
     id: 'job',
     titleKey: 'Job',
     titleFallback: 'Iş',
+    shortLabel: 'Iş',
+    icon: Briefcase,
+    subtitle: 'Kärhana we wezipe',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.workCompany)   e.workCompany   = 'Kärhananyň ady — hökmany'
@@ -342,6 +372,9 @@ const STEPS: StepDef[] = [
     id: 'files',
     titleKey: 'Passport files',
     titleFallback: 'Pasport faýllar',
+    shortLabel: 'Faýllar',
+    icon: FolderOpen,
+    subtitle: 'Pasport suratlary',
     validate: (form, mode) => {
       const e: FormErrors = {}
       if (mode === 'create') {
@@ -355,6 +388,9 @@ const STEPS: StepDef[] = [
     id: 'guarantor',
     titleKey: '1. Guarantor',
     titleFallback: '1. Zamun',
+    shortLabel: 'Zamun',
+    icon: ShieldCheck,
+    subtitle: 'Zamun maglumatlary',
     validate: (form) => {
       const e: FormErrors = {}
       if (!form.guarantor1Name)           e.guarantor1Name           = 'Zamunyň ady — hökmany'
@@ -371,243 +407,79 @@ const STEPS: StepDef[] = [
   },
 ]
 
-// ─── Step Sidebar ─────────────────────────────────────────────────────────────
-
-function StepSidebar({
-  steps,
-  current,
-  completed,
-  onGoTo,
-}: {
-  steps: StepDef[]
-  current: number
-  completed: Set<number>
-  onGoTo: (i: number) => void
-}) {
-  return (
-    <nav className="bg-card border border-border rounded-xl py-2 sticky top-4 overflow-hidden">
-      {steps.map((step, i) => {
-        const isDone      = completed.has(i)
-        const isActive    = i === current
-        const isReachable = i === 0 || completed.has(i - 1) || isDone
-
-        return (
-          <button
-            key={step.id}
-            type="button"
-            onClick={() => isReachable && onGoTo(i)}
-            disabled={!isReachable}
-            className={cn(
-              'relative w-full flex items-center gap-2.5 px-3.5 py-2 text-left transition-colors duration-150',
-              'disabled:cursor-not-allowed',
-              isActive  && 'bg-muted',
-              !isActive && isReachable && 'hover:bg-muted/50',
-            )}
-          >
-            {/* Active indicator bar */}
-            {isActive && (
-              <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-primary" />
-            )}
-
-            {/* Dot */}
-            <span
-              className={cn(
-                'flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0 text-[11px] font-semibold border transition-all duration-200',
-                isActive  && 'bg-primary border-primary text-primary-foreground',
-                isDone && !isActive && 'bg-primary/10 border-primary/30 text-primary',
-                !isDone && !isActive && 'bg-background border-border text-muted-foreground',
-              )}
-            >
-              {isDone && !isActive
-                ? <CheckCircle2 className="w-3 h-3" />
-                : i + 1
-              }
-            </span>
-
-            {/* Label */}
-            <span
-              className={cn(
-                'text-[13px] leading-snug transition-colors duration-150',
-                isActive  && 'text-foreground font-medium',
-                isDone && !isActive && 'text-muted-foreground',
-                !isDone && !isActive && 'text-muted-foreground',
-              )}
-            >
-              {step.titleFallback}
-            </span>
-          </button>
-        )
-      })}
-    </nav>
-  )
-}
-
 // ─── Step content renderers ───────────────────────────────────────────────────
 
-function StepStatus({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepStatus({ form, errors, set }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="max-w-md">
-        <FormInput
-          type="select"
-          label="Status"
-          required
-          value={form.status}
-          onChange={(v) => set('status', v)}
-          options={STATUS_OPTIONS}
-          error={errors.status}
-          placeholder="Saýlaň"
-        />
+        <FormInput type="select" label="Status" required value={form.status} onChange={(v) => set('status', v)} options={STATUS_OPTIONS} error={errors.status} placeholder="Saýlaň" />
       </div>
-      <FormInput
-        type="text"
-        label="Bellik"
-        value={form.note}
-        onChange={(v) => set('note', v)}
-        placeholder="Bellik"
-      />
+      <FormInput type="text" label="Bellik" value={form.note} onChange={(v) => set('note', v)} placeholder="Bellik" />
     </div>
   )
 }
 
-function StepLoan({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepLoan({ form, errors, set }: StepContentProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <FormInput
-        type="searchable-select"
-        label="Karz görnüşi"
-        required
-        value={form.loanType}
-        onChange={(v) => set('loanType', v)}
-        options={LOAN_TYPE_OPTIONS}
-        placeholder="Saýlamak üçin basyň"
-        error={errors.loanType}
-      />
-      <FormInput
-        type="number"
-        label="Karz möçberi"
-        required
-        value={form.loanAmount}
-        onChange={(v) => set('loanAmount', v)}
-        placeholder="Karz möçberi"
-        error={errors.loanAmount}
-      />
+      <FormInput type="searchable-select" label="Karz görnüşi" required value={form.loanType} onChange={(v) => set('loanType', v)} options={LOAN_TYPE_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.loanType} />
+      <FormInput type="number" label="Karz möçberi" required value={form.loanAmount} onChange={(v) => set('loanAmount', v)} placeholder="Karz möçberi" error={errors.loanAmount} />
     </div>
   )
 }
 
-function StepLocation({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepLocation({ form, errors, set }: StepContentProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <FormInput
-        type="searchable-select"
-        label="Welaýat"
-        required
-        value={form.region}
-        onChange={(v) => set('region', v)}
-        options={REGION_OPTIONS}
-        placeholder="Saýlamak üçin basyň"
-        error={errors.region}
-      />
-      <FormInput
-        type="searchable-select"
-        label="Şahamça"
-        required
-        value={form.branch}
-        onChange={(v) => set('branch', v)}
-        options={[]}
-        placeholder="Saýlamak üçin basyň"
-        error={errors.branch}
-      />
+      <FormInput type="searchable-select" label="Welaýat" required value={form.region} onChange={(v) => set('region', v)} options={REGION_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.region} />
+      <FormInput type="searchable-select" label="Şahamça" required value={form.branch} onChange={(v) => set('branch', v)} options={[]} placeholder="Saýlamak üçin basyň" error={errors.branch} />
     </div>
   )
 }
 
-function StepPersonal({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepPersonal({ form, errors, set }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FormInput type="text"  label="Ady"            required value={form.firstName}      onChange={(v) => set('firstName', v)}      placeholder="Ady"            error={errors.firstName}      />
-        <FormInput type="text"  label="Familiýasy"     required value={form.lastName}       onChange={(v) => set('lastName', v)}       placeholder="Familiýasy"     error={errors.lastName}       />
-        <FormInput type="text"  label="Atasynyň ady"            value={form.patronicName}   onChange={(v) => set('patronicName', v)}   placeholder="Atasynyň ady"                                 />
+        <FormInput type="text"  label="Ady"          required value={form.firstName}    onChange={(v) => set('firstName', v)}    placeholder="Ady"          error={errors.firstName}    />
+        <FormInput type="text"  label="Familiýasy"   required value={form.lastName}     onChange={(v) => set('lastName', v)}     placeholder="Familiýasy"   error={errors.lastName}     />
+        <FormInput type="text"  label="Atasynyň ady"          value={form.patronicName} onChange={(v) => set('patronicName', v)} placeholder="Atasynyň ady"                             />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FormInput type="select" label="Bilimi"          required value={form.education}      onChange={(v) => set('education', v)}      options={EDUCATION_OPTIONS}  placeholder="Saýlaň"          error={errors.education}      />
-        <FormInput type="select" label="Maşgala ýagdaýy" required value={form.marriageStatus} onChange={(v) => set('marriageStatus', v)} options={MARRIAGE_OPTIONS}   placeholder="Saýlaň"          error={errors.marriageStatus} />
-        <FormInput type="date"  label="Doglan güni"     required value={form.dateOfBirth}    onChange={(v) => set('dateOfBirth', v)}    error={errors.dateOfBirth}    />
+        <FormInput type="select" label="Bilimi"          required value={form.education}      onChange={(v) => set('education', v)}      options={EDUCATION_OPTIONS} placeholder="Saýlaň" error={errors.education}      />
+        <FormInput type="select" label="Maşgala ýagdaýy" required value={form.marriageStatus} onChange={(v) => set('marriageStatus', v)} options={MARRIAGE_OPTIONS}  placeholder="Saýlaň" error={errors.marriageStatus} />
+        <FormInput type="date"   label="Doglan güni"     required value={form.dateOfBirth}    onChange={(v) => set('dateOfBirth', v)}    error={errors.dateOfBirth}    />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <FormInput type="text"  label="Ýazgy edilen salgyňyz"  required value={form.residence}       onChange={(v) => set('residence', v)}       placeholder="Ýazgy edilen salgy" error={errors.residence}  />
-        <FormInput type="text"  label="Häzirki ýaşaýyş ýeri"            value={form.currentResidence} onChange={(v) => set('currentResidence', v)} placeholder="Häzirki ýaşaýyş ýeri" />
+        <FormInput type="text" label="Ýazgy edilen salgyňyz"  required value={form.residence}       onChange={(v) => set('residence', v)}       placeholder="Ýazgy edilen salgy"   error={errors.residence}  />
+        <FormInput type="text" label="Häzirki ýaşaýyş ýeri"            value={form.currentResidence} onChange={(v) => set('currentResidence', v)} placeholder="Häzirki ýaşaýyş ýeri" />
       </div>
       <div className="max-w-md">
-        <FormInput
-          type="searchable-select"
-          label="Karz taryhy"
-          value={form.loanHistory}
-          onChange={(v) => set('loanHistory', v)}
-          options={[]}
-          placeholder="Saýlamak üçin basyň"
-        />
+        <FormInput type="searchable-select" label="Karz taryhy" value={form.loanHistory} onChange={(v) => set('loanHistory', v)} options={[]} placeholder="Saýlamak üçin basyň" />
       </div>
     </div>
   )
 }
 
-function StepCard({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepCard({ form, errors, set }: StepContentProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <FormInput type="text"             label="Kart belgisi"      required value={form.cardNumber}   onChange={(v) => set('cardNumber', v)}   placeholder="Kart belgisi"          error={errors.cardNumber}   />
-      <FormInput type="text"             label="Kartdaky ady"      required value={form.cardName}     onChange={(v) => set('cardName', v)}     placeholder="Kartdaky ady"          error={errors.cardName}     />
-      <FormInput type="searchable-select" label="Kart Möhleti (aý)" required value={form.cardExpMonth} onChange={(v) => set('cardExpMonth', v)} options={MONTH_OPTIONS}             placeholder="Saýlamak üçin basyň" error={errors.cardExpMonth} />
-      <FormInput type="searchable-select" label="Kart Möhleti (ýyl)" required value={form.cardExpYear}  onChange={(v) => set('cardExpYear', v)}  options={YEAR_OPTIONS}              placeholder="Saýlamak üçin basyň" error={errors.cardExpYear}  />
+      <FormInput type="text"              label="Kart belgisi"      required value={form.cardNumber}   onChange={(v) => set('cardNumber', v)}   placeholder="Kart belgisi"       error={errors.cardNumber}   />
+      <FormInput type="text"              label="Kartdaky ady"      required value={form.cardName}     onChange={(v) => set('cardName', v)}     placeholder="Kartdaky ady"       error={errors.cardName}     />
+      <FormInput type="searchable-select" label="Kart Möhleti (aý)" required value={form.cardExpMonth} onChange={(v) => set('cardExpMonth', v)} options={MONTH_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.cardExpMonth} />
+      <FormInput type="searchable-select" label="Kart Möhleti (ýyl)" required value={form.cardExpYear} onChange={(v) => set('cardExpYear', v)}  options={YEAR_OPTIONS}  placeholder="Saýlamak üçin basyň" error={errors.cardExpYear}  />
     </div>
   )
 }
 
-function StepPassport({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepPassport({ form, errors, set }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FormInput type="searchable-select" label="Pasport seriýasy"    required value={form.passportSerie}       onChange={(v) => set('passportSerie', v)}       options={PASSPORT_SERIES_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.passportSerie}       />
-        <FormInput type="text"             label="Pasport belgisi"      required value={form.passportNumber}      onChange={(v) => set('passportNumber', v)}      placeholder="Pasport belgisi"           error={errors.passportNumber}      />
-        <FormInput type="date"             label="Pasport berlen senesi" required value={form.passportDateOfIssue} onChange={(v) => set('passportDateOfIssue', v)} error={errors.passportDateOfIssue} />
+        <FormInput type="searchable-select" label="Pasport seriýasy"     required value={form.passportSerie}       onChange={(v) => set('passportSerie', v)}       options={PASSPORT_SERIES_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.passportSerie}       />
+        <FormInput type="text"              label="Pasport belgisi"       required value={form.passportNumber}      onChange={(v) => set('passportNumber', v)}      placeholder="Pasport belgisi"           error={errors.passportNumber}      />
+        <FormInput type="date"              label="Pasport berlen senesi" required value={form.passportDateOfIssue} onChange={(v) => set('passportDateOfIssue', v)} error={errors.passportDateOfIssue} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput type="text" label="Kim tarapyndan berildi" required value={form.passportGivenBy} onChange={(v) => set('passportGivenBy', v)} placeholder="Kim tarapyndan berildi" error={errors.passportGivenBy} />
@@ -617,30 +489,18 @@ function StepPassport({
   )
 }
 
-function StepContact({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepContact({ form, errors, set }: StepContentProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       <FormInput type="email" label="E-poçta"        value={form.email}           onChange={(v) => set('email', v)}           placeholder="E-poçta"    />
-      <FormInput type="phone" label="Telefon"         required value={form.phone}           onChange={(v) => set('phone', v)}           placeholder="61 097 651" error={errors.phone}           />
-      <FormInput type="phone" label="Telefon goşmaça"          value={form.phoneAdditional} onChange={(v) => set('phoneAdditional', v)} placeholder="61 097 651" />
-      <FormInput type="phone" label="Öý telefony"              value={form.homePhone}       onChange={(v) => set('homePhone', v)}       placeholder="61 097 651" />
+      <FormInput type="phone" label="Telefon"  required value={form.phone}        onChange={(v) => set('phone', v)}           placeholder="61 097 651" error={errors.phone} />
+      <FormInput type="phone" label="Telefon goşmaça" value={form.phoneAdditional} onChange={(v) => set('phoneAdditional', v)} placeholder="61 097 651" />
+      <FormInput type="phone" label="Öý telefony"     value={form.homePhone}       onChange={(v) => set('homePhone', v)}       placeholder="61 097 651" />
     </div>
   )
 }
 
-function StepJob({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepJob({ form, errors, set }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -652,23 +512,15 @@ function StepJob({
         <FormInput type="searchable-select" label="Işleýän etrabyňyz"   value={form.workProvince} onChange={(v) => set('workProvince', v)} options={[]}             placeholder="Saýlamak üçin basyň" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FormInput type="text"   label="Wezipe"          required value={form.position}      onChange={(v) => set('position', v)}      placeholder="Wezipe"          error={errors.position}      />
-        <FormInput type="number" label="Zähmet haky"     required value={form.salary}        onChange={(v) => set('salary', v)}        placeholder="Zähmet haky"     error={errors.salary}        />
+        <FormInput type="text"   label="Wezipe"              required value={form.position}      onChange={(v) => set('position', v)}      placeholder="Wezipe"          error={errors.position}      />
+        <FormInput type="number" label="Zähmet haky"         required value={form.salary}        onChange={(v) => set('salary', v)}        placeholder="Zähmet haky"     error={errors.salary}        />
         <FormInput type="date"   label="Işe başlan wagtyňyz" required value={form.workStartedAt} onChange={(v) => set('workStartedAt', v)} error={errors.workStartedAt} />
       </div>
     </div>
   )
 }
 
-function StepFiles({
-  form, errors, set, mode, initialData,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-  mode: 'create' | 'edit'
-  initialData?: LoanOrder
-}) {
+function StepFiles({ form, errors, set, mode, initialData }: StepContentProps & { mode: 'create' | 'edit'; initialData?: LoanOrder }) {
   return (
     <div className="flex flex-col gap-6">
       {mode === 'edit' && initialData && (
@@ -684,85 +536,53 @@ function StepFiles({
             url ? (
               <div key={label} className="flex flex-col gap-1">
                 <span className="text-xs text-muted-foreground">{label} — häzirki</span>
-                <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate">
-                  Faýly gör
-                </a>
+                <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline truncate">Faýly gör</a>
               </div>
             ) : null
           )}
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <FormInput
-          type="file"
-          label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'}
-          required={mode === 'create'}
-          accept="image/*"
-          fileValue={form.passportPage1}
-          onFileChange={(f) => set('passportPage1', f)}
-          placeholder="Faýl saýlaň ýa-da salmak üçin basyň"
-          error={errors.passportPage1}
-        />
-        <FormInput
-          type="file"
-          label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'}
-          required={mode === 'create'}
-          accept="image/*"
-          fileValue={form.passportPage23}
-          onFileChange={(f) => set('passportPage23', f)}
-          placeholder="Faýl saýlaň ýa-da salmak üçin basyň"
-          error={errors.passportPage23}
-        />
-        <FormInput
-          type="file"
-          label="Pasport (8-9 sahypa)"
-          accept="image/*"
-          fileValue={form.passportPage89}
-          onFileChange={(f) => set('passportPage89', f)}
-          placeholder="Faýl saýlaň ýa-da salmak üçin basyň"
-        />
-        <FormInput
-          type="file"
-          label="Pasport (32-nji sahypa)"
-          accept="image/*"
-          fileValue={form.passportPage32}
-          onFileChange={(f) => set('passportPage32', f)}
-          placeholder="Faýl saýlaň ýa-da salmak üçin basyň"
-        />
+        <FormInput type="file" label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'} required={mode === 'create'} accept="image/*" fileValue={form.passportPage1} onFileChange={(f) => set('passportPage1', f)} placeholder="Faýl saýlaň ýa-da salmak üçin basyň" error={errors.passportPage1} />
+        <FormInput type="file" label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'} required={mode === 'create'} accept="image/*" fileValue={form.passportPage23} onFileChange={(f) => set('passportPage23', f)} placeholder="Faýl saýlaň ýa-da salmak üçin basyň" error={errors.passportPage23} />
+        <FormInput type="file" label="Pasport (8-9 sahypa)"  accept="image/*" fileValue={form.passportPage89} onFileChange={(f) => set('passportPage89', f)} placeholder="Faýl saýlaň ýa-da salmak üçin basyň" />
+        <FormInput type="file" label="Pasport (32-nji sahypa)" accept="image/*" fileValue={form.passportPage32} onFileChange={(f) => set('passportPage32', f)} placeholder="Faýl saýlaň ýa-da salmak üçin basyň" />
       </div>
     </div>
   )
 }
 
-function StepGuarantor({
-  form, errors, set,
-}: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
-}) {
+function StepGuarantor({ form, errors, set }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FormInput type="text" label="Zamunyň ady"        required value={form.guarantor1Name}    onChange={(v) => set('guarantor1Name', v)}    placeholder="Zamunyň ady"        error={errors.guarantor1Name}    />
-        <FormInput type="text" label="Zamunyň familiýasy" required value={form.guarantor1Surname}  onChange={(v) => set('guarantor1Surname', v)}  placeholder="Zamunyň familiýasy" error={errors.guarantor1Surname}  />
-        <FormInput type="text" label="Zamunyň atasynyň ady"        value={form.guarantor1Patronic} onChange={(v) => set('guarantor1Patronic', v)} placeholder="Zamunyň atasynyň ady" />
+        <FormInput type="text" label="Zamunyň ady"          required value={form.guarantor1Name}    onChange={(v) => set('guarantor1Name', v)}    placeholder="Zamunyň ady"          error={errors.guarantor1Name}    />
+        <FormInput type="text" label="Zamunyň familiýasy"   required value={form.guarantor1Surname}  onChange={(v) => set('guarantor1Surname', v)}  placeholder="Zamunyň familiýasy"   error={errors.guarantor1Surname}  />
+        <FormInput type="text" label="Zamunyň atasynyň ady"          value={form.guarantor1Patronic} onChange={(v) => set('guarantor1Patronic', v)} placeholder="Zamunyň atasynyň ady"                                  />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput type="searchable-select" label="Pasport seriýasy" required value={form.guarantor1PassportSerie}  onChange={(v) => set('guarantor1PassportSerie', v)}  options={PASSPORT_SERIES_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.guarantor1PassportSerie}  />
-        <FormInput type="text"             label="Pasport belgisi"   required value={form.guarantor1PassportNumber} onChange={(v) => set('guarantor1PassportNumber', v)} placeholder="Pasport belgisi"           error={errors.guarantor1PassportNumber} />
+        <FormInput type="text"              label="Pasport belgisi"   required value={form.guarantor1PassportNumber} onChange={(v) => set('guarantor1PassportNumber', v)} placeholder="Pasport belgisi"           error={errors.guarantor1PassportNumber} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <FormInput type="text"             label="Kart belgisi"      required value={form.guarantor1CardNumber}   onChange={(v) => set('guarantor1CardNumber', v)}   placeholder="Kart belgisi"          error={errors.guarantor1CardNumber}   />
-        <FormInput type="text"             label="Kartdaky ady"      required value={form.guarantor1CardName}     onChange={(v) => set('guarantor1CardName', v)}     placeholder="Kartdaky ady"          error={errors.guarantor1CardName}     />
-        <FormInput type="searchable-select" label="Möhleti (aý)"     required value={form.guarantor1CardExpMonth} onChange={(v) => set('guarantor1CardExpMonth', v)} options={MONTH_OPTIONS}             placeholder="Saýlamak üçin basyň"    error={errors.guarantor1CardExpMonth} />
-        <FormInput type="searchable-select" label="Möhleti (ýyl)"    required value={form.guarantor1CardExpYear}  onChange={(v) => set('guarantor1CardExpYear', v)}  options={YEAR_OPTIONS}              placeholder="Saýlamak üçin basyň"    error={errors.guarantor1CardExpYear}  />
+        <FormInput type="text"              label="Kart belgisi" required value={form.guarantor1CardNumber}   onChange={(v) => set('guarantor1CardNumber', v)}   placeholder="Kart belgisi"       error={errors.guarantor1CardNumber}   />
+        <FormInput type="text"              label="Kartdaky ady" required value={form.guarantor1CardName}     onChange={(v) => set('guarantor1CardName', v)}     placeholder="Kartdaky ady"       error={errors.guarantor1CardName}     />
+        <FormInput type="searchable-select" label="Möhleti (aý)" required value={form.guarantor1CardExpMonth} onChange={(v) => set('guarantor1CardExpMonth', v)} options={MONTH_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.guarantor1CardExpMonth} />
+        <FormInput type="searchable-select" label="Möhleti (ýyl)" required value={form.guarantor1CardExpYear}  onChange={(v) => set('guarantor1CardExpYear', v)}  options={YEAR_OPTIONS}  placeholder="Saýlamak üçin basyň" error={errors.guarantor1CardExpYear}  />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput type="number" label="Ortaca zähmet haky" required value={form.guarantor1Salary} onChange={(v) => set('guarantor1Salary', v)} placeholder="Ortaca zähmet haky" error={errors.guarantor1Salary} />
       </div>
     </div>
   )
+}
+
+// ─── Shared step content prop type ───────────────────────────────────────────
+
+interface StepContentProps {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -776,45 +596,56 @@ interface LoanOrderFormProps {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormProps) {
-  const { t }      = useTranslation()
-  const navigate   = useNavigate()
+  const { t }    = useTranslation()
+  const navigate = useNavigate()
 
   const createMutation = useCreateLoanOrder()
   const updateMutation = useUpdateLoanOrder()
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const [form, setForm]           = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE)
-  const [errors, setErrors]       = useState<FormErrors>({})
+  const [form, setForm]     = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE)
+  const [errors, setErrors] = useState<FormErrors>({})
   const [currentStep, setCurrentStep] = useState(0)
-  const [completed, setCompleted] = useState<Set<number>>(
-    // In edit mode, mark all steps as reachable from the start
+
+  /**
+   * `visited`: steps the user has explicitly moved away from (via Next or direct nav).
+   * Used to mark steps as "done" or "error" in the step bar.
+   * In edit mode all steps start visited so errors show immediately on submit.
+   */
+  const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>()
   )
 
-  const set = useCallback(
-    <K extends keyof FormState>(key: K, value: FormState[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }))
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
-    },
-    []
-  )
+  /** Steps with at least one error (evaluated lazily — only after being visited). */
+  const stepsWithErrors = useMemo(() => {
+    const out = new Set<number>()
+    visited.forEach((i) => {
+      if (Object.keys(STEPS[i].validate(form, mode)).length > 0) out.add(i)
+    })
+    return out
+  }, [form, mode, visited])
+
+  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }, [])
 
   const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
 
-  // Validate current step and advance
-  const handleNext = () => {
-    const stepDef = STEPS[currentStep]
-    const errs    = stepDef.validate(form, mode)
+  // ── Navigation ──────────────────────────────────────────────────────────────
 
+  const markVisited = (i: number) =>
+    setVisited((prev) => new Set([...prev, i]))
+
+  const handleNext = () => {
+    markVisited(currentStep)
+    const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
       return
     }
-
     setErrors({})
-    setCompleted((prev) => new Set([...prev, currentStep]))
-
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -823,6 +654,7 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
 
   const handleBack = () => {
     if (currentStep > 0) {
+      markVisited(currentStep)
       setErrors({})
       setCurrentStep(currentStep - 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -830,25 +662,26 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
   }
 
   const handleGoTo = (i: number) => {
+    markVisited(currentStep)
     setErrors({})
     setCurrentStep(i)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Final submit — validate all steps at once
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
   const handleSubmit = () => {
+    // Mark all steps visited so error states show in the bar
+    setVisited(new Set(STEPS.map((_, i) => i)))
+
     const allErrors: FormErrors = {}
-    for (const step of STEPS) {
-      Object.assign(allErrors, step.validate(form, mode))
-    }
+    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors)
       toast.error('Käbir hökmany meýdanlar doldurylan däldir.')
-      // Find which step has the first error and jump there
       for (let i = 0; i < STEPS.length; i++) {
-        const stepErrs = STEPS[i].validate(form, mode)
-        if (Object.keys(stepErrs).length > 0) {
+        if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
           setCurrentStep(i)
           break
         }
@@ -905,138 +738,114 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
     }
 
     if (mode === 'create') {
-      createMutation.mutate(payload, {
-        onSuccess: () => navigate('/loan-orders'),
-      })
+      createMutation.mutate(payload, { onSuccess: () => navigate('/loan-orders') })
     } else {
-      updateMutation.mutate(
-        { id: loanOrderId!, payload },
-        { onSuccess: () => navigate('/loan-orders') }
-      )
+      updateMutation.mutate({ id: loanOrderId!, payload }, { onSuccess: () => navigate('/loan-orders') })
     }
   }
 
-  const isLastStep = currentStep === STEPS.length - 1
+  // ── StepBar items ───────────────────────────────────────────────────────────
 
-  // Completed step count for progress bar
-  const completedCount = completed.size
+ // 4. stepBarItems'i StepCardItem[] olarak oluştur
+const stepBarItems: StepCardItem[] = STEPS.map((s, i) => {
+  const isActive  = i === currentStep
+  const hasErrors = stepsWithErrors.has(i)
+  const isDone    = visited.has(i) && !hasErrors
+
+  return {
+    id:       s.id,
+    title:    t(s.titleKey) || s.titleFallback,
+    subtitle: s.subtitle,
+    icon:     s.icon,
+    status:   isActive  ? 'active'
+            : hasErrors ? 'error'
+            : isDone    ? 'done'
+            : 'idle',
+  }
+})
+
+  const isLastStep     = currentStep === STEPS.length - 1
 
   // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex flex-col gap-5">
-      {/* ── Page header ── */}
+      {/* Page header */}
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold text-foreground">
-          {mode === 'create'
-            ? (t('Loan order create') || 'Karz sargyt döredüň')
-            : (t('Loan order edit')   || 'Karz sargydy üýtget')}
+          {mode === 'create' ? (t('Loan order create') || 'Karz sargyt döredüň') : (t('Loan order edit') || 'Karz sargydy üýtget')}
         </h1>
         <p className="text-sm text-muted-foreground">
           {t('Fill in all sections step by step') || 'Ähli meýdanlary dolduryp, ädim-ädim öň geçiň.'}
         </p>
       </div>
 
-      {/* ── Thin progress bar ── */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-[3px] rounded-full bg-border overflow-hidden">
-          <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${(completedCount / STEPS.length) * 100}%` }}
-          />
+      {/* Horizontal step bar — sits above the form card */}
+      <StepBarCards steps={stepBarItems} onGoTo={handleGoTo} />
+
+      {/* Form card */}
+      <div className="flex flex-col bg-card border border-border rounded-xl overflow-hidden">
+        {/* Card header */}
+        <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-border">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold tabular-nums">
+            {currentStep + 1} / {STEPS.length}
+          </span>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t(STEPS[currentStep].titleKey) || STEPS[currentStep].titleFallback}
+          </h2>
         </div>
-        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-          {completedCount} / {STEPS.length}
-        </span>
-      </div>
 
-      {/* ── Sidebar + content layout ── */}
-      <div className="grid grid-cols-[200px_1fr] gap-5 items-start">
-        {/* Sidebar */}
-        <StepSidebar
-          steps={STEPS}
-          current={currentStep}
-          completed={completed}
-          onGoTo={handleGoTo}
-        />
+        {/* Card body */}
+        <div className="p-5">
+          {currentStep === 0 && <StepStatus    {...stepProps} />}
+          {currentStep === 1 && <StepLoan      {...stepProps} />}
+          {currentStep === 2 && <StepLocation  {...stepProps} />}
+          {currentStep === 3 && <StepPersonal  {...stepProps} />}
+          {currentStep === 4 && <StepCard      {...stepProps} />}
+          {currentStep === 5 && <StepPassport  {...stepProps} />}
+          {currentStep === 6 && <StepContact   {...stepProps} />}
+          {currentStep === 7 && <StepJob       {...stepProps} />}
+          {currentStep === 8 && <StepFiles     {...stepProps} mode={mode} initialData={initialData} />}
+          {currentStep === 9 && <StepGuarantor {...stepProps} />}
+        </div>
 
-        {/* Step card */}
-        <div className="flex flex-col gap-0 bg-card border border-border rounded-xl overflow-hidden">
-          {/* Card header */}
-          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-border">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold tabular-nums">
-              {currentStep + 1} / {STEPS.length}
-            </span>
-            <h2 className="text-sm font-semibold text-foreground">
-              {t(STEPS[currentStep].titleKey) || STEPS[currentStep].titleFallback}
-            </h2>
-          </div>
-
-          {/* Card body */}
-          <div className="p-5">
-            {currentStep === 0 && <StepStatus    {...stepProps} />}
-            {currentStep === 1 && <StepLoan      {...stepProps} />}
-            {currentStep === 2 && <StepLocation  {...stepProps} />}
-            {currentStep === 3 && <StepPersonal  {...stepProps} />}
-            {currentStep === 4 && <StepCard      {...stepProps} />}
-            {currentStep === 5 && <StepPassport  {...stepProps} />}
-            {currentStep === 6 && <StepContact   {...stepProps} />}
-            {currentStep === 7 && <StepJob       {...stepProps} />}
-            {currentStep === 8 && <StepFiles     {...stepProps} mode={mode} initialData={initialData} />}
-            {currentStep === 9 && <StepGuarantor {...stepProps} />}
-          </div>
-
-          {/* Card footer with navigation */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-t border-border bg-muted/30">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={currentStep === 0 ? () => navigate(-1) : handleBack}
-              disabled={isPending}
-            >
-              {currentStep === 0 ? (
-                t('Cancel') || 'Ýatyr'
-              ) : (
-                <span className="flex items-center gap-1.5">
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                  {t('Back') || 'Yza'}
-                </span>
-              )}
-            </Button>
-
-            {isLastStep ? (
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSubmit}
-                disabled={isPending}
-                className="min-w-[150px]"
-              >
-                {isPending ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    {t('Loading') || 'Ýüklenilýär...'}
-                  </span>
-                ) : mode === 'create'
-                    ? (t('loanOrderMobiles.createButton') || 'Karz sargyt döredüň')
-                    : (t('loanOrders.saveButton')         || 'Ýatda sakla')
-                }
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleNext}
-                disabled={isPending}
-                className="min-w-[120px]"
-              >
-                <span className="flex items-center gap-1.5">
-                  {t('Next') || 'Indiki'}
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </span>
-              </Button>
+        {/* Card footer */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-t border-border bg-muted/30">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={currentStep === 0 ? () => navigate(-1) : handleBack}
+            disabled={isPending}
+          >
+            {currentStep === 0 ? (t('Cancel') || 'Ýatyr') : (
+              <span className="flex items-center gap-1.5">
+                <ChevronLeft className="w-3.5 h-3.5" />
+                {t('Back') || 'Yza'}
+              </span>
             )}
-          </div>
+          </Button>
+
+          {isLastStep ? (
+            <Button type="button" size="sm" onClick={handleSubmit} disabled={isPending} className="min-w-[150px]">
+              {isPending ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {t('Loading') || 'Ýüklenilýär...'}
+                </span>
+              ) : mode === 'create'
+                  ? (t('loanOrderMobiles.createButton') || 'Karz sargyt döredüň')
+                  : (t('loanOrders.saveButton')         || 'Ýatda sakla')
+              }
+            </Button>
+          ) : (
+            <Button type="button" size="sm" onClick={handleNext} disabled={isPending} className="min-w-[120px]">
+              <span className="flex items-center gap-1.5">
+                {t('Next') || 'Indiki'}
+                <ChevronRight className="w-3.5 h-3.5" />
+              </span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

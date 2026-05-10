@@ -182,7 +182,7 @@ function TextInput({
 function PhoneInput({
   value = '',
   onChange,
-  placeholder = '61 097 651',
+  placeholder = '61 111213',
   error,
   disabled,
   required,

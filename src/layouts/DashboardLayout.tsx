@@ -327,9 +327,9 @@ function AppSidebar() {
           title: t("Users", "Ulanyjylar"),
           icon: Users,
           items: [
-            { title: t("Operators", "Operatorlar"), url: "/users/operators" },
-            { title: t("Clients", "Müşderiler"), url: "/users/clients" },
-            { title: t("All users", "Ähli ulanyjylar"), url: "/users/all" },
+            { title: t("Operators", "Operatorlar"), url: "/operators" },
+            { title: t("Clients", "Müşderiler"), url: "/clients" },
+            { title: t("All users", "Ähli ulanyjylar"), url: "/all-users" },
           ],
         },
         {
