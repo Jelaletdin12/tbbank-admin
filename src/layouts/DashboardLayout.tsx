@@ -378,11 +378,11 @@ function AppSidebar() {
               items: [
                 {
                   title: t("Loan types", "Karz görnüşleri"),
-                  url: "/settings/loan/types",
+                  url: "/settings/loan/loan-types",
                 },
                 {
                   title: t("Required Documents", "Gerekli resminamalar"),
-                  url: "/settings/loan/documents",
+                  url: "/settings/loan/required-documents",
                 },
               ],
             },

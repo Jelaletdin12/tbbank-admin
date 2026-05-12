@@ -137,6 +137,16 @@ const PermissionCreatePage = lazy(() => import("@/pages/settings/users/permissio
 const PermissionsViewPage = lazy(() => import("@/pages/settings/users/permissionsView"));
 const PermissionEditPage = lazy(() => import("@/pages/settings/users/permissionsEdit"));
 
+const LoanTypesPage = lazy(() => import("@/pages/settings/loan/loanTypes"));
+const LoanTypeCreatePage = lazy(() => import("@/pages/settings/loan/loanTypesCreate"));
+const LoanTypesViewPage = lazy(() => import("@/pages/settings/loan/loanTypesView"));
+const LoanTypeEditPage = lazy(() => import("@/pages/settings/loan/loanTypesEdit"));
+
+const RequiredDocumentsPage = lazy(() => import("@/pages/settings/loan/requiredDocuments"));
+const RequiredDocumentCreatePage = lazy(() => import("@/pages/settings/loan/requiredDocumentsCreate"));
+const RequiredDocumentsViewPage = lazy(() => import("@/pages/settings/loan/requiredDocumentsView"));
+const RequiredDocumentEditPage = lazy(() => import("@/pages/settings/loan/requiredDocumentsEdit"));
+
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -750,6 +760,70 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <PermissionEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/loan-types",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanTypesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/loan-types/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanTypeCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/loan-types/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanTypesViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/loan-types/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanTypeEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/required-documents",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RequiredDocumentsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/required-documents/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RequiredDocumentCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/required-documents/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RequiredDocumentsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/loan/required-documents/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RequiredDocumentEditPage />
               </Suspense>
             ),
           },
