@@ -338,20 +338,20 @@ function AppSidebar() {
           items: [
             {
               title: t("Currency rates", "Walýuta kurslary"),
-              url: "/currencies/rates",
+              url: "/currency-rates",
             },
             {
               title: t(
                 "Visa/Master, Sber Settings",
                 "Visa/Master, Sber sazlamalary",
               ),
-              url: "/currencies/settings",
+              url: "/visa-master-sber-settings",
             },
           ],
         },
         {
           title: t("Online payment history", "Onlaýn töleg taryhy"),
-          url: "/online-payments",
+          url: "/online-payments-history",
           icon: CreditCard,
         },
       ],

@@ -81,7 +81,7 @@ src/
    - Create ve Edit sayfaları (`pages/`) sadece bu component'i çağıran birer **wrapper** olmalıdır.
    - Edit sayfası `useParams()` ile URL'den `id` alır, ilgili hook ile veriyi fetch eder ve `initialData` prop'u olarak form'a geçer.
    - Validation, form state, submit logic — hepsi shared component içinde tek yerde yönetilir.
-   - Create ve Edit form lar multiple form ise yani bir cok adimdan olusuyorsa o zaman `src/components/stepBarV2.tsx` componentini kullan. Çünkü orada Progressive Disclosure var. Ama eger sadece bir form ise o zaman `src/components/form.tsx` componentini kullan.
+   - Create ve Edit form lar multiple form ise yani bir cok adimdan olusuyorsa o zaman `src/components/stepBarV2.tsx` componentini kullan. Çünkü orada Progressive Disclosure var. Ama eger sadece bir form ise o zaman `src/components/formInput.tsx` componentini kullan.
    - Örnek yapı:
      ```
      features/[feature]/

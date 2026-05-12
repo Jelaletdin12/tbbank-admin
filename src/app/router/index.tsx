@@ -115,6 +115,28 @@ const ClientCreatePage = lazy(() => import("@/pages/users/clientsCreate"));
 const ClientViewPage = lazy(() => import("@/pages/users/clientsView"));
 const ClientEditPage = lazy(() => import("@/pages/users/clientsEdit"));
 
+const CurrencyRatesPage = lazy(() => import("@/pages/currencies/currencyRates"));
+const CurrencyRateCreatePage = lazy(() => import("@/pages/currencies/currencyRatesCreate"));
+const CurrencyRateViewPage = lazy(() => import("@/pages/currencies/currencyRatesView"));
+const CurrencyRateEditPage = lazy(() => import("@/pages/currencies/currencyRatesEdit"));
+
+const VisaMasterSberSettingsPage = lazy(() => import("@/pages/currencies/visaMasterSberSettings"));
+const VisaMasterSberSettingCreatePage = lazy(() => import("@/pages/currencies/visaMasterSberSettingsCreate"));
+const VisaMasterSberSettingEditPage = lazy(() => import("@/pages/currencies/visaMasterSberSettingsEdit"));
+
+const OnlinePaymentsHistoryPage = lazy(() => import("@/pages/onlinePaymentsHistory"));
+const OnlinePaymentsHistoryViewPage = lazy(() => import("@/pages/onlinePaymentsHistory/onlinePaymenHistoryView"));
+
+const RolesPage = lazy(() => import("@/pages/settings/users/roles"));
+const RoleCreatePage = lazy(() => import("@/pages/settings/users/createRole"));
+const RoleViewPage = lazy(() => import("@/pages/settings/users/rolesView"));
+const RoleEditPage = lazy(() => import("@/pages/settings/users/editRole"));
+
+const PermissionsPage = lazy(() => import("@/pages/settings/users/permissions"));
+const PermissionCreatePage = lazy(() => import("@/pages/settings/users/permissionsCreate"));
+const PermissionsViewPage = lazy(() => import("@/pages/settings/users/permissionsView"));
+const PermissionEditPage = lazy(() => import("@/pages/settings/users/permissionsEdit"));
+
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -592,6 +614,142 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <ClientEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /currencies-rates
+            path: "/currency-rates",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CurrencyRatesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/currency-rates/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CurrencyRateCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/currency-rates/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CurrencyRateViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/currency-rates/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CurrencyRateEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /visa-master-sber-settings
+            path: "/visa-master-sber-settings",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterSberSettingsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/visa-master-sber-settings/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterSberSettingCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/visa-master-sber-settings/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <VisaMasterSberSettingEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/online-payments-history",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OnlinePaymentsHistoryPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/online-payments-history/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <OnlinePaymentsHistoryViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/roles",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RolesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/roles/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RoleCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/roles/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RoleViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/roles/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <RoleEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/permissions",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PermissionsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/permissions/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PermissionCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/permissions/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PermissionsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/users/permissions/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <PermissionEditPage />
               </Suspense>
             ),
           },
