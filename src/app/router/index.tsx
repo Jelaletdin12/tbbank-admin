@@ -157,6 +157,16 @@ const CardTypeCreatePage = lazy(() => import("@/pages/settings/card/cardTypesCre
 const CardTypesViewPage = lazy(() => import("@/pages/settings/card/cardTypesView"));
 const CardTypeEditPage = lazy(() => import("@/pages/settings/card/cardTypesEdit"));
 
+const DistrictsPage = lazy(() => import("@/pages/settings/location/districts"));
+const DistrictCreatePage = lazy(() => import("@/pages/settings/location/districtsCreate"));
+const DistrictsViewPage = lazy(() => import("@/pages/settings/location/districtsView"));
+const DistrictEditPage = lazy(() => import("@/pages/settings/location/districtsEdit"));
+
+const BranchesPage = lazy(() => import("@/pages/settings/location/branches"));
+const BranchCreatePage = lazy(() => import("@/pages/settings/location/branchesCreate"));
+const BranchesViewPage = lazy(() => import("@/pages/settings/location/branchesView"));
+const BranchEditPage = lazy(() => import("@/pages/settings/location/branchesEdit"));
+
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -898,6 +908,70 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <CardTypeEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /settings/location/districts
+            path: "/settings/location/districts",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DistrictsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/districts/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DistrictCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/districts/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DistrictsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/districts/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <DistrictEditPage />
+              </Suspense>
+            ),
+          },
+          { // Sidebar: /settings/location/branches
+            path: "/settings/location/branches",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BranchesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/branches/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BranchCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/branches/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BranchesViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/location/branches/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BranchEditPage />
               </Suspense>
             ),
           },
