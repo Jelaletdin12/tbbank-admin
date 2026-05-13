@@ -147,6 +147,16 @@ const RequiredDocumentCreatePage = lazy(() => import("@/pages/settings/loan/requ
 const RequiredDocumentsViewPage = lazy(() => import("@/pages/settings/loan/requiredDocumentsView"));
 const RequiredDocumentEditPage = lazy(() => import("@/pages/settings/loan/requiredDocumentsEdit"));
 
+const CardReasonsPage = lazy(() => import("@/pages/settings/card/reasons"));
+const CardReasonCreatePage = lazy(() => import("@/pages/settings/card/reasonsCreate"));
+const CardReasonsViewPage = lazy(() => import("@/pages/settings/card/reasonsView"));
+const CardReasonEditPage = lazy(() => import("@/pages/settings/card/reasonsEdit"));
+
+const CardTypesPage = lazy(() => import("@/pages/settings/card/cardTypes"));
+const CardTypeCreatePage = lazy(() => import("@/pages/settings/card/cardTypesCreate"));
+const CardTypesViewPage = lazy(() => import("@/pages/settings/card/cardTypesView"));
+const CardTypeEditPage = lazy(() => import("@/pages/settings/card/cardTypesEdit"));
+
 function AuthGuard() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -824,6 +834,70 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <RequiredDocumentEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-reasons",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardReasonsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-reasons/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardReasonCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-reasons/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardReasonsViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-reasons/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardReasonEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-types",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTypesPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-types/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTypeCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-types/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTypesViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/settings/card/card-types/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <CardTypeEditPage />
               </Suspense>
             ),
           },

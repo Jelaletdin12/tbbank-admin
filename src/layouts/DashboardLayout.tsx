@@ -394,11 +394,11 @@ function AppSidebar() {
                     "Card Issuance Reasons",
                     "Kartyň çykarylmagynyň sebäpleri",
                   ),
-                  url: "/settings/card/reasons",
+                  url: "/settings/card/card-reasons",
                 },
                 {
                   title: t("Card types", "Kart görnüşleri"),
-                  url: "/settings/card/types",
+                  url: "/settings/card/card-types",
                 },
               ],
             },
