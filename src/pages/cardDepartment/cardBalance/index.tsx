@@ -149,6 +149,7 @@ export default function CardBalancesPage() {
           {t('Card balances', 'Kart galyndylary')}
         </h1>
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       <DataTableToolbar
         searchValue={search}
@@ -181,6 +182,7 @@ export default function CardBalancesPage() {
         totalCount={total}
         onPageChange={setPage}
       />
+</div>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

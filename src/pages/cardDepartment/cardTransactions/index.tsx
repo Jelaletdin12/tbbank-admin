@@ -157,6 +157,9 @@ export default function CardTransactionsPage() {
         </h1>
       </div>
 
+<div className="bg-card border border-border rounded-xl p-4">
+
+
       {/* Toolbar */}
       <DataTableToolbar
         searchValue={search}
@@ -190,6 +193,7 @@ export default function CardTransactionsPage() {
         totalCount={total}
         onPageChange={setPage}
       />
+</div>
 
       {/* Delete dialog */}
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>

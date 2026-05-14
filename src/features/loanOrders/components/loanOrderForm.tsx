@@ -13,6 +13,7 @@ import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import { useCreateLoanOrder, useUpdateLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
 import type { LoanOrder, LoanOrderPayload } from '@/features/loanOrders/api/loanOrdersApi'
+import { BRANCHES_BY_REGION } from '@/features/loanOrders/api/loanOrdersApi'
 
 // ─── Static options ───────────────────────────────────────────────────────────
 
@@ -387,7 +388,7 @@ interface StepContentProps {
 function StepStatus({ form, errors, set }: StepContentProps) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Ýagdaý">
+      <BentoCard>
         <FormInput
           type="select"
           label="Status"
@@ -400,7 +401,7 @@ function StepStatus({ form, errors, set }: StepContentProps) {
         />
       </BentoCard>
 
-      <BentoCard title="Bellik">
+      <BentoCard>
         <FormInput
           type="textarea"
           label="Bellik"
@@ -417,7 +418,7 @@ function StepStatus({ form, errors, set }: StepContentProps) {
 function StepLoan({ form, errors, set }: StepContentProps) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Karz görnüşi">
+      <BentoCard>
         <FormInput
           type="searchable-select"
           label="Karz görnüşi"
@@ -430,7 +431,7 @@ function StepLoan({ form, errors, set }: StepContentProps) {
         />
       </BentoCard>
 
-      <BentoCard title="Möçber">
+      <BentoCard>
         <FormInput
           type="number"
           label="Karz möçberi"
@@ -446,9 +447,11 @@ function StepLoan({ form, errors, set }: StepContentProps) {
 }
 
 function StepLocation({ form, errors, set }: StepContentProps) {
+  const branchOptions = BRANCHES_BY_REGION[form.region] ?? []
+
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Welaýat">
+      <BentoCard>
         <FormInput
           type="searchable-select"
           label="Welaýat"
@@ -459,19 +462,16 @@ function StepLocation({ form, errors, set }: StepContentProps) {
           placeholder="Saýlamak üçin basyň"
           error={errors.region}
         />
-        <p className="text-xs text-muted-foreground">
-          Welaýaty saýlasaňyz şahamçalar güncellenar.
-        </p>
       </BentoCard>
 
-      <BentoCard title="Şahamça">
+      <BentoCard>
         <FormInput
           type="searchable-select"
           label="Şahamça"
           required
           value={form.branch}
           onChange={(v) => set('branch', v)}
-          options={[]}
+          options={branchOptions}
           placeholder="Saýlamak üçin basyň"
           disabled={!form.region}
           error={errors.branch}
@@ -485,37 +485,37 @@ function StepPersonal({ form, errors, set }: StepContentProps) {
   return (
     <div className="space-y-4">
       <BentoGrid cols={3}>
-        <BentoCard title="Ady">
+        <BentoCard>
           <FormInput type="text" label="Ady" required value={form.firstName} onChange={(v) => set('firstName', v)} placeholder="Ady" error={errors.firstName} />
         </BentoCard>
-        <BentoCard title="Familiýasy">
+        <BentoCard>
           <FormInput type="text" label="Familiýasy" required value={form.lastName} onChange={(v) => set('lastName', v)} placeholder="Familiýasy" error={errors.lastName} />
         </BentoCard>
-        <BentoCard title="Atasynyň ady">
+        <BentoCard>
           <FormInput type="text" label="Atasynyň ady" value={form.patronicName} onChange={(v) => set('patronicName', v)} placeholder="Atasynyň ady" />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={3}>
-        <BentoCard title="Bilimi">
+        <BentoCard >
           <FormInput type="select" label="Bilimi" required value={form.education} onChange={(v) => set('education', v)} options={EDUCATION_OPTIONS} placeholder="Saýlaň" error={errors.education} />
         </BentoCard>
-        <BentoCard title="Maşgala ýagdaýy">
+        <BentoCard >
           <FormInput type="select" label="Maşgala ýagdaýy" required value={form.marriageStatus} onChange={(v) => set('marriageStatus', v)} options={MARRIAGE_OPTIONS} placeholder="Saýlaň" error={errors.marriageStatus} />
         </BentoCard>
-        <BentoCard title="Doglan güni">
+        <BentoCard >
           <FormInput type="date" label="Doglan güni" required value={form.dateOfBirth} onChange={(v) => set('dateOfBirth', v)} error={errors.dateOfBirth} />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={2}>
-        <BentoCard title="Ýazgy edilen salgy">
+        <BentoCard >
           <FormInput type="text" label="Ýazgy edilen salgyňyz" required value={form.residence} onChange={(v) => set('residence', v)} placeholder="Ýazgy edilen salgy" error={errors.residence} />
         </BentoCard>
-        <BentoCard title="Häzirki ýaşaýyş ýeri">
+        <BentoCard >
           <FormInput type="text" label="Häzirki ýaşaýyş ýeri" value={form.currentResidence} onChange={(v) => set('currentResidence', v)} placeholder="Häzirki ýaşaýyş ýeri" />
         </BentoCard>
-        <BentoCard title="Karz taryhy" span="full">
+        <BentoCard span="full">
           <FormInput type="searchable-select" label="Karz taryhy" value={form.loanHistory} onChange={(v) => set('loanHistory', v)} options={[]} placeholder="Saýlamak üçin basyň" />
         </BentoCard>
       </BentoGrid>
@@ -543,22 +543,22 @@ function StepPassport({ form, errors, set }: StepContentProps) {
   return (
     <div className="space-y-4">
       <BentoGrid cols={3}>
-        <BentoCard title="Seriýasy">
+        <BentoCard >
           <FormInput type="searchable-select" label="Pasport seriýasy" required value={form.passportSerie} onChange={(v) => set('passportSerie', v)} options={PASSPORT_SERIES_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.passportSerie} />
         </BentoCard>
-        <BentoCard title="Belgisi">
+        <BentoCard >
           <FormInput type="text" label="Pasport belgisi" required value={form.passportNumber} onChange={(v) => set('passportNumber', v)} placeholder="Pasport belgisi" error={errors.passportNumber} />
         </BentoCard>
-        <BentoCard title="Berlen senesi">
+        <BentoCard >
           <FormInput type="date" label="Pasport berlen senesi" required value={form.passportDateOfIssue} onChange={(v) => set('passportDateOfIssue', v)} error={errors.passportDateOfIssue} />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={2}>
-        <BentoCard title="Kim tarapyndan berildi">
+        <BentoCard >
           <FormInput type="text" label="Kim tarapyndan berildi" required value={form.passportGivenBy} onChange={(v) => set('passportGivenBy', v)} placeholder="Kim tarapyndan berildi" error={errors.passportGivenBy} />
         </BentoCard>
-        <BentoCard title="Doglan ýeri">
+        <BentoCard >
           <FormInput type="text" label="Doglan ýeri (pasport)" value={form.bornPlace} onChange={(v) => set('bornPlace', v)} placeholder="Doglan ýeri (pasport)" />
         </BentoCard>
       </BentoGrid>
@@ -586,25 +586,25 @@ function StepJob({ form, errors, set }: StepContentProps) {
   return (
     <div className="space-y-4">
       <BentoGrid cols={2}>
-        <BentoCard title="Kärhana">
+        <BentoCard >
           <FormInput type="text" label="Işleýän edaranyň/kärhananyň ady" required value={form.workCompany} onChange={(v) => set('workCompany', v)} placeholder="Kärhananyň ady" error={errors.workCompany} />
           <FormInput type="phone" label="Işgärler bölüminiň iş belgisi" value={form.workHrPhone} onChange={(v) => set('workHrPhone', v)} placeholder="61 097 651" />
         </BentoCard>
 
-        <BentoCard title="Iş ýeri">
+        <BentoCard >
           <FormInput type="searchable-select" label="Işleýän welaýatyňyz" value={form.workRegion} onChange={(v) => set('workRegion', v)} options={REGION_OPTIONS} placeholder="Saýlamak üçin basyň" />
           <FormInput type="searchable-select" label="Işleýän etrabyňyz" value={form.workProvince} onChange={(v) => set('workProvince', v)} options={[]} placeholder="Saýlamak üçin basyň" />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={3}>
-        <BentoCard title="Wezipe">
+        <BentoCard >
           <FormInput type="text" label="Wezipe" required value={form.position} onChange={(v) => set('position', v)} placeholder="Wezipe" error={errors.position} />
         </BentoCard>
-        <BentoCard title="Zähmet haky">
+        <BentoCard>
           <FormInput type="number" label="Zähmet haky" required value={form.salary} onChange={(v) => set('salary', v)} placeholder="Zähmet haky" error={errors.salary} />
         </BentoCard>
-        <BentoCard title="Işe başlan wagty">
+        <BentoCard>
           <FormInput type="date" label="Işe başlan wagtyňyz" required value={form.workStartedAt} onChange={(v) => set('workStartedAt', v)} error={errors.workStartedAt} />
         </BentoCard>
       </BentoGrid>
@@ -644,7 +644,7 @@ function StepFiles({
       )}
 
       <BentoGrid cols={2}>
-        <BentoCard title="Pasport (sahypa 1)">
+        <BentoCard >
           <FormInput
             type="file"
             label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'}
@@ -656,7 +656,7 @@ function StepFiles({
           />
         </BentoCard>
 
-        <BentoCard title="Pasport (2-3-nji sahypa)">
+        <BentoCard>
           <FormInput
             type="file"
             label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'}
@@ -668,7 +668,7 @@ function StepFiles({
           />
         </BentoCard>
 
-        <BentoCard title="Pasport (8-9 sahypa)">
+        <BentoCard >
           <FormInput
             type="file"
             label="Pasport (8-9 sahypa)"
@@ -678,7 +678,7 @@ function StepFiles({
           />
         </BentoCard>
 
-        <BentoCard title="Pasport (32-nji sahypa)">
+        <BentoCard >
           <FormInput
             type="file"
             label="Pasport (32-nji sahypa)"
@@ -696,33 +696,33 @@ function StepGuarantor({ form, errors, set }: StepContentProps) {
   return (
     <div className="space-y-4">
       <BentoGrid cols={3}>
-        <BentoCard title="Ady">
+        <BentoCard>
           <FormInput type="text" label="Zamunyň ady" required value={form.guarantor1Name} onChange={(v) => set('guarantor1Name', v)} placeholder="Zamunyň ady" error={errors.guarantor1Name} />
         </BentoCard>
-        <BentoCard title="Familiýasy">
+        <BentoCard >
           <FormInput type="text" label="Zamunyň familiýasy" required value={form.guarantor1Surname} onChange={(v) => set('guarantor1Surname', v)} placeholder="Zamunyň familiýasy" error={errors.guarantor1Surname} />
         </BentoCard>
-        <BentoCard title="Atasynyň ady">
+        <BentoCard >
           <FormInput type="text" label="Zamunyň atasynyň ady" value={form.guarantor1Patronic} onChange={(v) => set('guarantor1Patronic', v)} placeholder="Zamunyň atasynyň ady" />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={2}>
-        <BentoCard title="Pasport seriýasy">
+        <BentoCard >
           <FormInput type="searchable-select" label="Pasport seriýasy" required value={form.guarantor1PassportSerie} onChange={(v) => set('guarantor1PassportSerie', v)} options={PASSPORT_SERIES_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.guarantor1PassportSerie} />
         </BentoCard>
-        <BentoCard title="Pasport belgisi">
+        <BentoCard >
           <FormInput type="text" label="Pasport belgisi" required value={form.guarantor1PassportNumber} onChange={(v) => set('guarantor1PassportNumber', v)} placeholder="Pasport belgisi" error={errors.guarantor1PassportNumber} />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={2}>
-        <BentoCard title="Kart maglumatlary">
+        <BentoCard >
           <FormInput type="text" label="Kart belgisi" required value={form.guarantor1CardNumber} onChange={(v) => set('guarantor1CardNumber', v)} placeholder="Kart belgisi" error={errors.guarantor1CardNumber} />
           <FormInput type="text" label="Kartdaky ady" required value={form.guarantor1CardName} onChange={(v) => set('guarantor1CardName', v)} placeholder="Kartdaky ady" error={errors.guarantor1CardName} />
         </BentoCard>
 
-        <BentoCard title="Kart möhleti we zähmet haky">
+        <BentoCard>
           <FormInput type="searchable-select" label="Möhleti (aý)" required value={form.guarantor1CardExpMonth} onChange={(v) => set('guarantor1CardExpMonth', v)} options={MONTH_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.guarantor1CardExpMonth} />
           <FormInput type="searchable-select" label="Möhleti (ýyl)" required value={form.guarantor1CardExpYear} onChange={(v) => set('guarantor1CardExpYear', v)} options={YEAR_OPTIONS} placeholder="Saýlamak üçin basyň" error={errors.guarantor1CardExpYear} />
           <FormInput type="number" label="Ortaca zähmet haky" required value={form.guarantor1Salary} onChange={(v) => set('guarantor1Salary', v)} placeholder="Ortaca zähmet haky" error={errors.guarantor1Salary} />
@@ -921,16 +921,6 @@ export function LoanOrderForm({ mode, initialData, loanOrderId }: LoanOrderFormP
       {/* Step bar */}
       <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
         <StepBarCards steps={stepBarItems} onGoTo={handleGoTo} />
-      </div>
-
-      {/* Step label */}
-      <div className="flex items-center gap-2">
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold tabular-nums">
-          {currentStep + 1} / {STEPS.length}
-        </span>
-        <h2 className="text-sm font-semibold text-foreground">
-          {t(STEPS[currentStep].titleKey) || STEPS[currentStep].titleFallback}
-        </h2>
       </div>
 
       {/* Step content */}

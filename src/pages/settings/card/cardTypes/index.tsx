@@ -172,6 +172,7 @@ export function CardTypesListPage() {
           </h1>
         </div>
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       {/* Toolbar */}
       <DataTableToolbar
@@ -209,6 +210,7 @@ export function CardTypesListPage() {
         totalCount={data?.total}
         onPageChange={setPage}
       />
+</div>
 
       {/* Delete dialog */}
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>

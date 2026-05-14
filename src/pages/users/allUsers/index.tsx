@@ -190,8 +190,13 @@ export default function UsersListPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-4">
-      
-
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">
+          {t('clients.title', 'Ahli Müşderiler')}
+        </h1>
+      </div>
+<div className="bg-card border border-border rounded-xl p-4">
+  
       {/* Toolbar */}
       <DataTableToolbar
         searchValue={search}
@@ -238,6 +243,7 @@ export default function UsersListPage() {
         totalCount={data?.total}
         onPageChange={setPage}
       />
+   </div>
 
       {/* Delete confirm dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>

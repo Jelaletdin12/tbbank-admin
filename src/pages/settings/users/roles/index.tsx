@@ -123,10 +123,9 @@ export default function RolesPage() {
         <h1 className="text-2xl font-bold text-foreground">
           {t('roles.title', 'Rollar')}
         </h1>
-        <Button onClick={() => navigate('/settings/users/roles/create')}>
-          {t('roles.actions.create', 'Rol dörediň')}
-        </Button>
+     
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       {/* Toolbar */}
       <DataTableToolbar
@@ -141,6 +140,8 @@ export default function RolesPage() {
         perPageOptions={[10, 25, 50, 100]}
         perPage={perPage}
         onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
+         actionLabel={t('roles.actions.create', 'Rol dörediň')}
+        onAction={() => navigate('/settings/users/roles/create')}
       />
 
       {/* Table */}
@@ -158,7 +159,7 @@ export default function RolesPage() {
         totalCount={data?.meta?.total ?? 0}
         onPageChange={setPage}
       />
-
+</div>
       {/* Delete confirmation dialog */}
       <AlertDialog
         open={deleteId !== null}

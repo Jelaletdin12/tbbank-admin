@@ -215,6 +215,7 @@ export default function IntlPaymentsPage() {
         </h1>
       </div>
       <MonthSelector value={month} onChange={(v) => { setMonth(v); setPage(1) }} />
+<div className="bg-card border border-border rounded-xl p-4">
 
       <DataTableToolbar
         searchValue={search}
@@ -262,6 +263,7 @@ export default function IntlPaymentsPage() {
         totalCount={data?.meta?.total}
         onPageChange={setPage}
       />
+</div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>

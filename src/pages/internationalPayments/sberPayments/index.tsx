@@ -303,7 +303,8 @@ export default function SberPaymentsListPage() {
       <h1 className="text-xl font-semibold text-foreground">
         Sber tolegier (talyplar ucin)
       </h1>
-      
+      <div className="bg-card border border-border rounded-xl p-4">
+
       {/* Toolbar */}
       <DataTableToolbar
         searchValue={search}
@@ -347,5 +348,6 @@ export default function SberPaymentsListPage() {
         onPageChange={setPage}
       />
     </div>
+      </div>
   )
 }

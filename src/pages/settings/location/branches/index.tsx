@@ -195,6 +195,7 @@ export function BranchesListPage() {
           </h1>
         </div>
       </div>
+<div className="bg-card border border-border rounded-xl p-4"> 
 
       <DataTableToolbar
         searchValue={search}
@@ -230,6 +231,7 @@ export function BranchesListPage() {
         totalCount={data?.total}
         onPageChange={setPage}
       />
+</div>
 
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

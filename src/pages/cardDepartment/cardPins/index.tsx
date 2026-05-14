@@ -11,7 +11,14 @@ import type {
   CardPinStatus,
 } from "@/features/cardPins/api/cardPinApi";
 import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import {
+  Eye,
+  Pencil,
+  Trash2,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,33 +32,43 @@ import {
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 
-import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
-
+import {
+  StatusBadge,
+  type StatusBadgeVariant,
+} from "@/components/ui/statusBadge";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
   pending: {
-    label:   'Garaşylýar',
-    variant: 'warning' as StatusBadgeVariant,
-    icon:    AlertCircle,
+    label: "Garaşylýar",
+    variant: "warning" as StatusBadgeVariant,
+    icon: AlertCircle,
   },
   approved: {
-    label:   'Tassyklandy',
-    variant: 'success' as StatusBadgeVariant,
-    icon:    CheckCircle2,
+    label: "Tassyklandy",
+    variant: "success" as StatusBadgeVariant,
+    icon: CheckCircle2,
   },
   rejected: {
-    label:   'Ýatyryldy',
-    variant: 'error' as StatusBadgeVariant,
-    icon:    XCircle,
+    label: "Ýatyryldy",
+    variant: "error" as StatusBadgeVariant,
+    icon: XCircle,
   },
-} satisfies Record<CardPinStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+} satisfies Record<
+  CardPinStatus,
+  { label: string; variant: StatusBadgeVariant; icon: React.ElementType }
+>;
 
 function CardPinStatusStatusBadge({ status }: { status: CardPinStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const cfg = STATUS_CONFIG[status];
+  if (!cfg)
+    return (
+      <span className="text-xs text-muted-foreground">{String(status)}</span>
+    );
+  return (
+    <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -137,7 +154,9 @@ export default function CardPinsPage() {
     {
       accessorKey: "status",
       header: t("cardPin.status", "Status"),
-      cell: ({ row }) => <CardPinStatusStatusBadge status={row.original.status} />,
+      cell: ({ row }) => (
+        <CardPinStatusStatusBadge status={row.original.status} />
+      ),
     },
     {
       id: "actions",
@@ -193,62 +212,64 @@ export default function CardPinsPage() {
           {t("Card pins", "Kart pin bukjalary")}
         </h1>
       </div>
-      <DataTableToolbar
-        searchValue={search}
-        onSearchChange={(v) => {
-          setSearch(v);
-          setPage(1);
-        }}
-        searchPlaceholder={t("cardPin.search", "Gözlemek")}
-        columns={columnMeta}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        columnOrder={columnOrder}
-        onColumnOrderChange={setColumnOrder}
-        filterFields={[
-          {
-            id: "status",
-            label: t("cardPin.status", "Status"),
-            options: [
-              { value: "pending", label: "Garaşylýar" },
-              { value: "approved", label: "Tassyklandy" },
-              { value: "rejected", label: "Ret edildi" },
-            ],
-          },
-        ]}
-        activeFilters={[{ fieldId: "status", value: statusFilter }]}
-        onFilterChange={(fieldId, value) => {
-          if (fieldId === "status")
-            setStatusFilter(value as CardPinStatus | "");
-          setPage(1);
-        }}
-        onFilterReset={() => {
-          setStatusFilter("");
-          setPage(1);
-        }}
-        perPage={perPage}
-        onPerPageChange={(v) => {
-          setPerPage(v);
-          setPage(1);
-        }}
-        actionLabel={t("cardPin.createBtn", "Kart pin bukja dörediň")}
-        onAction={() => navigate("/card-pins/create")}
-      />
+      <div className="bg-card border border-border rounded-xl p-4">
+        <DataTableToolbar
+          searchValue={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          searchPlaceholder={t("cardPin.search", "Gözlemek")}
+          columns={columnMeta}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
+          filterFields={[
+            {
+              id: "status",
+              label: t("cardPin.status", "Status"),
+              options: [
+                { value: "pending", label: "Garaşylýar" },
+                { value: "approved", label: "Tassyklandy" },
+                { value: "rejected", label: "Ret edildi" },
+              ],
+            },
+          ]}
+          activeFilters={[{ fieldId: "status", value: statusFilter }]}
+          onFilterChange={(fieldId, value) => {
+            if (fieldId === "status")
+              setStatusFilter(value as CardPinStatus | "");
+            setPage(1);
+          }}
+          onFilterReset={() => {
+            setStatusFilter("");
+            setPage(1);
+          }}
+          perPage={perPage}
+          onPerPageChange={(v) => {
+            setPerPage(v);
+            setPage(1);
+          }}
+          actionLabel={t("cardPin.createBtn", "Kart pin bukja dörediň")}
+          onAction={() => navigate("/card-pins/create")}
+        />
 
-      <DataTable
-        columns={columns}
-        data={data?.data ?? []}
-        isLoading={isLoading}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        columnOrder={columnOrder}
-        onColumnOrderChange={setColumnOrder}
-        enableRowSelection
-        currentPage={data?.meta?.current_page ?? 1}
-        totalPages={data?.meta?.last_page ?? 1}
-        totalCount={data?.meta?.total}
-        onPageChange={setPage}
-      />
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          isLoading={isLoading}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
+          enableRowSelection
+          currentPage={data?.meta?.current_page ?? 1}
+          totalPages={data?.meta?.last_page ?? 1}
+          totalCount={data?.meta?.total}
+          onPageChange={setPage}
+        />
+      </div>
 
       {/* Delete confirmation */}
       <AlertDialog

@@ -19,112 +19,127 @@ import {
   useDeleteCardOrder,
 } from "@/features/orderNewCard/hooks/useOrderNewCard";
 import type { CardOrderStatus } from "@/features/orderNewCard/api/orderNewCardApi";
-import {
-  InfoRow,
-  Section,
-  PassportImage,
-} from "@/components/viewPageComponents";
+import { InfoRow, PassportImage } from "@/components/viewPageComponents";
+
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_CFG: Record<
-  CardOrderStatus,
-  { label: string; className: string; icon: string }
-> = {
-  PENDING: {
-    label: "Garaşylýar",
-    icon: "⏳",
-    className: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-  },
-  APPROVED: {
-    label: "Tassyklandy",
-    icon: "✓",
-    className:
-      "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-  },
-  REJECTED: {
-    label: "Ýatyryldy",
-    icon: "✕",
-    className: "bg-red-500/10 text-red-400 border border-red-500/20",
-  },
-};
+const STATUS_CFG: Record<CardOrderStatus, { label: string; className: string; icon: string }> = {
+  PENDING:  { label: "Garaşylýar", icon: "⏳", className: "bg-amber-500/10 text-amber-400 border border-amber-500/20"   },
+  APPROVED: { label: "Tassyklandy", icon: "✓", className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
+  REJECTED: { label: "Ýatyryldy",  icon: "✕", className: "bg-red-500/10 text-red-400 border border-red-500/20"          },
+}
 
 function StatusBadge({ status }: { status: CardOrderStatus }) {
-  const cfg = STATUS_CFG[status];
+  const cfg = STATUS_CFG[status]
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${cfg.className}`}
-    >
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${cfg.className}`}>
       <span className="text-[10px]">{cfg.icon}</span>
       {cfg.label}
     </span>
-  );
+  )
 }
 
-// ─── Loading skeleton ─────────────────────────────────────────────────────────
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+  const colClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
+}: {
+  title?: string
+  span?: "full" | 2 | 3
+  children: React.ReactNode
+}) {
+  const spanClass =
+    span === "full" ? "sm:col-span-full" :
+    span === 2      ? "sm:col-span-2"    :
+    span === 3      ? "sm:col-span-3"    : ""
+
+  return (
+    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
+      {title && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
+        </div>
+      )}
+      {children}
+    </div>
+  )
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function DetailSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       <Skeleton className="h-8 w-64" />
-      <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-full" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+            <Skeleton className="h-3 w-24 mb-1" />
+            {Array.from({ length: 3 }).map((_, j) => (
+              <Skeleton key={j} className="h-4 w-full" />
+            ))}
+          </div>
         ))}
       </div>
     </div>
-  );
+  )
 }
 
-// ─── CardOrderDetailPage ──────────────────────────────────────────────────────
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CardOrderDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { id }     = useParams<{ id: string }>()
+  const navigate   = useNavigate()
+  const { t }      = useTranslation()
 
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
-  const { data: order, isLoading } = useCardOrderById(id ?? "");
-  const deleteMutation = useDeleteCardOrder();
+  const { data: order, isLoading } = useCardOrderById(id ?? "")
+  const deleteMutation = useDeleteCardOrder()
 
   const handleDelete = async () => {
-    if (!id) return;
-    await deleteMutation.mutateAsync(id);
-    navigate("/order-new-card");
-  };
+    if (!id) return
+    await deleteMutation.mutateAsync(id)
+    navigate("/order-new-card")
+  }
 
-  if (isLoading) return <DetailSkeleton />;
+  if (isLoading) return <DetailSkeleton />
   if (!order)
     return (
       <p className="text-muted-foreground text-sm">
         {t("common.notFound", "Tapylmady")}
       </p>
-    );
+    )
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">
-            {t("cardOrder.detailTitle", "Kart sargyt giriş üçin")}:{" "}
-            <span className="text-primary font-mono">{order.id}</span>
-          </h1>
-        </div>
+    <div className="flex flex-col gap-6">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-xl font-semibold text-foreground">
+          {t("cardOrder.detailTitle", "Kart sargyt giriş üçin")}:{" "}
+          <span className="text-primary font-mono">{order.id}</span>
+        </h1>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="icon"
-            title={t("common.print", "Çap etmek")}
-          >
+          <Button variant="outline" size="icon" title={t("common.print", "Çap etmek")}>
             <Printer size={15} />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            title={t("common.export", "Eksport")}
-          >
+          <Button variant="outline" size="icon" title={t("common.export", "Eksport")}>
             <Download size={15} />
           </Button>
           <Button
@@ -145,127 +160,110 @@ export default function CardOrderDetailPage() {
         </div>
       </div>
 
-      {/* Main info */}
-      <Section title="">
-        <InfoRow label="ID">{order.id}</InfoRow>
-        <InfoRow label={t("cardOrder.field.createdAt", "Döredilen wagty")}>
-          {order.createdAt}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.isPaid", "Tölenen")}>
-          <span
-            className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold
-            ${
-              order.isPaid
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-red-500/15 text-red-400"
-            }`}
-          >
-            {order.isPaid ? "✓" : "✕"}
-          </span>
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.status", "Status")}>
-          <StatusBadge status={order.status} />
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.note", "Bellik")}>
-          {order.note ?? "—"}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.createdBy", "Sargyt eden")}>
-          <span className="text-primary font-medium">{order.createdBy}</span>
-        </InfoRow>
-      </Section>
+      {/* ── Row 1: Meta + Kart + Lokasiýa ───────────────────────────────── */}
+      <BentoGrid cols={3}>
+        <BentoCard title={t("cardOrder.section.meta", "Esasy maglumatlar")}>
+          <InfoRow label="ID">{order.id}</InfoRow>
+          <InfoRow label={t("cardOrder.field.createdAt", "Döredilen wagty")}>
+            {order.createdAt}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.status", "Status")}>
+            <StatusBadge status={order.status} />
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.isPaid", "Tölenen")}>
+            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${order.isPaid ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+              {order.isPaid ? "✓" : "✕"}
+            </span>
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.note", "Bellik")}>
+            {order.note ?? "—"}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.createdBy", "Sargyt eden")}>
+            <span className="text-primary font-medium">{order.createdBy}</span>
+          </InfoRow>
+        </BentoCard>
 
-      {/* Kart */}
-      <Section title={t("cardOrder.section.card", "Kart")}>
-        <InfoRow
-          label={t(
-            "cardOrder.field.issuanceReason",
-            "Kartyň çykarylmagynyň sebäbi",
-          )}
-        >
-          <span className="text-primary font-medium">
-            {order.issuanceReasonName}
-          </span>
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.cardType", "Kart görnüşi")}>
-          <span className="text-cyan-400 font-medium">
-            {order.cardTypeName}
-          </span>
-        </InfoRow>
-      </Section>
+        <BentoCard title={t("cardOrder.section.card", "Kart")}>
+          <InfoRow label={t("cardOrder.field.issuanceReason", "Kartyň çykarylmagynyň sebäbi")}>
+            <span className="text-primary font-medium">{order.issuanceReasonName}</span>
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.cardType", "Kart görnüşi")}>
+            <span className="text-cyan-400 font-medium">{order.cardTypeName}</span>
+          </InfoRow>
+        </BentoCard>
 
-      {/* Lokasiýa */}
-      <Section title={t("cardOrder.section.location", "Lokasiýa")}>
-        <InfoRow label={t("cardOrder.field.province", "Welaýat")}>
-          {order.provinceName}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.branch", "Şahamça")}>
-          <span className="text-cyan-400 font-medium">{order.branchName}</span>
-        </InfoRow>
-      </Section>
+        <BentoCard title={t("cardOrder.section.location", "Lokasiýa")}>
+          <InfoRow label={t("cardOrder.field.province", "Welaýat")}>
+            {order.provinceName}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.branch", "Şahamça")}>
+            <span className="text-cyan-400 font-medium">{order.branchName}</span>
+          </InfoRow>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Şahsy maglumatlar */}
-      <Section title={t("cardOrder.section.personal", "Şahsy maglumatlar")}>
-        <InfoRow label={t("cardOrder.field.fullName", "Doly ady")}>
-          {[order.lastName, order.firstName, order.middleName]
-            .filter(Boolean)
-            .join(" ")}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.birthDate", "Doglan güni")}>
-          {order.birthDate}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.phone", "Telefon")}>
-          {order.phone}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.phoneExtra", "Telefon goşmaça")}>
-          {order.phoneExtra ?? "—"}
-        </InfoRow>
-        <InfoRow label={t("cardOrder.field.citizenship", "Raýatlyk")}>
-          {order.citizenship}
-        </InfoRow>
-        <InfoRow
-          label={t(
-            "cardOrder.field.registeredAddress",
-            "Ýazgy edilen salgyňyz",
-          )}
-        >
-          {order.registeredAddress}
-        </InfoRow>
-        <InfoRow
-          label={t("cardOrder.field.currentAddress", "Häzirki ýaşaýyş ýeri")}
-        >
-          {order.currentAddress}
-        </InfoRow>
-        <InfoRow
-          label={t("cardOrder.field.workplace", "Işleýän ýeriňiz we wezipäňiz")}
-        >
-          {order.workplace}
-        </InfoRow>
-      </Section>
+      {/* ── Row 2: Şahsy maglumatlar (full width — many fields) ─────────── */}
+      <BentoGrid cols={2}>
+        <BentoCard title={t("cardOrder.section.personal", "Şahsy maglumatlar")}>
+          <InfoRow label={t("cardOrder.field.fullName", "Doly ady")}>
+            {[order.lastName, order.firstName, order.middleName].filter(Boolean).join(" ")}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.birthDate", "Doglan güni")}>
+            {order.birthDate}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.citizenship", "Raýatlyk")}>
+            {order.citizenship}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.registeredAddress", "Ýazgy edilen salgy")}>
+            {order.registeredAddress}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.currentAddress", "Häzirki ýaşaýyş ýeri")}>
+            {order.currentAddress}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.workplace", "Işleýän ýeri we wezipesi")}>
+            {order.workplace}
+          </InfoRow>
+        </BentoCard>
 
-      {/* Pasport faýýlar */}
-      <Section title={t("cardOrder.section.passportFiles", "Pasport faýýlar")}>
-        <PassportImage
-          label={t("cardOrder.field.passportPage1", "Pasport (sahypa 1)")}
-          url={order.passportFiles.page1}
-        />
-        <PassportImage
-          label={t(
-            "cardOrder.field.passportPage23",
-            "Pasport (2-3-nji sahypa)",
-          )}
-          url={order.passportFiles.page23}
-        />
-        <PassportImage
-          label={t("cardOrder.field.passportPage89", "Pasport (8-9 sahypa)")}
-          url={order.passportFiles.page89}
-        />
-        <PassportImage
-          label={t("cardOrder.field.passportPage32", "Pasport (32-nji sahypa)")}
-          url={order.passportFiles.page32}
-        />
-      </Section>
+        <BentoCard title={t("cardOrder.section.contacts", "Kontakt")}>
+          <InfoRow label={t("cardOrder.field.phone", "Telefon")}>
+            {order.phone}
+          </InfoRow>
+          <InfoRow label={t("cardOrder.field.phoneExtra", "Telefon goşmaça")}>
+            {order.phoneExtra ?? "—"}
+          </InfoRow>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Delete confirm dialog */}
+      {/* ── Row 3: Passport images ───────────────────────────────────────── */}
+      <BentoGrid cols={4}>
+        <BentoCard title={t("cardOrder.field.passportPage1", "Sahypa 1")}>
+          <PassportImage
+            label={t("cardOrder.field.passportPage1", "Pasport (sahypa 1)")}
+            url={order.passportFiles.page1}
+          />
+        </BentoCard>
+        <BentoCard title={t("cardOrder.field.passportPage23", "Sahypa 2-3")}>
+          <PassportImage
+            label={t("cardOrder.field.passportPage23", "Pasport (2-3-nji sahypa)")}
+            url={order.passportFiles.page23}
+          />
+        </BentoCard>
+        <BentoCard title={t("cardOrder.field.passportPage89", "Sahypa 8-9")}>
+          <PassportImage
+            label={t("cardOrder.field.passportPage89", "Pasport (8-9 sahypa)")}
+            url={order.passportFiles.page89}
+          />
+        </BentoCard>
+        <BentoCard title={t("cardOrder.field.passportPage32", "Sahypa 32")}>
+          <PassportImage
+            label={t("cardOrder.field.passportPage32", "Pasport (32-nji sahypa)")}
+            url={order.passportFiles.page32}
+          />
+        </BentoCard>
+      </BentoGrid>
+
+      {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -273,10 +271,7 @@ export default function CardOrderDetailPage() {
               {t("cardOrder.deleteTitle", "Pozmak isleýärsiňizmi?")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(
-                "cardOrder.deleteDescription",
-                "Bu kart sargyt hemişelik pozular. Bu işi yzyna gaýtaryp bolmaz.",
-              )}
+              {t("cardOrder.deleteDescription", "Bu kart sargyt hemişelik pozular. Bu işi yzyna gaýtaryp bolmaz.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -292,6 +287,7 @@ export default function CardOrderDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
-  );
+  )
 }

@@ -123,10 +123,9 @@ export default function PermissionsPage() {
         <h1 className="text-2xl font-bold text-foreground">
           {t('permissions.title', 'Rugsatlar')}
         </h1>
-        <Button onClick={() => navigate('/settings/users/permissions/create')}>
-          {t('permissions.actions.create', 'Rugsat dörediň')}
-        </Button>
+       
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       {/* Toolbar */}
       <DataTableToolbar
@@ -141,6 +140,8 @@ export default function PermissionsPage() {
         perPageOptions={[10, 25, 50, 100]}
         perPage={perPage}
         onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
+         actionLabel={t('permissions.actions.create', 'Rugsat dörediň')}
+        onAction={() => navigate('/settings/users/permissions/create')}
       />
 
       {/* Table */}
@@ -158,6 +159,7 @@ export default function PermissionsPage() {
         totalCount={data?.meta?.total ?? 0}
         onPageChange={setPage}
       />
+</div>
 
       {/* Delete confirmation dialog */}
       <AlertDialog

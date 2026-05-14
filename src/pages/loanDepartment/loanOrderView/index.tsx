@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Trash2, Pencil, ChevronRight } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import {
   useLoanOrderById,
   useDeleteLoanOrder,
@@ -15,50 +15,64 @@ import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import type { LoanOrderMobileStatus } from "@/features/loanOrderMobiles/api/loanOrderMobilesApi";
 import {
   InfoRow,
-  Section,
   PassportImage,
+  AuditLog,
+  type AuditRowProps,
 } from "@/components/viewPageComponents";
-import { AuditRow, type AuditRowProps } from "@/components/viewPageComponents";
+
+// ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  GARAŞYLÝAR: {
-    label: "Garaşylýar",
-    variant: "warning" as StatusBadgeVariant,
-    icon: AlertCircle,
-  },
-  KANAGATLANDYRYLAN: {
-    label: "Tassyklandy",
-    variant: "success" as StatusBadgeVariant,
-    icon: CheckCircle2,
-  },
-  RED_EDILDI: {
-    label: "Ýatyryldy",
-    variant: "error" as StatusBadgeVariant,
-    icon: XCircle,
-  },
-  IŞLENÝÄR: {
-    label: "Işlenýär",
-    variant: "warning" as StatusBadgeVariant,
-    icon: AlertCircle,
-  },
-} satisfies Record<
-  LoanOrderMobileStatus,
-  { label: string; variant: StatusBadgeVariant; icon: React.ElementType }
->;
+  GARAŞYLÝAR:        { label: "Garaşylýar",    variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
+  KANAGATLANDYRYLAN: { label: "Tassyklandy",   variant: "success" as StatusBadgeVariant, icon: CheckCircle2 },
+  RED_EDILDI:        { label: "Ýatyryldy",     variant: "error"   as StatusBadgeVariant, icon: XCircle      },
+  IŞLENÝÄR:          { label: "Işlenýär",      variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
+} satisfies Record<LoanOrderMobileStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
 
-function LoanOrderMobileStatusBadge({
-  status,
+function LoanOrderMobileStatusBadge({ status }: { status: LoanOrderMobileStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
+
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+  const colClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
 }: {
-  status: LoanOrderMobileStatus;
+  title?: string
+  span?: "full" | 2 | 3
+  children: React.ReactNode
 }) {
-  const cfg = STATUS_CONFIG[status];
-  if (!cfg)
-    return (
-      <span className="text-xs text-muted-foreground">{String(status)}</span>
-    );
+  const spanClass =
+    span === "full" ? "sm:col-span-full" :
+    span === 2      ? "sm:col-span-2"    :
+    span === 3      ? "sm:col-span-3"    : ""
+
   return (
-    <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
-  );
+    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
+      {title && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
+        </div>
+      )}
+      {children}
+    </div>
+  )
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -67,73 +81,69 @@ function LoanOrderViewSkeleton() {
   return (
     <div className="flex flex-col gap-4">
       <Skeleton className="h-7 w-64" />
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
-        >
-          <Skeleton className="h-4 w-32 mb-1" />
-          {[...Array(3)].map((_, j) => (
-            <Skeleton key={j} className="h-4 w-full" />
-          ))}
-        </div>
-      ))}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+            <Skeleton className="h-3 w-24 mb-1" />
+            {[...Array(3)].map((_, j) => (
+              <Skeleton key={j} className="h-4 w-full" />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
-  );
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LoanOrderViewPage() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const deleteMutation = useDeleteLoanOrder();
+  const { t }    = useTranslation()
+  const navigate = useNavigate()
+  const { id }   = useParams<{ id: string }>()
+  const deleteMutation = useDeleteLoanOrder()
 
-  const { data: order, isLoading } = useLoanOrderById(id!);
+  const { data: order, isLoading } = useLoanOrderById(id!)
 
   const handleDelete = () => {
-    if (!window.confirm(t("loanOrders.deleteConfirm", "Bu sargyt pozulsynmy?")))
-      return;
+    if (!window.confirm(t("loanOrders.deleteConfirm", "Bu sargyt pozulsynmy?"))) return
     deleteMutation.mutate(id!, {
       onSuccess: () => {
-        toast.success(t("loanOrders.deleteSuccess", "Sargyt pozuldy"));
-        navigate("/loan-orders");
+        toast.success(t("loanOrders.deleteSuccess", "Sargyt pozuldy"))
+        navigate("/loan-orders")
       },
       onError: () => {
-        toast.error(
-          t("loanOrders.deleteError", "Pozma wagty ýalňyşlyk ýüze çykdy"),
-        );
+        toast.error(t("loanOrders.deleteError", "Pozma wagty ýalňyşlyk ýüze çykdy"))
       },
-    });
-  };
+    })
+  }
 
-  if (isLoading) return <LoanOrderViewSkeleton />;
+  if (isLoading) return <LoanOrderViewSkeleton />
 
   if (!order) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
         {t("common.notFound", "Tapylmady")}
       </div>
-    );
+    )
   }
 
-  // Replace with real audit data from API when available
   const auditLogs: AuditRowProps[] = [
     {
-      id: "44548",
+      id:     "44548",
       action: t("audit.actions.view", "Görmek"),
-      by: order.createdBy ?? "",
+      by:     order.createdBy ?? "",
       target: `${t("loanOrders.title", "Karz sargyt")}: ${order.id}`,
       status: "FINISHED",
-      date: order.createdAt ?? "",
+      date:   order.createdAt ?? "",
     },
-  ];
+  ]
 
   return (
-    <div className="flex flex-col">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-5">
+    <div className="flex flex-col gap-6">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">
           {t("loanOrders.view.title", "Karz sargyt giriş")}: {order.id}
         </h1>
@@ -156,243 +166,192 @@ export default function LoanOrderViewPage() {
         </div>
       </div>
 
-      {/* ── Basic Info ─────────────────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden mb-6">
-        <InfoRow label="ID" value={order.id} />
-        <InfoRow
-          label={t("loanOrders.columns.createdAt", "Döredilen wagty")}
-          value={order.createdAt}
-        />
-        {/* Status row — special render */}
-        <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground">
-            {t("loanOrders.columns.status", "Status")}
-          </span>
-          <LoanOrderMobileStatusBadge status={order.status} />
-        </div>
-        <InfoRow
-          label={t("loanOrders.fields.amount", "Berlik")}
-          value={order.amount ? String(order.amount) : undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.createdBy", "Sargyt eden")}
-          value={order.createdBy ?? undefined}
-          isLink
-        />
-      </div>
+      {/* ── Row 1: Meta + Loan + Location ───────────────────────────────── */}
+      <BentoGrid cols={3}>
+        {/* Meta */}
+        <BentoCard title={t("loanOrders.sections.meta", "Esasy maglumatlar")}>
+          <InfoRow label="ID" value={order.id} />
+          <InfoRow
+            label={t("loanOrders.columns.createdAt", "Döredilen wagty")}
+            value={order.createdAt}
+          />
+          <InfoRow
+            label={t("loanOrders.columns.status", "Status")}
+          >
+            <LoanOrderMobileStatusBadge status={order.status} />
+          </InfoRow>
+          <InfoRow
+            label={t("loanOrders.fields.amount", "Berlik")}
+            value={order.amount ? String(order.amount) : undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.createdBy", "Sargyt eden")}
+            value={order.createdBy ?? undefined}
+            isLink
+          />
+        </BentoCard>
 
-      {/* ── Loan ───────────────────────────────────────────────────────────── */}
-      <Section title={t("loanOrders.sections.loan", "Karz")}>
-        <InfoRow
-          label={t("loanOrders.columns.loanType", "Karz görnüşi")}
-          value={order.loanType}
-          isLink
-        />
-        <InfoRow
-          label={t("loanOrders.fields.loanAmount", "Karz mukdary")}
-          value={order.loanAmount ? String(order.loanAmount) : undefined}
-        />
-      </Section>
+        {/* Loan */}
+        <BentoCard title={t("loanOrders.sections.loan", "Karz")}>
+          <InfoRow
+            label={t("loanOrders.columns.loanType", "Karz görnüşi")}
+            value={order.loanType}
+            isLink
+          />
+          <InfoRow
+            label={t("loanOrders.fields.loanAmount", "Karz mukdary")}
+            value={order.loanAmount ? String(order.loanAmount) : undefined}
+          />
+        </BentoCard>
 
-      {/* ── Location ───────────────────────────────────────────────────────── */}
-      <Section title={t("loanOrders.sections.location", "Lokasiýa")}>
-        <InfoRow
-          label={t("loanOrders.columns.region", "Welaýat")}
-          value={order.region}
-        />
-        <InfoRow
-          label={t("loanOrders.columns.branch", "Şahamça")}
-          value={order.branch}
-          isLink
-        />
-      </Section>
+        {/* Location */}
+        <BentoCard title={t("loanOrders.sections.location", "Lokasiýa")}>
+          <InfoRow
+            label={t("loanOrders.columns.region", "Welaýat")}
+            value={order.region}
+          />
+          <InfoRow
+            label={t("loanOrders.columns.branch", "Şahamça")}
+            value={order.branch}
+            isLink
+          />
+        </BentoCard>
+      </BentoGrid>
 
-      {/* ── Personal Info ──────────────────────────────────────────────────── */}
-      <Section title={t("loanOrders.sections.personal", "Şahsy maglumatlar")}>
-        <InfoRow
-          label={t("loanOrders.fields.fullName", "Doly ady")}
-          value={order.fullName ?? `${order.firstName} ${order.lastName}`}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.education", "Bilimi")}
-          value={order.education ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.maritalStatus", "Maşgala ýagdaýy")}
-          value={order.maritalStatus ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.birthDate", "Doglan güni")}
-          value={order.birthDate ?? undefined}
-        />
-        <InfoRow
-          label={t(
-            "loanOrders.fields.registeredAddress",
-            "Ýazgy edilen salgyňyz",
-          )}
-          value={order.registeredAddress ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.currentAddress", "Häzirki ýaşaýyş ýeri")}
-          value={order.currentAddress ?? undefined}
-        />
-      </Section>
+      {/* ── Row 2: Personal + Contacts ──────────────────────────────────── */}
+      <BentoGrid cols={2}>
+        {/* Personal */}
+        <BentoCard title={t("loanOrders.sections.personal", "Şahsy maglumatlar")}>
+          <InfoRow
+            label={t("loanOrders.fields.fullName", "Doly ady")}
+            value={order.fullName ?? `${order.firstName} ${order.lastName}`}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.education", "Bilimi")}
+            value={order.education ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.maritalStatus", "Maşgala ýagdaýy")}
+            value={order.maritalStatus ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.birthDate", "Doglan güni")}
+            value={order.birthDate ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.registeredAddress", "Ýazgy edilen salgy")}
+            value={order.registeredAddress ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.currentAddress", "Häzirki ýaşaýyş ýeri")}
+            value={order.currentAddress ?? undefined}
+          />
+        </BentoCard>
 
-      {/* ── Contacts ───────────────────────────────────────────────────────── */}
-      <Section
-        title={t(
-          "loanOrders.sections.contacts",
-          "Habarlaşmak üçin maglumatlar",
-        )}
-      >
-        <InfoRow
-          label={t("loanOrders.fields.email", "E-poçta")}
-          value={order.email ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.columns.phone", "Telefon")}
-          value={order.phone}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.phoneAlt", "Telefon goşmaça")}
-          value={order.phoneAlt ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.homePhone", "Öý telefony")}
-          value={order.homePhone ?? undefined}
-        />
-      </Section>
+        {/* Contacts */}
+        <BentoCard title={t("loanOrders.sections.contacts", "Habarlaşmak")}>
+          <InfoRow
+            label={t("loanOrders.fields.email", "E-poçta")}
+            value={order.email ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.columns.phone", "Telefon")}
+            value={order.phone}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.phoneAlt", "Telefon goşmaça")}
+            value={order.phoneAlt ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.homePhone", "Öý telefony")}
+            value={order.homePhone ?? undefined}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-      {/* ── Employment ─────────────────────────────────────────────────────── */}
-      <Section title={t("loanOrders.sections.employment", "Iş")}>
-        <InfoRow
-          label={t(
-            "loanOrders.fields.employer",
-            "Işleýän edaranyň/kärhananyn ady",
-          )}
-          value={order.employer ?? undefined}
-        />
-        <InfoRow
-          label={t(
-            "loanOrders.fields.deptPhone",
-            "Işgärler bölüminiň iş belgisi",
-          )}
-          value={order.deptPhone ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.workRegion", "Işleýän welaýatyňyz")}
-          value={order.workRegion ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.workCity", "Işleýän etrabyňyz")}
-          value={order.workCity ?? undefined}
-          isLink
-        />
-        <InfoRow
-          label={t("loanOrders.fields.position", "Wezipe")}
-          value={order.position ?? undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.salary", "Zähmet haky")}
-          value={order.salary ? String(order.salary) : undefined}
-        />
-        <InfoRow
-          label={t("loanOrders.fields.employedSince", "Işe başlan wagtyňyz")}
-          value={order.employedSince ?? undefined}
-        />
-      </Section>
+      {/* ── Row 3: Employment + Passport info ───────────────────────────── */}
+      <BentoGrid cols={2}>
+        {/* Employment */}
+        <BentoCard title={t("loanOrders.sections.employment", "Iş")}>
+          <InfoRow
+            label={t("loanOrders.fields.employer", "Kärhananyň ady")}
+            value={order.employer ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.deptPhone", "Işgärler bölüminiň belgisi")}
+            value={order.deptPhone ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.workRegion", "Işleýän welaýaty")}
+            value={order.workRegion ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.workCity", "Işleýän etraby")}
+            value={order.workCity ?? undefined}
+            isLink
+          />
+          <InfoRow
+            label={t("loanOrders.fields.position", "Wezipe")}
+            value={order.position ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.salary", "Zähmet haky")}
+            value={order.salary ? String(order.salary) : undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.employedSince", "Işe başlan wagty")}
+            value={order.employedSince ?? undefined}
+          />
+        </BentoCard>
 
-      {/* ── Passport ───────────────────────────────────────────────────────── */}
-      <Section title={t("loanOrders.sections.passport", "Pasport")}>
-        <InfoRow
-          label={t("loanOrders.fields.passportNumber", "Pasport")}
-          value={order.passportNumber ?? undefined}
-        />
-        <InfoRow
-          label={t(
-            "loanOrders.fields.passportIssuedBy",
-            "Kim tarapyndan berildi",
-          )}
-          value={order.passportIssuedBy ?? undefined}
-        />
-        <InfoRow
-          label={t(
-            "loanOrders.fields.passportBirthPlace",
-            "Doglan ýeri (pasport)",
-          )}
-          value={order.passportBirthPlace ?? undefined}
-        />
-        <PassportImage
-          label={t("loanOrders.fields.passportPage1", "Pasport (sahypa 1)")}
-          src={order.passportPage1Url ?? undefined}
-        />
-        <PassportImage
-          label={t(
-            "loanOrders.fields.passportPage23",
-            "Pasport (2-3-nji sahypa)",
-          )}
-          src={order.passportPage23Url ?? undefined}
-        />
-        <PassportImage
-          label={t("loanOrders.fields.passportPage89", "Pasport (8-9 sahypa)")}
-          src={order.passportPage89Url ?? undefined}
-        />
-        <PassportImage
-          label={t(
-            "loanOrders.fields.passportPage32",
-            "Pasport (32-nji sahypa)",
-          )}
-          src={order.passportPage32Url ?? undefined}
-        />
-      </Section>
+        {/* Passport info */}
+        <BentoCard title={t("loanOrders.sections.passport", "Pasport")}>
+          <InfoRow
+            label={t("loanOrders.fields.passportNumber", "Pasport")}
+            value={order.passportNumber ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.passportIssuedBy", "Kim tarapyndan berildi")}
+            value={order.passportIssuedBy ?? undefined}
+          />
+          <InfoRow
+            label={t("loanOrders.fields.passportBirthPlace", "Doglan ýeri (pasport)")}
+            value={order.passportBirthPlace ?? undefined}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-      {/* ── Audit Log ──────────────────────────────────────────────────────── */}
-      <div className="mb-6">
-        <details open>
-          <summary className="text-base font-semibold text-foreground mb-2 cursor-pointer select-none list-none flex items-center gap-1.5 w-fit">
-            {t("loanOrders.sections.audit", "Ammallar")}
-            <ChevronRight size={15} className="text-muted-foreground" />
-          </summary>
-          <div className="bg-card border border-border rounded-xl overflow-hidden mt-2">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    {[
-                      "ID",
-                      t("audit.columns.action", "AMALYŇ ADY"),
-                      t("audit.columns.by", "KIM TARAPYNDAN"),
-                      t("audit.columns.target", "AMALYŇ NYŞANY (TARIBESI)"),
-                      t("audit.columns.status", "AMALYŇ STATUSY"),
-                      t("audit.columns.date", "SENE"),
-                      "",
-                    ].map((col, i) => (
-                      <th
-                        key={i}
-                        className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                      >
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs.map((log) => (
-                    <AuditRow key={log.id} {...log} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-border text-xs text-muted-foreground">
-              <span>{t("common.prev", "Öňki")}</span>
-              <span>
-                1–{auditLogs.length} / {auditLogs.length}
-              </span>
-              <span>{t("common.next", "Soňky")}</span>
-            </div>
-          </div>
-        </details>
-      </div>
+      {/* ── Row 4: Passport images ───────────────────────────────────────── */}
+      <BentoGrid cols={4}>
+        <BentoCard title={t("loanOrders.fields.passportPage1", "Sahypa 1")}>
+          <PassportImage
+            label={t("loanOrders.fields.passportPage1", "Pasport (sahypa 1)")}
+            src={order.passportPage1Url ?? undefined}
+          />
+        </BentoCard>
+        <BentoCard title={t("loanOrders.fields.passportPage23", "Sahypa 2-3")}>
+          <PassportImage
+            label={t("loanOrders.fields.passportPage23", "Pasport (2-3-nji sahypa)")}
+            src={order.passportPage23Url ?? undefined}
+          />
+        </BentoCard>
+        <BentoCard title={t("loanOrders.fields.passportPage89", "Sahypa 8-9")}>
+          <PassportImage
+            label={t("loanOrders.fields.passportPage89", "Pasport (8-9 sahypa)")}
+            src={order.passportPage89Url ?? undefined}
+          />
+        </BentoCard>
+        <BentoCard title={t("loanOrders.fields.passportPage32", "Sahypa 32")}>
+          <PassportImage
+            label={t("loanOrders.fields.passportPage32", "Pasport (32-nji sahypa)")}
+            src={order.passportPage32Url ?? undefined}
+          />
+        </BentoCard>
+      </BentoGrid>
+
+      {/* ── Audit log ────────────────────────────────────────────────────── */}
+      <AuditLog logs={auditLogs} />
+
     </div>
-  );
+  )
 }

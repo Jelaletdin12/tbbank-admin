@@ -161,6 +161,7 @@ export default function LoanTypesListPage() {
       <h1 className="text-xl font-semibold text-foreground mb-5">
         {t('loanTypes.title', 'Karz görnüşleri')}
       </h1>
+<div className="bg-card border border-border rounded-xl p-4">
 
       <DataTableToolbar
         searchValue={search}
@@ -190,6 +191,7 @@ export default function LoanTypesListPage() {
         totalCount={data?.total}
         onPageChange={setPage}
       />
+</div>
 
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>

@@ -102,6 +102,7 @@ export default function RequiredDocumentsListPage() {
       <h1 className="text-xl font-semibold text-foreground mb-4">
         {t('loanDocuments.title', 'Karz gerekli resminamalary')}
       </h1>
+<div className="bg-card border border-border rounded-xl p-4">
 
       {/* Toolbar */}
       <DataTableToolbar
@@ -134,5 +135,6 @@ export default function RequiredDocumentsListPage() {
         onPageChange={setPage}
       />
     </div>
+</div>
   )
 }

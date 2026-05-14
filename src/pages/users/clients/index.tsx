@@ -146,6 +146,7 @@ export default function ClientsPage() {
           {t('clients.title', 'Müşderiler')}
         </h1>
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       <DataTableToolbar
         searchValue={search}
@@ -194,6 +195,7 @@ export default function ClientsPage() {
         onPageChange={setPage}
         enableRowSelection
       />
+</div>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>

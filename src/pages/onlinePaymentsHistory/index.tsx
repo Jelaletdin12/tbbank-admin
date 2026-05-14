@@ -163,6 +163,8 @@ export default function OnlinePaymentHistoryPage() {
       <h1 className="text-2xl font-semibold text-foreground mb-5">
         {t("onlinePayments.title", "Onlaýn töleg taryhy")}
       </h1>
+<div className="bg-card border border-border rounded-xl p-4">
+
 
       <DataTableToolbar
         searchValue={search}
@@ -191,6 +193,7 @@ export default function OnlinePaymentHistoryPage() {
         totalCount={data?.total ?? 0}
         onPageChange={setPage}
       />
+</div>
     </div>
   );
 }

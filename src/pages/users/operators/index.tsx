@@ -180,6 +180,7 @@ export default function OperatorsPage() {
           {t('operators.title', 'Operatorlar')}
         </h1>
       </div>
+<div className="bg-card border border-border rounded-xl p-4">
 
       {/* Toolbar */}
       <DataTableToolbar
@@ -230,6 +231,7 @@ export default function OperatorsPage() {
         onPageChange={setPage}
         enableRowSelection
       />
+</div>
 
       {/* Delete dialog */}
       <AlertDialog

@@ -25,56 +25,77 @@ import {
 } from "@/components/ui/statusBadge";
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { InfoRow, PassportImage } from "@/components/viewPageComponents";
-// ─── Status badge ─────────────────────────────────────────────────────────────
+
+// ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  pending: {
-    label: "Garaşylýar",
-    variant: "warning" as StatusBadgeVariant,
-    icon: AlertCircle,
-  },
-  approved: {
-    label: "Tassyklandy",
-    variant: "success" as StatusBadgeVariant,
-    icon: CheckCircle2,
-  },
-  rejected: {
-    label: "Ýatyryldy",
-    variant: "error" as StatusBadgeVariant,
-    icon: XCircle,
-  },
-} satisfies Record<
-  CardPinStatus,
-  { label: string; variant: StatusBadgeVariant; icon: React.ElementType }
->;
+  pending:  { label: "Garaşylýar", variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
+  approved: { label: "Tassyklandy", variant: "success" as StatusBadgeVariant, icon: CheckCircle2 },
+  rejected: { label: "Ýatyryldy",  variant: "error"   as StatusBadgeVariant, icon: XCircle      },
+} satisfies Record<CardPinStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
 
 function CardPinStatusBadge({ status }: { status: CardPinStatus }) {
-  const cfg = STATUS_CONFIG[status];
-  if (!cfg)
-    return (
-      <span className="text-xs text-muted-foreground">{String(status)}</span>
-    );
+  const cfg = STATUS_CONFIG[status]
+  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
+
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+  const colClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
+}: {
+  title?: string
+  span?: "full" | 2 | 3
+  children: React.ReactNode
+}) {
+  const spanClass =
+    span === "full" ? "sm:col-span-full" :
+    span === 2      ? "sm:col-span-2"    :
+    span === 3      ? "sm:col-span-3"    : ""
+
   return (
-    <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
-  );
+    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
+      {title && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
+        </div>
+      )}
+      {children}
+    </div>
+  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CardPinViewPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { id }     = useParams<{ id: string }>()
+  const navigate   = useNavigate()
+  const { t }      = useTranslation()
 
-  const { data, isLoading, isError } = useCardPin(id!);
-  const { mutate: deletePin, isPending: isDeleting } = useDeleteCardPin();
+  const { data, isLoading, isError } = useCardPin(id!)
+  const { mutate: deletePin, isPending: isDeleting } = useDeleteCardPin()
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
         <Spinner className="size-8 text-primary" />
       </div>
-    );
+    )
   }
 
   if (isError || !data) {
@@ -82,12 +103,13 @@ export default function CardPinViewPage() {
       <div className="flex items-center justify-center py-24 text-muted-foreground">
         {t("common.notFound", "Maglumat tapylmady")}
       </div>
-    );
+    )
   }
 
   return (
-    <div className="mx-auto space-y-6">
-      {/* Header */}
+    <div className="mx-auto flex flex-col gap-6">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <h1 className="text-xl font-bold text-foreground">
           {t("cardPin.viewTitle", "Kart pin bukja giňişleýin")}: {data.id}
@@ -120,11 +142,7 @@ export default function CardPinViewPage() {
                 <AlertDialogAction
                   disabled={isDeleting}
                   className="bg-destructive hover:bg-destructive/90"
-                  onClick={() =>
-                    deletePin(data.id, {
-                      onSuccess: () => navigate("/card-pins"),
-                    })
-                  }
+                  onClick={() => deletePin(data.id, { onSuccess: () => navigate("/card-pins") })}
                 >
                   {t("common.delete", "Poz")}
                 </AlertDialogAction>
@@ -143,33 +161,27 @@ export default function CardPinViewPage() {
         </div>
       </div>
 
-      {/* Main Info */}
-      <section className="bg-card border border-border rounded-lg px-6">
-        <InfoRow label="ID">
-          <span className="font-mono">{data.id}</span>
-        </InfoRow>
-        <InfoRow label={t("cardPin.createdAt", "Döredilen wagty")}>
-          {data.created_at}
-        </InfoRow>
-        <InfoRow label={t("cardPin.status", "Status")}>
-          <CardPinStatusBadge status={data.status} />
-        </InfoRow>
-        <InfoRow label={t("cardPin.note", "Bellik")}>
-          {data.note || "—"}
-        </InfoRow>
-        <InfoRow label={t("cardPin.createdBy", "Sargyt eden")}>
-          <span className="text-primary font-medium">
-            {data.created_by_label}
-          </span>
-        </InfoRow>
-      </section>
+      {/* ── Row 1: Meta + Kart + Lokasiýa ───────────────────────────────── */}
+      <BentoGrid cols={3}>
+        <BentoCard title={t("cardPin.metaSection", "Esasy maglumatlar")}>
+          <InfoRow label="ID">
+            <span className="font-mono">{data.id}</span>
+          </InfoRow>
+          <InfoRow label={t("cardPin.createdAt", "Döredilen wagty")}>
+            {data.created_at}
+          </InfoRow>
+          <InfoRow label={t("cardPin.status", "Status")}>
+            <CardPinStatusBadge status={data.status} />
+          </InfoRow>
+          <InfoRow label={t("cardPin.note", "Bellik")}>
+            {data.note || "—"}
+          </InfoRow>
+          <InfoRow label={t("cardPin.createdBy", "Sargyt eden")}>
+            <span className="text-primary font-medium">{data.created_by_label}</span>
+          </InfoRow>
+        </BentoCard>
 
-      {/* Kart */}
-      <section className="bg-card border border-border rounded-lg px-6 py-4">
-        <h2 className="text-base font-semibold text-foreground mb-2">
-          {t("cardPin.cardSection", "Kart")}
-        </h2>
-        <div className="divide-y divide-border">
+        <BentoCard title={t("cardPin.cardSection", "Kart")}>
           <InfoRow label={t("cardPin.cardNumber", "Kart belgisi")}>
             <span className="font-mono tracking-wider">{data.card_number}</span>
           </InfoRow>
@@ -179,74 +191,70 @@ export default function CardPinViewPage() {
           <InfoRow label={t("cardPin.cardExpireYear", "Kart Möhleti (ýyl)")}>
             —
           </InfoRow>
-        </div>
-      </section>
+        </BentoCard>
 
-      {/* Lokasiýa */}
-      <section className="bg-card border border-border rounded-lg px-6 py-4">
-        <h2 className="text-base font-semibold text-foreground mb-2">
-          {t("cardPin.locationSection", "Lokasiýa")}
-        </h2>
-        <div className="divide-y divide-border">
+        <BentoCard title={t("cardPin.locationSection", "Lokasiýa")}>
           <InfoRow label={t("cardPin.province", "Welaýat")}>
             {data.province_label}
           </InfoRow>
           <InfoRow label={t("cardPin.branch", "Şahamça")}>
-            <span className="text-primary font-medium">
-              {data.branch_label}
-            </span>
+            <span className="text-primary font-medium">{data.branch_label}</span>
           </InfoRow>
-        </div>
-      </section>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Şahsy maglumatlar */}
-      <section className="bg-card border border-border rounded-lg px-6 py-4">
-        <h2 className="text-base font-semibold text-foreground mb-2">
-          {t("cardPin.personalSection", "Şahsy maglumatlar")}
-        </h2>
-        <div className="divide-y divide-border">
+      {/* ── Row 2: Şahsy + Pasport maglumatlary ─────────────────────────── */}
+      <BentoGrid cols={2}>
+        <BentoCard title={t("cardPin.personalSection", "Şahsy maglumatlar")}>
           <InfoRow label={t("cardPin.fullName", "Doly ady")}>
             {`${data.last_name} ${data.first_name} ${data.father_name}`}
           </InfoRow>
           <InfoRow label={t("cardPin.birthDate", "Doglan güni")}>
             {data.birth_date}
           </InfoRow>
-          <InfoRow label={t("cardPin.phone", "Telefon")}>+{data.phone}</InfoRow>
-        </div>
-      </section>
+          <InfoRow label={t("cardPin.phone", "Telefon")}>
+            +{data.phone}
+          </InfoRow>
+        </BentoCard>
 
-      {/* Pasport */}
-      <section className="bg-card border border-border rounded-lg px-6 py-4">
-        <h2 className="text-base font-semibold text-foreground mb-2">
-          {t("cardPin.passportSection", "Pasport")}
-        </h2>
-        <div className="divide-y divide-border mb-4">
+        <BentoCard title={t("cardPin.passportSection", "Pasport")}>
           <InfoRow label={t("cardPin.passportSeries", "Pasport seriýasy")}>
             {data.passport_series}
           </InfoRow>
           <InfoRow label={t("cardPin.passportNumber", "Pasport belgisi")}>
             {data.passport_number}
           </InfoRow>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        </BentoCard>
+      </BentoGrid>
+
+      {/* ── Row 3: Passport images ───────────────────────────────────────── */}
+      <BentoGrid cols={4}>
+        <BentoCard title={t("cardPin.passportFile1", "Sahypa 1")}>
           <PassportImage
             label={t("cardPin.passportFile1", "Pasport (sahypa 1)")}
             url={data.passport_file_1}
           />
+        </BentoCard>
+        <BentoCard title={t("cardPin.passportFile2", "Sahypa 2-3")}>
           <PassportImage
             label={t("cardPin.passportFile2", "Pasport (2-3-nji sahypa)")}
             url={data.passport_file_2}
           />
+        </BentoCard>
+        <BentoCard title={t("cardPin.passportFile3", "Sahypa 8-9")}>
           <PassportImage
             label={t("cardPin.passportFile3", "Pasport (8-9 sahypa)")}
             url={data.passport_file_3}
           />
+        </BentoCard>
+        <BentoCard title={t("cardPin.passportFile4", "Sahypa 32")}>
           <PassportImage
             label={t("cardPin.passportFile4", "Pasport (32-nji sahypa)")}
             url={data.passport_file_4}
           />
-        </div>
-      </section>
+        </BentoCard>
+      </BentoGrid>
+
     </div>
-  );
+  )
 }
