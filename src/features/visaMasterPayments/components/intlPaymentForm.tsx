@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  User, MapPin, IdCard, CreditCard, Files,
+} from 'lucide-react'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
-import type { IntlPaymentItem, IntlPaymentCreatePayload, IntlPaymentStatus, CurrencyType } from '../api/visaMasterPaymentsApi'
+import { FormActions } from '@/components/formActions'
+import { StepBarCards, type StepCardItem } from '@/components//stepBarV2'
+import type { StepStatus } from '@/components/stepBar'
+import type {
+  IntlPaymentItem,
+  IntlPaymentCreatePayload,
+  IntlPaymentStatus,
+  CurrencyType,
+} from '../api/visaMasterPaymentsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,28 +96,68 @@ const PROVINCE_OPTIONS = [
   { value: 'balkan',   label: 'Balkan' },
 ]
 
-// Kabul ediji docs — 9 sany
 const KABUL_DOCS: { key: FileKey; label: string }[] = [
-  { key: 'doc_sberbank_account',     label: 'Talypyň degişli welaýata "SBERBANK" kartyň rekwizitleri' },
-  { key: 'doc_school_enrollment',    label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwänamasy' },
-  { key: 'doc_summons',              label: 'Talypyň bilendiriň göçürmesi' },
-  { key: 'doc_passport_tm',          label: 'Talypyň degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi' },
-  { key: 'doc_foreign_passport',     label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi' },
-  { key: 'doc_foreign_passport_copy',label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurtda galan döwründe bakýan döwleti baradaky bellenen sahypasynyň göçürmesi' },
-  { key: 'doc_exit_permission',      label: 'Talypyň Türkmenistandan çykmak — we Türkmenistana girmek üçin pasportynyň dowletiniň girmesiz baradaky bellenen (goşmaç şaýmynyň) bellenen sahypasynyň göçürmesi' },
-  { key: 'doc_school_foreign_info',  label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy barada doly takyk dil ulgaýynda takyk dil maglumatly sebäpleri daşary ýurt döwletiniň ýokary okuw mekdebinden haty' },
-  { key: 'doc_school_departure_info',label: 'Talypyň daşary ýurt döwletinde döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwänamany döwlet dili maglumatlaryny talabap doly takyk dil ulgaýynda talaby daşary ýurt döwletiniň ýokary okuw mekdebinden haty' },
+  { key: 'doc_sberbank_account',      label: 'Talypyň SBERBANK kartynyň rekwizitleri' },
+  { key: 'doc_school_enrollment',     label: 'Daşary ýurt ÝOM-da okaýandygy barada güwänamasy' },
+  { key: 'doc_summons',               label: 'Çagyrylma hatynyn göçürmesi' },
+  { key: 'doc_passport_tm',           label: 'TM içki pasportynyň asyl görnüşi we göçürmesi' },
+  { key: 'doc_foreign_passport',      label: 'Daşary ýurt pasportynyň göçürmesi' },
+  { key: 'doc_foreign_passport_copy', label: 'Bakýan döwlet sahypasynyň göçürmesi' },
+  { key: 'doc_exit_permission',       label: 'Çykyş-giriş rugsat bellikli sahypa göçürmesi' },
+  { key: 'doc_school_foreign_info',   label: 'ÝOM-dan hat (okuw dilinde)' },
+  { key: 'doc_school_departure_info', label: 'ÝOM-dan hat (döwlet dilinde)' },
 ]
 
-// Upgradyý docs — 6 sany
 const UPGRAD_DOCS: { key: FileKey; label: string }[] = [
-  { key: 'upd_doc_passport_tm',          label: 'Upgradyý degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi' },
-  { key: 'upd_doc_foreign_passport',     label: 'Upgradyý degişli Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi' },
-  { key: 'upd_doc_visa',                 label: 'Upgradyý Türkmenistandan — çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurt döwletinde galýandygy we daşary ýurt döwleti baradaky şaýmynyň bellenen sahypasynyň göçürmesi' },
-  { key: 'upd_doc_acceptance_letter',    label: 'Upgradyýyň we kabul edijiniň Batalyý töräre garyşdyryjy resminamalarynyň göçürmesi' },
-  { key: 'upd_doc_passport_biometric',   label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra Türkmenistanyň raýatynyň pasportynyň tässy göreli alan bolsa, osta üstü görli 1 pasportynyň seriýasy baradaky maglumatlary' },
-  { key: 'upd_doc_passport_old',         label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra Türkmenistanyň raýatynyň pasportynyň köp göreli alanlar soňra birleşi göreli alan bolsa, biri miwe möhüründen doglan doglan ata-enelerden biriniň alan pasportynyň seriýasy baradaky göwnamasy' },
+  { key: 'upd_doc_passport_tm',        label: 'TM içki pasportynyň asyl görnüşi (upd)' },
+  { key: 'upd_doc_foreign_passport',   label: 'Daşary ýurt pasportynyň göçürmesi (upd)' },
+  { key: 'upd_doc_visa',               label: 'Wiza bellenen sahypasynyň göçürmesi' },
+  { key: 'upd_doc_acceptance_letter',  label: 'Kabul haty we beýleki resminamalar' },
+  { key: 'upd_doc_passport_biometric', label: 'Täze (2015+) pasport seriýasy maglumatlary' },
+  { key: 'upd_doc_passport_old',       label: 'Könelräk pasport seriýasy maglumatlary' },
 ]
+
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
+
+interface Step {
+  id: StepId
+  title: string
+  subtitle: string
+}
+
+const STEPS: Step[] = [
+  { id: 'general',  title: 'Esasy',      subtitle: 'Status, müşderi'      },
+  { id: 'location', title: 'Lokasiýa',   subtitle: 'Welaýat, şahamça'     },
+  { id: 'personal', title: 'Şahsy',      subtitle: 'Pasport, kontakt'     },
+  { id: 'payment',  title: 'Töleg',      subtitle: 'Töleýji, kabul ediji' },
+  { id: 'docs',     title: 'Resminamalar', subtitle: '15 resminama'       },
+]
+
+// Per-step required fields for incremental validation
+const STEP_REQUIRED_FIELDS: Partial<Record<StepId, (keyof FormState)[]>> = {
+  general:  ['client_id', 'status', 'currency_type'],
+  location: ['province', 'branch'],
+  personal: ['passport_first_name', 'passport_last_name', 'phone'],
+  payment:  ['passport_series', 'passport_number', 'payer_full_name', 'payer_account_number', 'receiver_info'],
+}
+
+const STEP_ERROR_LABELS: Partial<Record<keyof FormState, string>> = {
+  client_id:            'Ulanyjy hökmany',
+  status:               'Status hökmany',
+  currency_type:        'Ýüztumanyň görnüşi hökmany',
+  province:             'Welaýat hökmany',
+  branch:               'Şahamça hökmany',
+  passport_first_name:  'Ady hökmany',
+  passport_last_name:   'Familiýasy hökmany',
+  phone:                'Telefon hökmany',
+  passport_series:      'Pasport seriýasy hökmany',
+  passport_number:      'Pasport nomeri hökmany',
+  payer_full_name:      'Doly ady hökmany',
+  payer_account_number: 'Goşun hasaby hökmany',
+  receiver_info:        'Kabul edijiniň maglumatlary hökmany',
+}
 
 // ─── Default state ────────────────────────────────────────────────────────────
 
@@ -130,48 +179,355 @@ const defaultState: FormState = {
   upd_doc_passport_biometric: null, upd_doc_passport_old: null,
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── Full validation (final submit) ──────────────────────────────────────────
 
-function validate(form: FormState): FormErrors {
+function validateAll(form: FormState): FormErrors {
   const errors: FormErrors = {}
-  if (!form.client_id)           errors.client_id           = 'Ulanyjy hökmany'
-  if (!form.status)              errors.status              = 'Status hökmany'
-  if (!form.currency_type)       errors.currency_type       = 'Ýüztumanyň görnüşi hökmany'
-  if (!form.province)            errors.province            = 'Welaýat hökmany'
-  if (!form.branch)              errors.branch              = 'Şahamça hökmany'
-  if (!form.passport_first_name) errors.passport_first_name = 'Ady hökmany'
-  if (!form.passport_last_name)  errors.passport_last_name  = 'Familiýasy hökmany'
-  if (!form.phone)               errors.phone               = 'Telefon hökmany'
-  if (!form.passport_series)     errors.passport_series     = 'Pasport seriýasy hökmany'
-  if (!form.passport_number)     errors.passport_number     = 'Pasport nomeri hökmany'
-  if (!form.payer_full_name)     errors.payer_full_name     = 'Ady Familiýasy Atasnyň ady hökmany'
-  if (!form.payer_account_number)errors.payer_account_number= 'Goşun hasaby hökmany'
-  if (!form.receiver_info)       errors.receiver_info       = 'Töleg kabul edijiniň maglumatlary hökmany'
+  Object.entries(STEP_ERROR_LABELS).forEach(([key, msg]) => {
+    if (!form[key as keyof FormState]) errors[key as keyof FormState] = msg
+  })
   return errors
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+function validateStep(form: FormState, stepId: StepId): FormErrors {
+  const fields = STEP_REQUIRED_FIELDS[stepId] ?? []
+  const errors: FormErrors = {}
+  fields.forEach((f) => {
+    if (!form[f]) errors[f] = STEP_ERROR_LABELS[f] ?? 'Hökmany'
+  })
+  return errors
+}
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// ─── Bento layout primitive ───────────────────────────────────────────────────
+
+function BentoGrid({
+  cols = 2,
+  children,
+}: {
+  cols?: 1 | 2 | 3
+  children: React.ReactNode
+}) {
+  const colClass = { 1: 'grid-cols-1', 2: 'grid-cols-1 sm:grid-cols-2', 3: 'grid-cols-1 sm:grid-cols-3' }[cols]
   return (
-    <section className="bg-card border border-border rounded-lg p-6 space-y-4">
+    <div className={`grid ${colClass} gap-4`}>
+      {children}
+    </div>
+  )
+}
+
+function BentoCard({
+  title,
+  children,
+  span,
+}: {
+  title?: string
+  children: React.ReactNode
+  span?: 'full'
+}) {
+  return (
+    <div
+      className={`bg-card border border-border rounded-xl p-5 space-y-4${span === 'full' ? ' sm:col-span-2' : ''}`}
+    >
       {title && (
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {title}
+        </p>
       )}
       {children}
-    </section>
+    </div>
+  )
+}
+
+// ─── Step content panels ──────────────────────────────────────────────────────
+
+function StepGeneral({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Müşderi">
+        <FormInput
+          type="searchable-select"
+          label="Ulanyjy"
+          value={form.client_id}
+          onChange={(v) => set('client_id', v)}
+          options={[]}
+          placeholder="Saýlamak üçin basyň"
+          error={errors.client_id}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Status">
+        <FormInput
+          type="select"
+          label="Status"
+          value={form.status}
+          onChange={(v) => set('status', v)}
+          options={STATUS_OPTIONS}
+          error={errors.status}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Kart görnüşi" span="full">
+        <FormInput
+          type="select"
+          label="Ýüztumanyň görnüşi"
+          value={form.currency_type}
+          onChange={(v) => set('currency_type', v)}
+          options={CURRENCY_OPTIONS}
+          error={errors.currency_type}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Bellik" span="full">
+        <FormInput
+          type="textarea"
+          label="Bellik"
+          value={form.note}
+          onChange={(v) => set('note', v)}
+          placeholder="Bellik..."
+          rows={2}
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepLocation({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Welaýat">
+        <FormInput
+          type="searchable-select"
+          label="Welaýat"
+          value={form.province}
+          onChange={(v) => { set('province', v); set('branch', '') }}
+          options={PROVINCE_OPTIONS}
+          error={errors.province}
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          Welaýaty saýlasaňyz şahamçalar güncellenar.
+        </p>
+      </BentoCard>
+
+      <BentoCard title="Şahamça">
+        <FormInput
+          type="searchable-select"
+          label="Şahamça"
+          value={form.branch}
+          onChange={(v) => set('branch', v)}
+          options={[]} // filtered by province
+          placeholder="Saýlamak üçin basyň"
+          error={errors.branch}
+          required
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepPersonal({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="At-familýa">
+        <FormInput
+          type="text"
+          label="Pasportdaky familýa"
+          value={form.passport_last_name}
+          onChange={(v) => set('passport_last_name', v)}
+          placeholder="NURYYEW"
+          error={errors.passport_last_name}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Pasportdaky ady"
+          value={form.passport_first_name}
+          onChange={(v) => set('passport_first_name', v)}
+          placeholder="HAÝDAR"
+          error={errors.passport_first_name}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Kontakt">
+        <FormInput
+          type="phone"
+          label="Telefon"
+          value={form.phone}
+          onChange={(v) => set('phone', v)}
+          error={errors.phone}
+          required
+        />
+        <FormInput
+          type="email"
+          label="E-poçta"
+          value={form.email}
+          onChange={(v) => set('email', v)}
+          placeholder="email@example.com"
+        />
+      </BentoCard>
+
+      <BentoCard title="Häzirki ýaşyş ýeri" span="full">
+        <FormInput
+          type="text"
+          label="Häzirki ýaşyş ýeri"
+          value={form.home_address}
+          onChange={(v) => set('home_address', v)}
+          placeholder="Köçe, jaý belgisi..."
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepPayment({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Pasport maglumatlary">
+        <FormInput
+          type="select"
+          label="Pasport seriýasy"
+          value={form.passport_series}
+          onChange={(v) => set('passport_series', v)}
+          options={PASSPORT_SERIES_OPTIONS}
+          error={errors.passport_series}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Pasport nomeri"
+          value={form.passport_number}
+          onChange={(v) => set('passport_number', v)}
+          placeholder="A123456"
+          error={errors.passport_number}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Töleýji">
+        <FormInput
+          type="text"
+          label="Ady Familiýasy Atasynyň ady"
+          value={form.payer_full_name}
+          onChange={(v) => set('payer_full_name', v)}
+          placeholder="Doly ady..."
+          error={errors.payer_full_name}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Goşun hasaby"
+          value={form.payer_account_number}
+          onChange={(v) => set('payer_account_number', v)}
+          placeholder="1234 5678 ..."
+          error={errors.payer_account_number}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Kabul edijiniň maglumatlary" span="full">
+        <FormInput
+          type="textarea"
+          label="Töleg kabul edijiniň maglumatlary"
+          value={form.receiver_info}
+          onChange={(v) => set('receiver_info', v)}
+          placeholder="Kabul ediji bank, hasap, Swift..."
+          rows={3}
+          error={errors.receiver_info}
+          required
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepDocs({
+  form, set,
+}: {
+  form: FormState
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Kabul ediji talyp — 9 resminama">
+        <div className="space-y-3">
+          {KABUL_DOCS.map(({ key, label }) => (
+            <FormInput
+              key={key}
+              type="file"
+              label={label}
+              onFileChange={(f) => set(key, f)}
+              fileValue={form[key] as File | null}
+              accept="image/*,.pdf"
+            />
+          ))}
+        </div>
+      </BentoCard>
+
+      <BentoCard title="Upgradyý — 6 resminama">
+        <div className="space-y-3">
+          {UPGRAD_DOCS.map(({ key, label }) => (
+            <FormInput
+              key={key}
+              type="file"
+              label={label}
+              onFileChange={(f) => set(key, f)}
+              fileValue={form[key] as File | null}
+              accept="image/*,.pdf"
+            />
+          ))}
+        </div>
+      </BentoCard>
+    </BentoGrid>
   )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function IntlPaymentForm({ mode, initialData, onSubmit, isSubmitting }: IntlPaymentFormProps) {
+export function IntlPaymentForm({
+  mode,
+  initialData,
+  onSubmit,
+  isSubmitting,
+}: IntlPaymentFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [form, setForm] = useState<FormState>(defaultState)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [currentStep, setCurrentStep] = useState(0)
+  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
+    STEPS.map((_, i) => (i === 0 ? 'active' : 'idle')),
+  )
 
+  // ── Populate in edit mode ──
   useEffect(() => {
     if (mode === 'edit' && initialData) {
       setForm({
@@ -200,18 +556,60 @@ export function IntlPaymentForm({ mode, initialData, onSubmit, isSubmitting }: I
         upd_doc_visa: null, upd_doc_acceptance_letter: null,
         upd_doc_passport_biometric: null, upd_doc_passport_old: null,
       })
+      // Mark all non-doc steps done in edit mode so the user can jump freely
+      setStepStatuses(STEPS.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle')))
     }
   }, [mode, initialData])
 
+  // ── Field setter ──
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
 
+  // ── Step navigation ──
+  const goStep = (idx: number) => {
+    if (idx < 0 || idx >= STEPS.length) return
+    setStepStatuses((prev) => {
+      const next = [...prev]
+      // going forward: mark current done
+      if (idx > currentStep) next[currentStep] = 'done'
+      next[idx] = 'active'
+      // going back: reset steps after target to idle (only those not yet done)
+      if (idx < currentStep) {
+        for (let i = idx + 1; i <= currentStep; i++) {
+          if (next[i] !== 'done') next[i] = 'idle'
+        }
+      }
+      return next
+    })
+    setErrors({})
+    setCurrentStep(idx)
+  }
+
+  const handleNext = () => {
+    const stepId = STEPS[currentStep].id
+    const stepErrors = validateStep(form, stepId)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors)
+      setStepStatuses((prev) => {
+        const next = [...prev]
+        next[currentStep] = 'error'
+        return next
+      })
+      return
+    }
+    if (currentStep === STEPS.length - 1) {
+      handleSubmit()
+    } else {
+      goStep(currentStep + 1)
+    }
+  }
+
   const handleSubmit = () => {
-    const errs = validate(form)
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
+    const allErrors = validateAll(form)
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors)
       return
     }
     onSubmit({
@@ -221,243 +619,59 @@ export function IntlPaymentForm({ mode, initialData, onSubmit, isSubmitting }: I
     })
   }
 
+  // ── StepBarCards data ──
+  const stepCardItems: StepCardItem[] = STEPS.map((s, i) => ({
+    id:       s.id,
+    title:    s.title,
+    subtitle: s.subtitle,
+    status:   stepStatuses[i],
+    icon:     [User, MapPin, IdCard, CreditCard, Files][i],
+  }))
+
+  const isLastStep = currentStep === STEPS.length - 1
+
   const title = mode === 'create'
     ? t('intlPayment.createTitle', 'Visa/Master tölegler (talyplar üçin) dörediň')
     : t('intlPayment.editTitle',   'Visa/Master tölegler (talyplar üçin) redaktirläň')
 
-  const submitLabel = mode === 'create'
-    ? t('intlPayment.createBtn', 'Visa/Master tölegler (talyplar üçin) dörediň')
-    : t('intlPayment.editBtn',   'Visa/Master tölegler (talyplar üçin) redaktirläň')
+  const submitLabel = isLastStep
+    ? (mode === 'create'
+        ? t('intlPayment.createBtn', 'Dörediň')
+        : t('intlPayment.editBtn',   'Redaktirläň'))
+    : undefined // not used on non-last steps
 
   return (
     <div className="mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-foreground">{title}</h1>
 
-      {/* ── Status ────────────────────────────────────────────────────────── */}
-      <Section title="">
-        <FormInput
-          type="searchable-select"
-          label={t('intlPayment.client', 'Ulanyjy')}
-          value={form.client_id}
-          onChange={(v) => set('client_id', v)}
-          options={[]} // Fetched from clients API
-          placeholder="Saýlamak üçin basyň"
-          error={errors.client_id}
-          required
+      {/* ── Step bar ────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
+        <StepBarCards
+          steps={stepCardItems}
+          onGoTo={(i) => {
+            // Allow jumping only to done/active steps
+            if (stepStatuses[i] !== 'idle') goStep(i)
+          }}
         />
-        <FormInput
-          type="select"
-          label={t('intlPayment.status', 'Status')}
-          value={form.status}
-          onChange={(v) => set('status', v)}
-          options={STATUS_OPTIONS}
-          error={errors.status}
-          required
-        />
-        <FormInput
-          type="textarea"
-          label={t('intlPayment.note', 'Bellik')}
-          value={form.note}
-          onChange={(v) => set('note', v)}
-          placeholder="Bellik"
-          rows={2}
-        />
-      </Section>
+      </div>
 
-      {/* ── Ýüztumanyň görnüşi ───────────────────────────────────────────── */}
-      <Section title={t('intlPayment.currencySection', 'Ýüztumanyň görnüşi')}>
-        <FormInput
-          type="select"
-          label={t('intlPayment.currencyType', 'Ýüztumanyň görnüşi')}
-          value={form.currency_type}
-          onChange={(v) => set('currency_type', v)}
-          options={CURRENCY_OPTIONS}
-          error={errors.currency_type}
-          required
-        />
-      </Section>
-
-      {/* ── Lokasiýa ─────────────────────────────────────────────────────── */}
-      <Section title={t('intlPayment.locationSection', 'Lokasiýa')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="searchable-select"
-            label={t('intlPayment.province', 'Welaýat')}
-            value={form.province}
-            onChange={(v) => { set('province', v); set('branch', '') }}
-            options={PROVINCE_OPTIONS}
-            error={errors.province}
-            required
-          />
-          <FormInput
-            type="searchable-select"
-            label={t('intlPayment.branch', 'Şahamça')}
-            value={form.branch}
-            onChange={(v) => set('branch', v)}
-            options={[]} // Fetched from branches API filtered by province
-            placeholder="Saýlamak üçin basyň"
-            error={errors.branch}
-            required
-          />
-        </div>
-      </Section>
-
-      {/* ── Şahsy maglumatlar ─────────────────────────────────────────────── */}
-      <Section title={t('intlPayment.personalSection', 'Şahsy maglumatlar')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="searchable-select"
-            label={t('intlPayment.passportLastName', 'Pasportdaky familýa')}
-            value={form.passport_last_name}
-            onChange={(v) => set('passport_last_name', v)}
-            options={[]}
-            placeholder="Pasportdaky familýa"
-            error={errors.passport_last_name}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('intlPayment.passportFirstName', 'Pasportdaky ady')}
-            value={form.passport_first_name}
-            onChange={(v) => set('passport_first_name', v)}
-            placeholder="Pasportdaky ady"
-            error={errors.passport_first_name}
-            required
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="phone"
-            label={t('intlPayment.phone', 'Telefon')}
-            value={form.phone}
-            onChange={(v) => set('phone', v)}
-            error={errors.phone}
-            required
-          />
-          <FormInput
-            type="email"
-            label={t('intlPayment.email', 'E-poçta')}
-            value={form.email}
-            onChange={(v) => set('email', v)}
-            placeholder="E-poçta"
-          />
-        </div>
-        <FormInput
-          type="text"
-          label={t('intlPayment.homeAddress', 'Häzirki ýaşyş ýeri')}
-          value={form.home_address}
-          onChange={(v) => set('home_address', v)}
-          placeholder="Häzirki ýaşyş ýeri"
-        />
-      </Section>
-
-      {/* ── Töleg upgradyjynyň maglumatlary ──────────────────────────────── */}
-      <Section title={t('intlPayment.payerSection', 'Töleg upgradyjynyň maglumatlary')}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="searchable-select"
-            label={t('intlPayment.passportSeries', 'Pasport seriýasy')}
-            value={form.passport_series}
-            onChange={(v) => set('passport_series', v)}
-            options={PASSPORT_SERIES_OPTIONS}
-            error={errors.passport_series}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('intlPayment.passportNumber', 'Pasport nomeri')}
-            value={form.passport_number}
-            onChange={(v) => set('passport_number', v)}
-            placeholder="Pasport nomeri"
-            error={errors.passport_number}
-            required
-          />
-        </div>
-        <FormInput
-          type="text"
-          label={t('intlPayment.payerFullName', 'Ady Familiýasy Atasnyň ady')}
-          value={form.payer_full_name}
-          onChange={(v) => set('payer_full_name', v)}
-          placeholder="Ady Familiýasy Atasnyň ady"
-          error={errors.payer_full_name}
-          required
-        />
-        <FormInput
-          type="text"
-          label={t('intlPayment.payerAccount', 'Goşun hasaby')}
-          value={form.payer_account_number}
-          onChange={(v) => set('payer_account_number', v)}
-          placeholder="Goşun hasaby"
-          error={errors.payer_account_number}
-          required
-        />
-      </Section>
-
-      {/* ── Töleg kabul edijiniň maglumatlary ────────────────────────────── */}
-      <Section title={t('intlPayment.receiverSection', 'Töleg kabul edijiniň maglumatlary')}>
-        <FormInput
-          type="textarea"
-          label={t('intlPayment.receiverInfo', 'Saňa ger')}
-          value={form.receiver_info}
-          onChange={(v) => set('receiver_info', v)}
-          placeholder="Saňa ger"
-          rows={3}
-          error={errors.receiver_info}
-          required
-        />
-      </Section>
-
-      {/* ── Kabul ediji talyp boyunca resminamalar ────────────────────────── */}
-      <Section title={t('intlPayment.kabulDocsSection', 'Kabul ediji talyp boyunca resminamalar')}>
-        <div className="space-y-4">
-          {KABUL_DOCS.map(({ key, label }) => (
-            <FormInput
-              key={key}
-              type="file"
-              label={label}
-              onFileChange={(f) => set(key, f)}
-              fileValue={form[key] as File | null}
-              accept="image/*,.pdf"
-            />
-          ))}
-        </div>
-      </Section>
-
-      {/* ── Upgradyý boyunca resminamalar ─────────────────────────────────── */}
-      <Section title={t('intlPayment.upgradDocsSection', 'Upgradyý boyunca resminamalar')}>
-        <div className="space-y-4">
-          {UPGRAD_DOCS.map(({ key, label }) => (
-            <FormInput
-              key={key}
-              type="file"
-              label={label}
-              onFileChange={(f) => set(key, f)}
-              fileValue={form[key] as File | null}
-              accept="image/*,.pdf"
-            />
-          ))}
-        </div>
-      </Section>
+      {/* ── Step content ─────────────────────────────────────────────────── */}
+      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} />}
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-3 pb-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/intl-payments/visa-master')}
-          disabled={isSubmitting}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="min-w-[240px]"
-        >
-          {isSubmitting ? <Spinner className="size-4" /> : submitLabel}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isSubmitting}
+        onCancel={() => navigate('/intl-payments/visa-master')}
+        onPrev={currentStep > 0 ? () => goStep(currentStep - 1) : undefined}
+        onNext={!isLastStep ? handleNext : undefined}
+        showSubmit={isLastStep}
+        onSubmit={isLastStep ? handleNext : undefined}
+        submitLabel={submitLabel}
+      />
     </div>
   )
 }

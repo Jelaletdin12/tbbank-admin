@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import { CreditCard, User, FileText } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
+import { FormActions } from '@/components/formActions'
+import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import type { CardPinItem, CardPinCreatePayload } from '@/features/cardPins/api/cardPinApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -36,6 +38,18 @@ interface FormState {
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
+type StepStatus = 'idle' | 'active' | 'done' | 'error'
+
+// ─── Step field mapping ───────────────────────────────────────────────────────
+
+const STEP_FIELDS: Array<Array<keyof FormState>> = [
+  // Step 0 — Kart & Lokasiýa
+  ['status', 'card_type', 'card_number', 'province', 'branch'],
+  // Step 1 — Şahsy maglumatlar
+  ['first_name', 'last_name', 'birth_date', 'phone'],
+  // Step 2 — Pasport & Faýllar
+  ['passport_series', 'passport_number', 'passport_file_1', 'passport_file_2', 'passport_file_3', 'passport_file_4'],
+]
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -45,7 +59,6 @@ const STATUS_OPTIONS = [
   { value: 'rejected', label: 'Ret edildi' },
 ]
 
-// These would typically come from API — using static options as placeholder
 const CARD_TYPE_OPTIONS = [
   { value: 'altyn_asyr', label: 'Altyn Asyr' },
   { value: 'visa',       label: 'Visa' },
@@ -53,10 +66,10 @@ const CARD_TYPE_OPTIONS = [
 ]
 
 const PASSPORT_SERIES_OPTIONS = [
-  { value: 'I',    label: 'I' },
-  { value: 'II',   label: 'II' },
-  { value: 'I-MR', label: 'I-MR' },
-  { value: 'II-MR',label: 'II-MR' },
+  { value: 'I',     label: 'I' },
+  { value: 'II',    label: 'II' },
+  { value: 'I-MR',  label: 'I-MR' },
+  { value: 'II-MR', label: 'II-MR' },
 ]
 
 const PROVINCE_OPTIONS = [
@@ -92,29 +105,57 @@ const defaultState: FormState = {
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
-function validate(form: FormState, mode: 'create' | 'edit'): FormErrors {
-  const errors: FormErrors = {}
+function validate(
+  form: FormState,
+  mode: 'create' | 'edit',
+  stepIndex?: number,
+): FormErrors {
+  const allErrors: FormErrors = {}
 
-  if (!form.status)          errors.status          = 'Status hökmany'
-  if (!form.card_type)       errors.card_type       = 'Kart görnüşi hökmany'
-  if (!form.card_number)     errors.card_number     = 'Kart belgisi hökmany'
-  if (!form.province)        errors.province        = 'Welaýat hökmany'
-  if (!form.branch)          errors.branch          = 'Şahamça hökmany'
-  if (!form.first_name)      errors.first_name      = 'Ady hökmany'
-  if (!form.last_name)       errors.last_name       = 'Familiýasy hökmany'
-  if (!form.birth_date)      errors.birth_date      = 'Doglan güni hökmany'
-  if (!form.phone)           errors.phone           = 'Telefon hökmany'
-  if (!form.passport_series) errors.passport_series = 'Pasport seriýasy hökmany'
-  if (!form.passport_number) errors.passport_number = 'Pasport belgisi hökmany'
+  if (!form.status)          allErrors.status          = 'Status hökmany'
+  if (!form.card_type)       allErrors.card_type       = 'Kart görnüşi hökmany'
+  if (!form.card_number)     allErrors.card_number     = 'Kart belgisi hökmany'
+  if (!form.province)        allErrors.province        = 'Welaýat hökmany'
+  if (!form.branch)          allErrors.branch          = 'Şahamça hökmany'
+  if (!form.first_name)      allErrors.first_name      = 'Ady hökmany'
+  if (!form.last_name)       allErrors.last_name       = 'Familiýasy hökmany'
+  if (!form.birth_date)      allErrors.birth_date      = 'Doglan güni hökmany'
+  if (!form.phone)           allErrors.phone           = 'Telefon hökmany'
+  if (!form.passport_series) allErrors.passport_series = 'Pasport seriýasy hökmany'
+  if (!form.passport_number) allErrors.passport_number = 'Pasport belgisi hökmany'
 
   if (mode === 'create') {
-    if (!form.passport_file_1) errors.passport_file_1 = 'Pasport (sahypa 1) hökmany'
-    if (!form.passport_file_2) errors.passport_file_2 = 'Pasport (2-3-nji sahypa) hökmany'
-    if (!form.passport_file_3) errors.passport_file_3 = 'Pasport (8-9 sahypa) hökmany'
-    if (!form.passport_file_4) errors.passport_file_4 = 'Pasport (32-nji sahypa) hökmany'
+    if (!form.passport_file_1) allErrors.passport_file_1 = 'Pasport (sahypa 1) hökmany'
+    if (!form.passport_file_2) allErrors.passport_file_2 = 'Pasport (2-3-nji sahypa) hökmany'
+    if (!form.passport_file_3) allErrors.passport_file_3 = 'Pasport (8-9 sahypa) hökmany'
+    if (!form.passport_file_4) allErrors.passport_file_4 = 'Pasport (32-nji sahypa) hökmany'
   }
 
-  return errors
+  if (stepIndex !== undefined) {
+    const stepKeys = STEP_FIELDS[stepIndex]
+    const stepErrors: FormErrors = {}
+    for (const key of stepKeys) {
+      if (allErrors[key]) stepErrors[key] = allErrors[key]
+    }
+    return stepErrors
+  }
+
+  return allErrors
+}
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+
+function Section({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      {title && (
+        <div className="px-5 py-3.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        </div>
+      )}
+      <div className="p-5">{children}</div>
+    </div>
+  )
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -123,10 +164,11 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState<FormState>(defaultState)
+  const [form, setForm]     = useState<FormState>(defaultState)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [currentStep, setCurrentStep]   = useState(0)
+  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(['active', 'idle', 'idle'])
 
-  // Hydrate form when editing
   useEffect(() => {
     if (mode === 'edit' && initialData) {
       setForm({
@@ -153,13 +195,66 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
 
+  // ── Step navigation ────────────────────────────────────────────────────────
+
+  const updateStatus = (index: number, status: StepStatus) => {
+    setStepStatuses((prev) => {
+      const next = [...prev]
+      next[index] = status
+      return next
+    })
+  }
+
+  const goToStep = (index: number) => {
+    updateStatus(currentStep, stepStatuses[currentStep] === 'error' ? 'error' : 'done')
+    updateStatus(index, 'active')
+    setCurrentStep(index)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleNext = () => {
+    const stepErrors = validate(form, mode, currentStep)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...stepErrors }))
+      updateStatus(currentStep, 'error')
+      toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
+      const firstKey = Object.keys(stepErrors)[0]
+      document.getElementById(`field-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    updateStatus(currentStep, 'done')
+    const next = currentStep + 1
+    updateStatus(next, 'active')
+    setCurrentStep(next)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handlePrev = () => {
+    const prev = currentStep - 1
+    updateStatus(currentStep, stepStatuses[currentStep] === 'error' ? 'error' : 'idle')
+    updateStatus(prev, 'active')
+    setCurrentStep(prev)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
   const handleSubmit = () => {
-    const errs = validate(form, mode)
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
+    const allErrors = validate(form, mode)
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors)
+      const newStatuses = stepStatuses.map((s, i) => {
+        const stepKeys = STEP_FIELDS[i]
+        const hasError = stepKeys.some((k) => allErrors[k])
+        if (i === currentStep) return hasError ? 'error' : 'active'
+        if (hasError) return 'error'
+        return s === 'idle' ? 'idle' : 'done'
+      }) as StepStatus[]
+      setStepStatuses(newStatuses)
+      toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
       return
     }
 
@@ -184,6 +279,37 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     })
   }
 
+  // ── Step bar items ─────────────────────────────────────────────────────────
+
+  const stepDefs = [
+    {
+      id: 'card',
+      title: t('cardPin.step.card', 'Kart'),
+      subtitle: t('cardPin.step.cardSub', 'Görnüş & lokasiýa'),
+      icon: CreditCard,
+    },
+    {
+      id: 'personal',
+      title: t('cardPin.step.personal', 'Şahsy'),
+      subtitle: t('cardPin.step.personalSub', 'Maglumatlar'),
+      icon: User,
+    },
+    {
+      id: 'passport',
+      title: t('cardPin.step.passport', 'Pasport'),
+      subtitle: t('cardPin.step.passportSub', 'Resminamalar'),
+      icon: FileText,
+    },
+  ]
+
+  const stepItems: StepCardItem[] = stepDefs.map((def, i) => ({
+    ...def,
+    status: stepStatuses[i],
+  }))
+
+  const isFirstStep = currentStep === 0
+  const isLastStep  = currentStep === stepDefs.length - 1
+
   const title = mode === 'create'
     ? t('cardPin.create', 'Kart pin bukja dörediň')
     : t('cardPin.edit',   'Kart pin bukja redaktirläň')
@@ -192,225 +318,249 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     ? t('cardPin.createBtn', 'Kart pin bukja dörediň')
     : t('cardPin.editBtn',   'Kart pin bukja redaktirläň')
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className=" mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
 
-      {/* ── Status & Note ────────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-lg p-6 space-y-4">
-        <FormInput
-          type="select"
-          label={t('cardPin.status', 'Status')}
-          value={form.status}
-          onChange={(v) => set('status', v)}
-          options={STATUS_OPTIONS}
-          error={errors.status}
-          required
-        />
-        <FormInput
-          type="text"
-          label={t('cardPin.note', 'Bellik')}
-          value={form.note}
-          onChange={(v) => set('note', v)}
-          placeholder={t('cardPin.notePlaceholder', 'Bellik')}
-        />
-      </section>
-
-      {/* ── Kart ─────────────────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-base font-semibold text-foreground mb-4">
-          {t('cardPin.cardSection', 'Kart')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="searchable-select"
-            label={t('cardPin.cardType', 'Kart görnüşi')}
-            value={form.card_type}
-            onChange={(v) => set('card_type', v)}
-            options={CARD_TYPE_OPTIONS}
-            error={errors.card_type}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('cardPin.cardNumber', 'Kart belgisi')}
-            value={form.card_number}
-            onChange={(v) => set('card_number', v)}
-            placeholder={t('cardPin.cardNumberPlaceholder', 'Kart belgisi')}
-            error={errors.card_number}
-            required
-          />
-        </div>
-      </section>
-
-      {/* ── Lokasiýa ─────────────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-base font-semibold text-foreground mb-4">
-          {t('cardPin.locationSection', 'Lokasiýa')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="searchable-select"
-            label={t('cardPin.province', 'Welaýat')}
-            value={form.province}
-            onChange={(v) => { set('province', v); set('branch', '') }}
-            options={PROVINCE_OPTIONS}
-            error={errors.province}
-            required
-          />
-          <FormInput
-            type="searchable-select"
-            label={t('cardPin.branch', 'Şahamça')}
-            value={form.branch}
-            onChange={(v) => set('branch', v)}
-            options={[]} // Populated dynamically based on province from API
-            placeholder={t('cardPin.branchPlaceholder', 'Saýlamak üçin basyň')}
-            error={errors.branch}
-            required
-          />
-        </div>
-      </section>
-
-      {/* ── Şahsy maglumatlar ─────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-base font-semibold text-foreground mb-4">
-          {t('cardPin.personalSection', 'Şahsy maglumatlar')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <FormInput
-            type="text"
-            label={t('cardPin.firstName', 'Ady')}
-            value={form.first_name}
-            onChange={(v) => set('first_name', v)}
-            placeholder={t('cardPin.firstName', 'Ady')}
-            error={errors.first_name}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('cardPin.lastName', 'Familiýasy')}
-            value={form.last_name}
-            onChange={(v) => set('last_name', v)}
-            placeholder={t('cardPin.lastName', 'Familiýasy')}
-            error={errors.last_name}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('cardPin.fatherName', 'Atasynyň ady')}
-            value={form.father_name}
-            onChange={(v) => set('father_name', v)}
-            placeholder={t('cardPin.fatherName', 'Atasynyň ady')}
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-          <FormInput
-            type="date"
-            label={t('cardPin.birthDate', 'Doglan güni')}
-            value={form.birth_date}
-            onChange={(v) => set('birth_date', v)}
-            error={errors.birth_date}
-            required
-          />
-          <FormInput
-            type="phone"
-            label={t('cardPin.phone', 'Telefon')}
-            value={form.phone}
-            onChange={(v) => set('phone', v)}
-            error={errors.phone}
-            required
-          />
-        </div>
-      </section>
-
-      {/* ── Pasport ───────────────────────────────────────────────────────── */}
-      <section className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-base font-semibold text-foreground mb-4">
-          {t('cardPin.passportSection', 'Pasport')}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <FormInput
-            type="searchable-select"
-            label={t('cardPin.passportSeries', 'Pasport seriýasy')}
-            value={form.passport_series}
-            onChange={(v) => set('passport_series', v)}
-            options={PASSPORT_SERIES_OPTIONS}
-            error={errors.passport_series}
-            required
-          />
-          <FormInput
-            type="text"
-            label={t('cardPin.passportNumber', 'Pasport belgisi')}
-            value={form.passport_number}
-            onChange={(v) => set('passport_number', v)}
-            placeholder={t('cardPin.passportNumber', 'Pasport belgisi')}
-            error={errors.passport_number}
-            required
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            type="file"
-            label={t('cardPin.passportFile1', 'Pasport (sahypa 1)')}
-            onFileChange={(f) => set('passport_file_1', f)}
-            fileValue={form.passport_file_1}
-            accept="image/*,.pdf"
-            error={errors.passport_file_1}
-            required={mode === 'create'}
-          />
-          <FormInput
-            type="file"
-            label={t('cardPin.passportFile2', 'Pasport (2-3-nji sahypa)')}
-            onFileChange={(f) => set('passport_file_2', f)}
-            fileValue={form.passport_file_2}
-            accept="image/*,.pdf"
-            error={errors.passport_file_2}
-            required={mode === 'create'}
-          />
-          <FormInput
-            type="file"
-            label={t('cardPin.passportFile3', 'Pasport (8-9 sahypa)')}
-            onFileChange={(f) => set('passport_file_3', f)}
-            fileValue={form.passport_file_3}
-            accept="image/*,.pdf"
-            error={errors.passport_file_3}
-            required={mode === 'create'}
-          />
-          <FormInput
-            type="file"
-            label={t('cardPin.passportFile4', 'Pasport (32-nji sahypa)')}
-            onFileChange={(f) => set('passport_file_4', f)}
-            fileValue={form.passport_file_4}
-            accept="image/*,.pdf"
-            error={errors.passport_file_4}
-            required={mode === 'create'}
-          />
-        </div>
-      </section>
-
-      {/* ── Actions ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-3 pb-6">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/card-pins')}
-          disabled={isSubmitting}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="min-w-[180px]"
-        >
-          {isSubmitting ? (
-            <Spinner className="size-4" />
-          ) : (
-            submitLabel
-          )}
-        </Button>
+      {/* ── Step Bar ─────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
+        <StepBarCards steps={stepItems} onGoTo={goToStep} />
       </div>
+
+      {/* ── Step 0: Kart & Lokasiýa ──────────────────────────────────────── */}
+      {currentStep === 0 && (
+        <>
+          <Section>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div id="field-status">
+                <FormInput
+                  type="select"
+                  label={t('cardPin.status', 'Status')}
+                  value={form.status}
+                  onChange={(v) => set('status', v)}
+                  options={STATUS_OPTIONS}
+                  error={errors.status}
+                  required
+                />
+              </div>
+              <FormInput
+                type="text"
+                label={t('cardPin.note', 'Bellik')}
+                value={form.note}
+                onChange={(v) => set('note', v)}
+                placeholder={t('cardPin.notePlaceholder', 'Bellik')}
+              />
+            </div>
+          </Section>
+
+          <Section title={t('cardPin.cardSection', 'Kart')}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div id="field-card_type">
+                <FormInput
+                  type="searchable-select"
+                  label={t('cardPin.cardType', 'Kart görnüşi')}
+                  value={form.card_type}
+                  onChange={(v) => set('card_type', v)}
+                  options={CARD_TYPE_OPTIONS}
+                  error={errors.card_type}
+                  required
+                />
+              </div>
+              <div id="field-card_number">
+                <FormInput
+                  type="text"
+                  label={t('cardPin.cardNumber', 'Kart belgisi')}
+                  value={form.card_number}
+                  onChange={(v) => set('card_number', v)}
+                  placeholder={t('cardPin.cardNumberPlaceholder', 'Kart belgisi')}
+                  error={errors.card_number}
+                  required
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section title={t('cardPin.locationSection', 'Lokasiýa')}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div id="field-province">
+                <FormInput
+                  type="searchable-select"
+                  label={t('cardPin.province', 'Welaýat')}
+                  value={form.province}
+                  onChange={(v) => { set('province', v); set('branch', '') }}
+                  options={PROVINCE_OPTIONS}
+                  error={errors.province}
+                  required
+                />
+              </div>
+              <div id="field-branch">
+                <FormInput
+                  type="searchable-select"
+                  label={t('cardPin.branch', 'Şahamça')}
+                  value={form.branch}
+                  onChange={(v) => set('branch', v)}
+                  options={[]}
+                  placeholder={t('cardPin.branchPlaceholder', 'Saýlamak üçin basyň')}
+                  error={errors.branch}
+                  required
+                />
+              </div>
+            </div>
+          </Section>
+        </>
+      )}
+
+      {/* ── Step 1: Şahsy maglumatlar ─────────────────────────────────────── */}
+      {currentStep === 1 && (
+        <Section title={t('cardPin.personalSection', 'Şahsy maglumatlar')}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div id="field-first_name">
+              <FormInput
+                type="text"
+                label={t('cardPin.firstName', 'Ady')}
+                value={form.first_name}
+                onChange={(v) => set('first_name', v)}
+                placeholder={t('cardPin.firstName', 'Ady')}
+                error={errors.first_name}
+                required
+              />
+            </div>
+            <div id="field-last_name">
+              <FormInput
+                type="text"
+                label={t('cardPin.lastName', 'Familiýasy')}
+                value={form.last_name}
+                onChange={(v) => set('last_name', v)}
+                placeholder={t('cardPin.lastName', 'Familiýasy')}
+                error={errors.last_name}
+                required
+              />
+            </div>
+            <FormInput
+              type="text"
+              label={t('cardPin.fatherName', 'Atasynyň ady')}
+              value={form.father_name}
+              onChange={(v) => set('father_name', v)}
+              placeholder={t('cardPin.fatherName', 'Atasynyň ady')}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div id="field-birth_date">
+              <FormInput
+                type="date"
+                label={t('cardPin.birthDate', 'Doglan güni')}
+                value={form.birth_date}
+                onChange={(v) => set('birth_date', v)}
+                error={errors.birth_date}
+                required
+              />
+            </div>
+            <div id="field-phone">
+              <FormInput
+                type="phone"
+                label={t('cardPin.phone', 'Telefon')}
+                value={form.phone}
+                onChange={(v) => set('phone', v)}
+                error={errors.phone}
+                required
+              />
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* ── Step 2: Pasport & Faýllar ─────────────────────────────────────── */}
+      {currentStep === 2 && (
+        <Section title={t('cardPin.passportSection', 'Pasport')}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div id="field-passport_series">
+              <FormInput
+                type="searchable-select"
+                label={t('cardPin.passportSeries', 'Pasport seriýasy')}
+                value={form.passport_series}
+                onChange={(v) => set('passport_series', v)}
+                options={PASSPORT_SERIES_OPTIONS}
+                error={errors.passport_series}
+                required
+              />
+            </div>
+            <div id="field-passport_number">
+              <FormInput
+                type="text"
+                label={t('cardPin.passportNumber', 'Pasport belgisi')}
+                value={form.passport_number}
+                onChange={(v) => set('passport_number', v)}
+                placeholder={t('cardPin.passportNumber', 'Pasport belgisi')}
+                error={errors.passport_number}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div id="field-passport_file_1">
+              <FormInput
+                type="file"
+                label={t('cardPin.passportFile1', 'Pasport (sahypa 1)')}
+                onFileChange={(f) => set('passport_file_1', f)}
+                fileValue={form.passport_file_1}
+                accept="image/*,.pdf"
+                error={errors.passport_file_1}
+                required={mode === 'create'}
+              />
+            </div>
+            <div id="field-passport_file_2">
+              <FormInput
+                type="file"
+                label={t('cardPin.passportFile2', 'Pasport (2-3-nji sahypa)')}
+                onFileChange={(f) => set('passport_file_2', f)}
+                fileValue={form.passport_file_2}
+                accept="image/*,.pdf"
+                error={errors.passport_file_2}
+                required={mode === 'create'}
+              />
+            </div>
+            <div id="field-passport_file_3">
+              <FormInput
+                type="file"
+                label={t('cardPin.passportFile3', 'Pasport (8-9 sahypa)')}
+                onFileChange={(f) => set('passport_file_3', f)}
+                fileValue={form.passport_file_3}
+                accept="image/*,.pdf"
+                error={errors.passport_file_3}
+                required={mode === 'create'}
+              />
+            </div>
+            <div id="field-passport_file_4">
+              <FormInput
+                type="file"
+                label={t('cardPin.passportFile4', 'Pasport (32-nji sahypa)')}
+                onFileChange={(f) => set('passport_file_4', f)}
+                fileValue={form.passport_file_4}
+                accept="image/*,.pdf"
+                error={errors.passport_file_4}
+                required={mode === 'create'}
+              />
+            </div>
+          </div>
+        </Section>
+      )}
+
+      {/* ── Form Actions ──────────────────────────────────────────────────── */}
+      <FormActions
+        isPending={isSubmitting}
+        onCancel={() => navigate('/card-pins')}
+        onPrev={!isFirstStep ? handlePrev : undefined}
+        prevLabel={t('common.prev', 'Yza')}
+        onNext={!isLastStep ? handleNext : undefined}
+        nextLabel={t('common.next', 'Indiki')}
+        showSubmit={isLastStep}
+        onSubmit={handleSubmit}
+        submitLabel={submitLabel}
+      />
     </div>
   )
 }

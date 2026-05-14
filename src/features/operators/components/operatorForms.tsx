@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import { useCreateOperator, useUpdateOperator } from '../hooks/useOperators'
 import type { Operator, CreateOperatorPayload, UpdateOperatorPayload } from '../api/operatorsApi'
@@ -225,29 +225,16 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-muted/20">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="bg-primary hover:bg-primary/90 text-primary-foreground min-w-[160px]"
-        >
-          {isPending
-            ? t('common.saving', 'Saklanýar...')
-            : mode === 'create'
-            ? t('operators.createBtn', 'Operator döredin')
-            : t('operators.updateBtn', 'Üýtgetmeleri sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate(-1)}
+        cancelVariant="ghost"
+        submitLabel={mode === 'create'
+          ? t('operators.createBtn', 'Operator döredin')
+          : t('operators.updateBtn', 'Üýtgetmeleri sakla')}
+        className="px-6 py-4 border-t border-border bg-muted/20"
+      />
     </div>
   )
 }

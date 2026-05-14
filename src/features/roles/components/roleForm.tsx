@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/formActions'
 import { useCreateRole, useUpdateRole } from '../hooks/useRoles'
 import type { Role, RolePayload } from '../api/rolesApi'
 
@@ -176,28 +176,16 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border bg-muted/20">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/settings/users/roles')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending
-            ? t('common.saving', 'Ýüklenýär...')
-            : mode === 'create'
-              ? t('roles.actions.create', 'Rol dörediň')
-              : t('roles.actions.save', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/settings/users/roles')}
+        loadingLabel={t('common.saving', 'Ýüklenýär...')}
+        submitLabel={mode === 'create'
+          ? t('roles.actions.create', 'Rol dörediň')
+          : t('roles.actions.save', 'Ýatda sakla')}
+        className="px-5 py-4 border-t border-border bg-muted/20"
+      />
     </div>
   )
 }

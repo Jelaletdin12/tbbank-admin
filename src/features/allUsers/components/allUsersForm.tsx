@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-import { Loader2 } from 'lucide-react'
+import { FormActions } from '@/components/formActions'
 import { useCreateUser, useUpdateUser } from '../hooks/useAllUsers'
 import type { User, CreateUserPayload, UpdateUserPayload } from '../api/allUsersApi'
 
@@ -300,27 +299,14 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
         </div>
       </div>
 
-      {/* Footer actions */}
-      <div className="flex items-center justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate(-1)}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending && <Loader2 size={14} className="mr-2 animate-spin" />}
-          {mode === 'create'
-            ? t('users.actions.create', 'Ulanyjy dörediň')
-            : t('users.actions.save', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate(-1)}
+        submitLabel={mode === 'create'
+          ? t('users.actions.create', 'Ulanyjy dörediň')
+          : t('users.actions.save', 'Ýatda sakla')}
+      />
     </div>
   )
 }

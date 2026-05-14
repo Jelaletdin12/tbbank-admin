@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import type { CardReason, CreateCardReasonPayload } from '../api/cardReasonsApi'
 import { useCreateCardReason, useUpdateCardReason } from '../hooks/useCardReasons'
@@ -203,29 +203,16 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 mt-6">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => navigate('/resources/card-states')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {isPending
-            ? t('common.saving', 'Saklanýar...')
-            : mode === 'create'
-            ? t('CardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')
-            : t('CardReasons.actions.update', 'Täzelemek')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/resources/card-states')}
+        cancelVariant="ghost"
+        submitLabel={mode === 'create'
+          ? t('CardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')
+          : t('CardReasons.actions.update', 'Täzelemek')}
+        className="mt-6"
+      />
     </div>
   )
 }

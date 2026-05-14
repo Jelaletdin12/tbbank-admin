@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { FormActions } from '@/components/formActions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCreateLoanType, useUpdateLoanType } from '../hooks/useLoanTypes'
 import type { LoanType, CreateLoanTypePayload } from '../api/loanTypesApi'
@@ -241,28 +241,16 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={handleCancel}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending
-            ? t('common.saving', 'Saklanýar...')
-            : mode === 'create'
-              ? t('loanTypes.actions.create', 'Karz görnüşi dörediň')
-              : t('loanTypes.actions.save', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        cancelVariant="ghost"
+        submitLabel={mode === 'create'
+          ? t('loanTypes.actions.create', 'Karz görnüşi dörediň')
+          : t('loanTypes.actions.save', 'Ýatda sakla')}
+        className="pt-4"
+      />
     </div>
   )
 }

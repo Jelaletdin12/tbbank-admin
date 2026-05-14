@@ -1,4 +1,3 @@
-'use client'
 
 import { SberPaymentForm } from '@/features/sberPayments/components/sberPaymentsForm'
 

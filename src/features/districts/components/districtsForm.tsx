@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import type { District, CreateDistrictPayload } from '../api/districtsApi'
 import { useCreateDistrict, useUpdateDistrict } from '../hooks/useDistricts'
@@ -165,28 +165,16 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-3 mt-6">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => navigate('/settings/location/districts')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {isPending
-            ? t('common.saving', 'Saklanýar...')
-            : mode === 'create'
-            ? t('districts.actions.create', 'Etrap döret')
-            : t('districts.actions.update', 'Täzelemek')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/settings/location/districts')}
+        cancelVariant="ghost"
+        submitLabel={mode === 'create'
+          ? t('districts.actions.create', 'Etrap döret')
+          : t('districts.actions.update', 'Täzelemek')}
+        className="mt-6"
+      />
     </div>
   )
 }

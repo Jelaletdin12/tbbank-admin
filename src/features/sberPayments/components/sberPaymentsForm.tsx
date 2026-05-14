@@ -1,15 +1,24 @@
-'use client'
-
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
+import { User, MapPin, IdCard, CreditCard, Files } from 'lucide-react'
 
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
-import { useCreateSberPayment, useUpdateSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
-import { WELAYATLAR, SAHAMCALAR, STATUSES, type SberPaymentOrder, type SberPaymentFormData, type PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
-import { useNavigate } from 'react-router-dom'
+import { FormActions } from '@/components/formActions'
+import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
+import type { StepStatus } from '@/components/stepBar'
+import {
+  useCreateSberPayment,
+  useUpdateSberPayment,
+} from '@/features/sberPayments/hooks/useSberPayments'
+import {
+  WELAYATLAR,
+  SAHAMCALAR,
+  STATUSES,
+  type SberPaymentOrder,
+  type SberPaymentFormData,
+  type PaymentStatus,
+} from '@/features/sberPayments/api/sberPaymentsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,376 +28,604 @@ interface SberPaymentFormProps {
   orderId?: string
 }
 
-// ─── Document Labels ──────────────────────────────────────────────────────────
+// ─── Document lists ───────────────────────────────────────────────────────────
 
-const acceptedDocumentLabels = [
-  'Talyba degisli walýuta "SBERBANK" kartyň rekwizitleri',
-  'Talybýň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwanamasy',
-  'Talybýň bildirisli göcürmesi',
-  'Talyba degisli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi',
-  'Talybýň Türkmenistandan çykmak we Türkmenistana girmek üçin (zagran) pasportynyň göçürmesi',
-  'Talybýň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportyndaky daşary ýurda göýberilmegi barada beriim miiletti hereket edijan rughsatnamasyniyň (wizasynyň) bellenen sahypasynyň göçürmesi',
-  'Talybýň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportyndaky Türkmenistandan çykanday we daşary ýurt döwletine girenligi baradaky ştamplaryň (belgi ştamply) bellenen sahypasynyň göçürmesi',
-  'Talybýň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwanamasynyň doly takyk dili wýagdayýnda talyk dili magumatyň sebäpleri baradaky daşary ýurt döwletiniň ýokary okuw mekdebinden haty',
+type AcceptedDocKey =
+  | 'acc_sberbank_card' | 'acc_enrollment' | 'acc_summons'
+  | 'acc_passport_tm' | 'acc_zagran_passport' | 'acc_visa_page'
+  | 'acc_entry_stamp' | 'acc_school_letter'
+
+type SentDocKey =
+  | 'snt_passport_tm' | 'snt_zagran_passport' | 'snt_entry_stamp'
+  | 'snt_relation_doc' | 'snt_new_passport_series' | 'snt_old_passport_series'
+
+const ACCEPTED_DOCS: { key: AcceptedDocKey; label: string }[] = [
+  { key: 'acc_sberbank_card',    label: 'Talýba degişli SBERBANK kartynyň rekwizitleri' },
+  { key: 'acc_enrollment',       label: 'Daşary ýurt ÝOM-da okaýandygy baradaky güwänamasy' },
+  { key: 'acc_summons',          label: 'Çagyrylma hatynyn göçürmesi' },
+  { key: 'acc_passport_tm',      label: 'TM içki pasportynyň asyl görnüşi we göçürmesi' },
+  { key: 'acc_zagran_passport',  label: 'Daşary ýurt (zagran) pasportynyň göçürmesi' },
+  { key: 'acc_visa_page',        label: 'Daşary ýurda rugsat (wizasy) bellenen sahypasynyň göçürmesi' },
+  { key: 'acc_entry_stamp',      label: 'Daşary ýurt döwletine girenliği baradaky ştamply sahypasynyň göçürmesi' },
+  { key: 'acc_school_letter',    label: 'ÝOM-dan hat (daşary ýurt dilinde maglumatly)' },
 ]
 
-const sentDocumentLabels = [
-  'Ugradyjy degisli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi',
-  'Ugradyjy degisli Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň asyl görnüşi we göçürmesi',
-  'Ugradyjy degisli Türkmenistandan çykmak we Türkmenistana girmek üçin pasportyndaky daşary döwletine girenliği we daşary döwlete baradaky ştamply bellenen sahypasynyň göçürmesi',
-  'Ugradyjynýň we kabul edijinin (talybýň) özara garyndaşlyk denjesini tassyklaýjy resminamalarynýň göçürmesi',
-  'Ugradyjy we kabul ediji (talyp) 2015-nji ýyldan soňra Türkmenistanyň raýatynýň pasportyny kiriş gerek alan bolsa, onda birnji gerek alan pasportynyň seriyasy baradaky maglumat',
-  'Ugradyjy we kabul ediji (talyp) 2015-nji ýyldan soňra Türkmenistanyň raýatynýň pasportyny kiriş gerek alandan soňra birnji gerek alan pasportynyň seriyasy baradaky magumatý bilmeýän, balsa onda polisijyenyň degisli ekedasynýdan birnji alan pasportynyň seriyasy baradaky güwanamasy',
+const SENT_DOCS: { key: SentDocKey; label: string }[] = [
+  { key: 'snt_passport_tm',         label: 'Ugradyjynyň TM içki pasportynyň asyl görnüşi we göçürmesi' },
+  { key: 'snt_zagran_passport',      label: 'Ugradyjynyň daşary ýurt pasportynyň asyl görnüşi we göçürmesi' },
+  { key: 'snt_entry_stamp',         label: 'Ugradyjynyň daşary döwletine girenliği ştamply sahypasynyň göçürmesi' },
+  { key: 'snt_relation_doc',        label: 'Ugradyjy we kabul edijiniň garyndaşlyk tassyklaýjy resminamasynyn göçürmesi' },
+  { key: 'snt_new_passport_series', label: 'Ugradyjy/kabul ediji täze (2015+) pasport seriýasy maglumaty' },
+  { key: 'snt_old_passport_series', label: 'Ugradyjy/kabul ediji köne pasport seriýasy baradaky güwänamasy' },
 ]
 
-// ─── Shared Form Component ────────────────────────────────────────────────────
+
+// ─── FormState ────────────────────────────────────────────────────────────────
+
+interface FormState extends SberPaymentFormData {
+  client_id: string
+  // file fields
+  acc_sberbank_card: File | null
+  acc_enrollment: File | null
+  acc_summons: File | null
+  acc_passport_tm: File | null
+  acc_zagran_passport: File | null
+  acc_visa_page: File | null
+  acc_entry_stamp: File | null
+  acc_school_letter: File | null
+  snt_passport_tm: File | null
+  snt_zagran_passport: File | null
+  snt_entry_stamp: File | null
+  snt_relation_doc: File | null
+  snt_new_passport_series: File | null
+  snt_old_passport_series: File | null
+}
+
+type FormErrors = Partial<Record<keyof FormState, string>>
+
+// ─── Default state ────────────────────────────────────────────────────────────
+
+const defaultState: FormState = {
+  client_id: '',
+  welayat: '',
+  sahamca: '',
+  firstName: '',
+  lastName: '',
+  phone: '',
+  email: '',
+  address: '',
+  status: 'GARASYLYYAR',
+  bellik: '',
+  accountNumber: '',
+  passportSeries: '',
+  passportNumber: '',
+  fullName: '',
+  acc_sberbank_card: null,
+  acc_enrollment: null,
+  acc_summons: null,
+  acc_passport_tm: null,
+  acc_zagran_passport: null,
+  acc_visa_page: null,
+  acc_entry_stamp: null,
+  acc_school_letter: null,
+  snt_passport_tm: null,
+  snt_zagran_passport: null,
+  snt_entry_stamp: null,
+  snt_relation_doc: null,
+  snt_new_passport_series: null,
+  snt_old_passport_series: null,
+}
+
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
+
+const STEPS: { id: StepId; title: string; subtitle: string }[] = [
+  { id: 'general',  title: 'Esasy',        subtitle: 'Status, müşderi'   },
+  { id: 'location', title: 'Lokasiýa',     subtitle: 'Welaýat, şahamça' },
+  { id: 'personal', title: 'Şahsy',        subtitle: 'Pasport, kontakt' },
+  { id: 'payment',  title: 'Töleg',        subtitle: 'Hasap, ugradyjy'  },
+  { id: 'docs',     title: 'Resminamalar', subtitle: '14 resminama'     },
+]
+
+const STEP_REQUIRED: Partial<Record<StepId, (keyof FormState)[]>> = {
+  general:  ['status'],
+  location: ['welayat', 'sahamca'],
+  personal: ['firstName', 'lastName', 'phone', 'address'],
+  payment:  ['passportSeries', 'passportNumber', 'fullName', 'accountNumber'],
+}
+
+const ERROR_LABELS: Partial<Record<keyof FormState, string>> = {
+  status:        'Status hökmany',
+  welayat:       'Welaýat hökmany',
+  sahamca:       'Şahamça hökmany',
+  firstName:     'Ady hökmany',
+  lastName:      'Familiýasy hökmany',
+  phone:         'Telefon hökmany',
+  address:       'Salgy hökmany',
+  passportSeries:'Pasport seriýasy hökmany',
+  passportNumber:'Pasport nomeri hökmany',
+  fullName:      'Doly ady hökmany',
+  accountNumber: 'Goýum hasaby hökmany',
+}
+
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({ cols = 2, children }: { cols?: 1 | 2; children: React.ReactNode }) {
+  return (
+    <div className={`grid gap-4 ${cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+      {children}
+    </div>
+  )
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
+}: {
+  title?: string
+  span?: 'full'
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className={`bg-card border border-border rounded-xl p-5 space-y-4${
+        span === 'full' ? ' sm:col-span-2' : ''
+      }`}
+    >
+      {title && (
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {title}
+        </p>
+      )}
+      {children}
+    </div>
+  )
+}
+
+// ─── Step panels ──────────────────────────────────────────────────────────────
+
+function StepGeneral({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Müşderi">
+        <FormInput
+          type="searchable-select"
+          label="Ulanyjy"
+          value={form.client_id}
+          onChange={(v) => set('client_id', v)}
+          options={[]}
+          placeholder="Saýlamak üçin basyň"
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Status">
+        <FormInput
+          type="select"
+          label="Status"
+          value={form.status}
+          onChange={(v) => set('status', v as PaymentStatus)}
+          options={STATUSES}
+          error={errors.status}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Bellik" span="full">
+        <FormInput
+          type="textarea"
+          label="Bellik"
+          value={form.bellik}
+          onChange={(v) => set('bellik', v)}
+          placeholder="Bellik..."
+          rows={2}
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepLocation({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  const branches = form.welayat ? (SAHAMCALAR[form.welayat] ?? []) : []
+
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Welaýat">
+        <FormInput
+          type="select"
+          label="Welaýat"
+          value={form.welayat}
+          onChange={(v) => { set('welayat', v); set('sahamca', '') }}
+          options={WELAYATLAR.map((w) => ({ value: w, label: w }))}
+          placeholder="Aşgabat"
+          error={errors.welayat}
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          Welaýaty saýlasaňyz şahamçalar güncellenar.
+        </p>
+      </BentoCard>
+
+      <BentoCard title="Şahamça">
+        <FormInput
+          type="searchable-select"
+          label="Şahamça"
+          value={form.sahamca}
+          onChange={(v) => set('sahamca', v)}
+          options={branches.map((b) => ({ value: b, label: b }))}
+          placeholder="Saýlamak üçin basyň"
+          disabled={!form.welayat}
+          error={errors.sahamca}
+          required
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepPersonal({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="At-familýa">
+        <FormInput
+          type="text"
+          label="Pasportdaky familiýa"
+          value={form.lastName}
+          onChange={(v) => set('lastName', v)}
+          placeholder="NURYYEW"
+          error={errors.lastName}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Pasportdaky ady"
+          value={form.firstName}
+          onChange={(v) => set('firstName', v)}
+          placeholder="HAÝDAR"
+          error={errors.firstName}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Kontakt">
+        <FormInput
+          type="phone"
+          label="Telefon"
+          value={form.phone}
+          onChange={(v) => set('phone', v)}
+          error={errors.phone}
+          required
+        />
+        <FormInput
+          type="email"
+          label="E-poçta"
+          value={form.email}
+          onChange={(v) => set('email', v)}
+          placeholder="email@example.com"
+        />
+      </BentoCard>
+
+      <BentoCard title="Häzirki ýaşyş ýeri" span="full">
+        <FormInput
+          type="text"
+          label="Salgy"
+          value={form.address}
+          onChange={(v) => set('address', v)}
+          placeholder="Köçe, jaý belgisi..."
+          error={errors.address}
+          required
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepPayment({
+  form, errors, set,
+}: {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Pasport maglumatlary">
+        <FormInput
+          type="searchable-select"
+          label="Pasport seriýasy"
+          value={form.passportSeries}
+          onChange={(v) => set('passportSeries', v)}
+          options={[
+            { value: 'II-MA', label: 'II-MA' },
+            { value: 'II-MB', label: 'II-MB' },
+            { value: 'II-MC', label: 'II-MC' },
+            { value: 'II-MD', label: 'II-MD' },
+          ]}
+          placeholder="Saýlamak üçin basyň"
+          error={errors.passportSeries}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Pasport nomeri"
+          value={form.passportNumber}
+          onChange={(v) => set('passportNumber', v)}
+          placeholder="A123456"
+          error={errors.passportNumber}
+          required
+        />
+      </BentoCard>
+
+      <BentoCard title="Ugradyjy">
+        <FormInput
+          type="text"
+          label="Ady Familiýasy Atasynyň ady"
+          value={form.fullName}
+          onChange={(v) => set('fullName', v)}
+          placeholder="Doly ady..."
+          error={errors.fullName}
+          required
+        />
+        <FormInput
+          type="text"
+          label="Goýum hasaby"
+          value={form.accountNumber}
+          onChange={(v) => set('accountNumber', v)}
+          placeholder="1234 5678 ..."
+          error={errors.accountNumber}
+          required
+        />
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+function StepDocs({
+  form, set,
+}: {
+  form: FormState
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}) {
+  return (
+    <BentoGrid cols={2}>
+      <BentoCard title="Kabul ediji talyp — 8 resminama">
+        <div className="space-y-3">
+          {ACCEPTED_DOCS.map(({ key, label }) => (
+            <FormInput
+              key={key}
+              type="file"
+              label={label}
+              onFileChange={(f) => set(key, f)}
+              fileValue={form[key] as File | null}
+              accept="image/*,.pdf"
+            />
+          ))}
+        </div>
+      </BentoCard>
+
+      <BentoCard title="Ugradyjy — 6 resminama">
+        <div className="space-y-3">
+          {SENT_DOCS.map(({ key, label }) => (
+            <FormInput
+              key={key}
+              type="file"
+              label={label}
+              onFileChange={(f) => set(key, f)}
+              fileValue={form[key] as File | null}
+              accept="image/*,.pdf"
+            />
+          ))}
+        </div>
+      </BentoCard>
+    </BentoGrid>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormProps) {
-  const router = useNavigate()
+  const navigate = useNavigate()
   const createMutation = useCreateSberPayment()
   const updateMutation = useUpdateSberPayment()
-  
   const isLoading = createMutation.isPending || updateMutation.isPending
-  
-  // Form state
-  const [formData, setFormData] = useState<SberPaymentFormData>({
-    welayat: '',
-    sahamca: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    address: '',
-    status: 'GARASYLYYAR',
-    bellik: '',
-    accountNumber: '',
-    passportSeries: '',
-    passportNumber: '',
-    fullName: '',
-  })
-  
 
-  
-  // Validation errors
-  const [errors, setErrors] = useState<Partial<Record<keyof SberPaymentFormData, string>>>({})
-  
-  // Populate form with initial data in edit mode
+  const [form, setForm] = useState<FormState>(defaultState)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [currentStep, setCurrentStep] = useState(0)
+  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
+    STEPS.map((_, i) => (i === 0 ? 'active' : 'idle')),
+  )
+
+  // ── Populate in edit mode ──
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      setFormData({
-        welayat: initialData.welayat,
-        sahamca: initialData.sahamca,
-        firstName: initialData.firstName,
-        lastName: initialData.lastName,
-        phone: initialData.phone,
-        email: initialData.email,
-        address: initialData.address,
-        status: initialData.status,
-        bellik: initialData.bellik,
-        accountNumber: initialData.accountNumber,
+      setForm((prev) => ({
+        ...prev,
+        welayat:        initialData.welayat,
+        sahamca:        initialData.sahamca,
+        firstName:      initialData.firstName,
+        lastName:       initialData.lastName,
+        phone:          initialData.phone,
+        email:          initialData.email,
+        address:        initialData.address,
+        status:         initialData.status,
+        bellik:         initialData.bellik,
+        accountNumber:  initialData.accountNumber,
         passportSeries: initialData.passportSeries,
         passportNumber: initialData.passportNumber,
-        fullName: initialData.fullName,
-      })
+        fullName:       initialData.fullName,
+      }))
+      // Let user jump freely to any step in edit mode
+      setStepStatuses(STEPS.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle')))
     }
   }, [mode, initialData])
-  
-  // Get available branches based on selected welayat
-  const availableBranches = formData.welayat ? SAHAMCALAR[formData.welayat] ?? [] : []
-  
-  // Update field helper
-  const updateField = <K extends keyof SberPaymentFormData>(
-    field: K,
-    value: SberPaymentFormData[K]
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
-    }
+
+  // ── Field setter ──
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
-  
-  // Validate form
-  const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof SberPaymentFormData, string>> = {}
-    
-    if (!formData.welayat) newErrors.welayat = 'Welayat saylanmaly'
-    if (!formData.sahamca) newErrors.sahamca = 'Sahamca saylanmaly'
-    if (!formData.firstName) newErrors.firstName = 'Ady girizmeli'
-    if (!formData.lastName) newErrors.lastName = 'Familiyasy girizmeli'
-    if (!formData.phone) newErrors.phone = 'Telefon girizmeli'
-    if (!formData.address) newErrors.address = 'Salgy girizmeli'
-    if (!formData.passportSeries) newErrors.passportSeries = 'Pasport seriyasy girizmeli'
-    if (!formData.passportNumber) newErrors.passportNumber = 'Pasport nomeri girizmeli'
-    if (!formData.fullName) newErrors.fullName = 'Doly ady girizmeli'
-    if (!formData.accountNumber) newErrors.accountNumber = 'Goyum hasaby girizmeli'
-    
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+
+  // ── Step validation ──
+  const validateStep = (stepId: StepId): FormErrors => {
+    const fields = STEP_REQUIRED[stepId] ?? []
+    const errs: FormErrors = {}
+    fields.forEach((f) => {
+      if (!form[f]) errs[f] = ERROR_LABELS[f] ?? 'Hökmany'
+    })
+    return errs
   }
-  
-  // Submit handler
-  const handleSubmit = async () => {
-    if (!validate()) {
-      toast.error('Meydanlary dolduryň')
+
+  const validateAll = (): FormErrors => {
+    const errs: FormErrors = {}
+    Object.entries(ERROR_LABELS).forEach(([k, msg]) => {
+      if (!form[k as keyof FormState]) errs[k as keyof FormState] = msg
+    })
+    return errs
+  }
+
+  // ── Navigation ──
+  const goStep = (idx: number) => {
+    if (idx < 0 || idx >= STEPS.length) return
+    setStepStatuses((prev) => {
+      const next = [...prev]
+      if (idx > currentStep) next[currentStep] = 'done'
+      next[idx] = 'active'
+      if (idx < currentStep) {
+        for (let i = idx + 1; i <= currentStep; i++) {
+          if (next[i] !== 'done') next[i] = 'idle'
+        }
+      }
+      return next
+    })
+    setErrors({})
+    setCurrentStep(idx)
+  }
+
+  const handleNext = () => {
+    const stepId = STEPS[currentStep].id
+    const stepErrors = validateStep(stepId)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors)
+      setStepStatuses((prev) => {
+        const next = [...prev]; next[currentStep] = 'error'; return next
+      })
       return
     }
-    
-    try {
-      if (mode === 'create') {
-        await createMutation.mutateAsync(formData)
-        toast.success('Toleg ustunlikli doredildi')
-        router('/sber-payments')
-      } else if (orderId) {
-        await updateMutation.mutateAsync({ ...formData, id: orderId })
-        toast.success('Toleg ustunlikli tazelendi')
-        router(`/sber-payments/${orderId}`)
-      }
-    } catch {
-      toast.error('Yalnyshlyk yuze cykdy')
+    if (currentStep === STEPS.length - 1) {
+      handleSubmit()
+    } else {
+      goStep(currentStep + 1)
     }
   }
-  
+
+  // ── Submit ──
+  const handleSubmit = async () => {
+    const allErrors = validateAll()
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors)
+      toast.error('Meýdanlary dolduryň')
+      return
+    }
+    try {
+      const payload: SberPaymentFormData = {
+        welayat:        form.welayat,
+        sahamca:        form.sahamca,
+        firstName:      form.firstName,
+        lastName:       form.lastName,
+        phone:          form.phone,
+        email:          form.email,
+        address:        form.address,
+        status:         form.status,
+        bellik:         form.bellik,
+        accountNumber:  form.accountNumber,
+        passportSeries: form.passportSeries,
+        passportNumber: form.passportNumber,
+        fullName:       form.fullName,
+      }
+      if (mode === 'create') {
+        await createMutation.mutateAsync(payload)
+        toast.success('Töleg üstünlikli döredildi')
+        navigate('/sber-payments')
+      } else if (orderId) {
+        await updateMutation.mutateAsync({ ...payload, id: orderId })
+        toast.success('Töleg üstünlikli täzelendi')
+        navigate(`/sber-payments/${orderId}`)
+      }
+    } catch {
+      toast.error('Ýalňyşlyk ýüze çykdy')
+    }
+  }
+
+  // ── StepBarCards data ──
+  const stepCardItems: StepCardItem[] = STEPS.map((s, i) => ({
+    id:       s.id,
+    title:    s.title,
+    subtitle: s.subtitle,
+    status:   stepStatuses[i],
+    icon:     ([User, MapPin, IdCard, CreditCard, Files] as const)[i],
+  }))
+
+  const isLastStep = currentStep === STEPS.length - 1
+
+  const submitLabel = mode === 'create'
+    ? 'Sber töleg (talyplar üçin) dörediň'
+    : 'Ýatda sakla'
+
   return (
-    <div className="space-y-8  pb-8">
-      {/* Status Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">Status</h2>
-        <div className="grid gap-4">
-          <FormInput
-            type="searchable-select"
-            label="Ulanyjy"
-            required
-            placeholder="Saylamak ucin basyn"
-            value=""
-            onChange={() => {}}
-            options={[]}
-          />
-          <FormInput
-            type="select"
-            label="Status"
-            required
-            value={formData.status}
-            onChange={(val) => updateField('status', val as PaymentStatus)}
-            options={STATUSES}
-            error={errors.status}
-          />
-          <FormInput
-            type="text"
-            label="Bellik"
-            value={formData.bellik}
-            onChange={(val) => updateField('bellik', val)}
-            placeholder="Bellik"
-          />
-        </div>
-      </section>
-      
-      {/* Location Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">Lokasiya</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormInput
-            type="select"
-            label="Welayat"
-            required
-            value={formData.welayat}
-            onChange={(val) => {
-              updateField('welayat', val)
-              updateField('sahamca', '') // Reset branch when region changes
-            }}
-            options={WELAYATLAR.map((w) => ({ value: w, label: w }))}
-            placeholder="Asgabat"
-            error={errors.welayat}
-          />
-          <FormInput
-            type="searchable-select"
-            label="Sahamca"
-            required
-            value={formData.sahamca}
-            onChange={(val) => updateField('sahamca', val)}
-            options={availableBranches.map((b) => ({ value: b, label: b }))}
-            placeholder="Saylamak ucin basyn"
-            disabled={!formData.welayat}
-            error={errors.sahamca}
-          />
-        </div>
-      </section>
-      
-      {/* Personal Info Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">Sahsy maglumatlar</h2>
-        <div className="grid gap-4">
-          <FormInput
-            type="text"
-            label="Pasportdaky ady"
-            required
-            value={formData.firstName}
-            onChange={(val) => updateField('firstName', val)}
-            placeholder="Pasportdaky ady"
-            error={errors.firstName}
-          />
-          <FormInput
-            type="text"
-            label="Pasportdaky familiya"
-            required
-            value={formData.lastName}
-            onChange={(val) => updateField('lastName', val)}
-            placeholder="Pasportdaky familiya"
-            error={errors.lastName}
-          />
-          <FormInput
-            type="phone"
-            label="Telefon"
-            required
-            value={formData.phone}
-            onChange={(val) => updateField('phone', val)}
-            placeholder="61 097 651"
-            error={errors.phone}
-          />
-          <FormInput
-            type="email"
-            label="E-pocta"
-            value={formData.email}
-            onChange={(val) => updateField('email', val)}
-            placeholder="E-pocta"
-          />
-          <FormInput
-            type="text"
-            label="Hazirki yasayys yeri"
-            required
-            value={formData.address}
-            onChange={(val) => updateField('address', val)}
-            placeholder="Hazirki yasayys yeri"
-            error={errors.address}
-          />
-        </div>
-      </section>
-      
-      {/* Payment Info Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">Tolegi ugradyjynyn maglumatlary</h2>
-        <div className="grid gap-4">
-          <FormInput
-            type="searchable-select"
-            label="Pasport seriyasy"
-            required
-            value={formData.passportSeries}
-            onChange={(val) => updateField('passportSeries', val)}
-            options={[
-              { value: 'II-MA', label: 'II-MA' },
-              { value: 'II-MB', label: 'II-MB' },
-              { value: 'II-MC', label: 'II-MC' },
-              { value: 'II-MD', label: 'II-MD' },
-            ]}
-            placeholder="Saylamak ucin basyn"
-            error={errors.passportSeries}
-          />
-          <FormInput
-            type="text"
-            label="Pasport nomeri"
-            required
-            value={formData.passportNumber}
-            onChange={(val) => updateField('passportNumber', val)}
-            placeholder="Pasport nomeri"
-            error={errors.passportNumber}
-          />
-          <FormInput
-            type="text"
-            label="Ady Familiyasy Atasynyn ady"
-            required
-            value={formData.fullName}
-            onChange={(val) => updateField('fullName', val)}
-            placeholder="Ady Familiyasy Atasynyn ady"
-            error={errors.fullName}
-          />
-          <FormInput
-            type="text"
-            label="Goyum hasaby"
-            required
-            value={formData.accountNumber}
-            onChange={(val) => updateField('accountNumber', val)}
-            placeholder="Goyum hasaby"
-            error={errors.accountNumber}
-          />
-        </div>
-      </section>
-      
-      {/* Recipient Info Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">Tolegi kabul edijinin maglumatlary</h2>
-        <div className="bg-card rounded-lg border border-border p-4">
-          <div className="flex items-start gap-4">
-            <span className="text-sm text-muted-foreground shrink-0 w-48">
-              Tolegi kabul edijinin maglumatlary
-            </span>
-            <Button variant="default" className="bg-primary text-primary-foreground">
-              Setir gos
-            </Button>
-          </div>
-        </div>
-      </section>
-      
-      {/* Accepted Documents Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">
-          Kabul ediji talyp boyunca resminamalary
-        </h2>
-        <div className="space-y-3">
-          {acceptedDocumentLabels.map((label, index) => (
-            <div key={index} className="flex items-start gap-4 py-3">
-              <span className="w-80 shrink-0 text-sm text-muted-foreground leading-relaxed">
-                {label}
-              </span>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Plus size={14} />
-                Add New File
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
-      
-      {/* Sent Documents Section */}
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">
-          Ugradyjy boyunca resminamalary
-        </h2>
-        <div className="space-y-3">
-          {sentDocumentLabels.map((label, index) => (
-            <div key={index} className="flex items-start gap-4 py-3">
-              <span className="w-80 shrink-0 text-sm text-muted-foreground leading-relaxed">
-                {label}
-              </span>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Plus size={14} />
-                Add New File
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
-      
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-        <Button
-          variant="outline"
-          disabled={isLoading}
-        >
-          Yatyr
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="min-w-[180px]"
-        >
-          {isLoading ? (
-            <Spinner className="w-4 h-4" />
-          ) : mode === 'create' ? (
-            'Sber toleg (talyplar ucin) doredih'
-          ) : (
-            'Yatda sakla'
-          )}
-        </Button>
+    <div className="mx-auto space-y-6 pb-8">
+      <h1 className="text-2xl font-bold text-foreground">
+        {mode === 'create' ? 'Sber töleg dörediň' : 'Sber töleg redaktirläň'}
+      </h1>
+
+      {/* ── Step bar ──────────────────────────────────────────────────────── */}
+      <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
+        <StepBarCards
+          steps={stepCardItems}
+          onGoTo={(i) => {
+            if (stepStatuses[i] !== 'idle') goStep(i)
+          }}
+        />
       </div>
+
+      {/* ── Step content ─────────────────────────────────────────────────── */}
+      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} />}
+      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} />}
+
+      {/* ── Actions ───────────────────────────────────────────────────────── */}
+      <FormActions
+        isPending={isLoading}
+        onCancel={() => navigate('/sber-payments')}
+        onPrev={currentStep > 0 ? () => goStep(currentStep - 1) : undefined}
+        onNext={!isLastStep ? handleNext : undefined}
+        showSubmit={isLastStep}
+        onSubmit={isLastStep ? handleNext : undefined}
+        submitLabel={submitLabel}
+        loadingLabel="Ýüklenýär..."
+      />
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/formActions'
 import { useCreatePermission, useUpdatePermission } from '../hooks/usePermissions'
 import type { Permission, PermissionPayload } from '../api/permissionsApi'
 
@@ -175,28 +175,15 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
         />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-border bg-muted/20">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/settings/users/permissions')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-        >
-          {isPending
-            ? t('common.saving', 'Ýüklenýär...')
-            : mode === 'create'
-              ? t('permissions.actions.create', 'Rugsat dörediň')
-              : t('permissions.actions.save', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/settings/users/permissions')}
+        submitLabel={mode === 'create'
+          ? t('permissions.actions.create', 'Rugsat dörediň')
+          : t('permissions.actions.save', 'Ýatda sakla')}
+        className="px-5 py-4 border-t border-border bg-muted/20"
+      />
     </div>
   )
 }

@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Button } from '@/components/ui/button'
 import { FormInput } from '@/components/formInput'
+import { FormActions } from '@/components/formActions'
 
 import {
   useCreateLoanRemaining,
@@ -99,8 +98,8 @@ export function LoanRemainingForm({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault()
     setSubmitted(true)
 
     if (!validate()) {
@@ -168,22 +167,14 @@ export function LoanRemainingForm({
         </div>
       </div>
 
-      <div className="flex justify-end gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => navigate('/loan-remaining')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button type="submit" disabled={isPending}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {mode === 'create'
-            ? t('common.create', 'Döret')
-            : t('common.save', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/loan-remaining')}
+        submitLabel={mode === 'create'
+          ? t('common.create', 'Döret')
+          : t('common.save', 'Ýatda sakla')}
+      />
     </form>
   )
 }

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
 import { FormInput } from '@/components/formInput'
+import { FormActions } from '@/components/formActions'
 import { type CardBalance } from '@/features/cardBalance/api/cardBalanceApi'
 import { useCreateCardBalance, useUpdateCardBalance } from '@/features/cardBalance/hooks/useCardBalance'
 
@@ -186,19 +186,18 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-3 mt-6">
-        <Button variant="ghost" onClick={handleCancel} disabled={isPending}>
-          {t('Cancel', 'Ýatyr')}
-        </Button>
-        <Button onClick={handleSubmit} disabled={isPending}>
-          {isPending
-            ? t('Saving...', 'Saklanýar...')
-            : mode === 'create'
-            ? t('Create card balance', 'Kart galyndysy dörediň')
-            : t('Save changes', 'Üýtgetmeleri sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        cancelVariant="ghost"
+        cancelLabel={t('Cancel', 'Ýatyr')}
+        loadingLabel={t('Saving...', 'Saklanýar...')}
+        submitLabel={mode === 'create'
+          ? t('Create card balance', 'Kart galyndysy dörediň')
+          : t('Save changes', 'Üýtgetmeleri sakla')}
+        className="mt-6"
+      />
     </div>
   )
 }

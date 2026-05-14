@@ -1,4 +1,3 @@
-'use client'
 
 import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { Check, AlertTriangle } from 'lucide-react'

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/formActions'
 import { useCreateRequiredDocument, useUpdateRequiredDocument } from '../hooks/useRequiredDocuments'
 import type { LoanDocument, LoanDocumentPayload, LoanDocumentTranslation } from '../api/requiredDocumentsApi'
 
@@ -222,8 +222,8 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!validate()) return
 
     const payload: LoanDocumentPayload = { name, description }
@@ -292,20 +292,15 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
         </div>
       </div>
 
-      {/* ── Actions ──────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-end gap-3 mt-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => navigate('/settings/loan/loan-documents')}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button type="submit" disabled={isPending} className="bg-primary text-primary-foreground hover:bg-primary/90">
-          {isPending ? t('common.saving', 'Saklanylýar...') : submitLabel}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate('/settings/loan/loan-documents')}
+        cancelVariant="ghost"
+        loadingLabel={t('common.saving', 'Saklanylýar...')}
+        submitLabel={submitLabel}
+        className="mt-4"
+      />
     </form>
   )
 }

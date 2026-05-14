@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/formActions'
 import { CURRENCY_OPTIONS, type CurrencyCode, type CurrencyRate } from '../api/currencyRatesApi'
 import { useCreateCurrencyRate, useUpdateCurrencyRate } from '../hooks/useCurrencyRates'
 
@@ -175,29 +175,16 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
         </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={handleCancel}
-          disabled={isPending}
-        >
-          {t('common.cancel', 'Ýatyr')}
-        </Button>
-        <Button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {isPending
-            ? t('common.saving', 'Saklanýar...')
-            : mode === 'create'
-              ? t('currencyRates.actions.create', 'Walýuta kursy dörediň')
-              : t('currencyRates.actions.update', 'Ýatda sakla')}
-        </Button>
-      </div>
+      <FormActions
+        isPending={isPending}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        cancelVariant="ghost"
+        submitLabel={mode === 'create'
+          ? t('currencyRates.actions.create', 'Walýuta kursy dörediň')
+          : t('currencyRates.actions.update', 'Ýatda sakla')}
+        className="px-6 py-4 border-t border-border"
+      />
     </div>
   )
 }
