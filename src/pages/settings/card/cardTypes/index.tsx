@@ -166,13 +166,7 @@ export function CardTypesListPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>{t('nav.resources', 'Resurslar')}</span>
-            <span>›</span>
-            <span className="text-foreground font-medium">
-              {t('cardTypes.title', 'Kart görnüşleri')}
-            </span>
-          </nav>
+        
           <h1 className="text-2xl font-bold text-foreground">
             {t('cardTypes.title', 'Kart görnüşleri')}
           </h1>

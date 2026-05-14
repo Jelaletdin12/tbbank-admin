@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  ChevronRight,
   Loader2,
   Pencil,
   Trash2,
@@ -155,26 +154,7 @@ export default function UserViewPage() {
 
   return (
     <div className="p-6 max-w-4xl space-y-0">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-        <button
-          onClick={() => navigate('/users')}
-          className="hover:text-foreground transition-colors"
-        >
-          {t('nav.resources', 'Resurslar')}
-        </button>
-        <ChevronRight size={12} />
-        <button
-          onClick={() => navigate('/users')}
-          className="hover:text-foreground transition-colors"
-        >
-          {t('nav.users', 'Ulanyjylar')}
-        </button>
-        <ChevronRight size={12} />
-        <span className="text-foreground font-medium">
-          {t('users.viewTitle', 'Ulanyjy giňişleýin')}: {user.name} ({user.username})
-        </span>
-      </nav>
+   
 
       {/* Title + actions */}
       <div className="flex items-start justify-between mb-6">

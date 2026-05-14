@@ -33,28 +33,10 @@ export function CardReasonViewPage() {
 
   return (
     <div className="p-6">
-      {/* Breadcrumb + actions */}
+    
       <div className="flex items-start justify-between mb-6">
         <div>
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span
-              className="cursor-pointer hover:text-foreground transition-colors"
-              onClick={() => navigate('/resources/card-states')}
-            >
-              {t('nav.resources', 'Resurslar')}
-            </span>
-            <span>›</span>
-            <span
-              className="cursor-pointer hover:text-foreground transition-colors"
-              onClick={() => navigate('/resources/card-states')}
-            >
-              {t('CardReasons.title', 'Kartyň çykarylmagynyň sebäpleri')}
-            </span>
-            <span>›</span>
-            <span className="text-foreground font-medium">
-              {t('CardReasons.view.breadcrumb', 'Kartyň çykarylmagynyň sebäbi giňişleýin: Rekwizit')}
-            </span>
-          </nav>
+         
           <h1 className="text-2xl font-bold text-foreground">
             {isLoading
               ? '...'

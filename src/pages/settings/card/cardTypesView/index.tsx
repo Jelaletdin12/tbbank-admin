@@ -30,28 +30,10 @@ export function CardTypeViewPage() {
 
   return (
     <div className="p-6">
-      {/* Breadcrumb + actions */}
+  
       <div className="flex items-start justify-between mb-6">
         <div>
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span
-              className="cursor-pointer hover:text-foreground transition-colors"
-              onClick={() => navigate('/resources/card-types')}
-            >
-              {t('nav.resources', 'Resurslar')}
-            </span>
-            <span>›</span>
-            <span
-              className="cursor-pointer hover:text-foreground transition-colors"
-              onClick={() => navigate('/resources/card-types')}
-            >
-              {t('cardTypes.title', 'Kart görnüşleri')}
-            </span>
-            <span>›</span>
-            <span className="text-foreground font-medium">
-              {isLoading ? '...' : data?.name[lang] ?? ''}
-            </span>
-          </nav>
+         
           <h1 className="text-2xl font-bold text-foreground">
             {isLoading
               ? '...'

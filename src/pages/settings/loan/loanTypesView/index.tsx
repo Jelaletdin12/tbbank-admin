@@ -69,26 +69,7 @@ export default function LoanTypeViewPage() {
   // ── View ───────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 max-w-3xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <span
-          className="hover:text-foreground cursor-pointer transition-colors"
-          onClick={() => navigate('/resources')}
-        >
-          {t('nav.resources', 'Resurslar')}
-        </span>
-        <span>/</span>
-        <span
-          className="hover:text-foreground cursor-pointer transition-colors text-primary"
-          onClick={() => navigate('/resources/loan-types')}
-        >
-          {t('loanTypes.title', 'Karz görnüşleri')}
-        </span>
-        <span>/</span>
-        <span className="text-foreground font-medium">
-          {t('loanTypes.viewTitle', 'Karz görnüşi giňişleýin')}: {data.name[lang]}
-        </span>
-      </div>
+    
 
       {/* Page header */}
       <div className="flex items-start justify-between mb-5">

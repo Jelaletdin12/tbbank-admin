@@ -190,19 +190,7 @@ export default function UsersListPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-4">
-      {/* Page header */}
-      <div>
-        <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-          <span>{t('nav.resources', 'Resurslar')}</span>
-          <span>›</span>
-          <span className="text-foreground font-medium">
-            {t('nav.users', 'Ulanyjylar')}
-          </span>
-        </nav>
-        <h1 className="text-2xl font-bold text-foreground">
-          {t('users.title', 'Ulanyjylar')}
-        </h1>
-      </div>
+      
 
       {/* Toolbar */}
       <DataTableToolbar

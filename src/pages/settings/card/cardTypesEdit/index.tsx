@@ -1,11 +1,10 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CardTypeForm } from '@/features/cardTypes/components/cardTypesForm'
 import { useCardTypeById } from '@/features/cardTypes/hooks/useCardTypes'
 
 export default function CardTypeEditPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { t } = useTranslation()
 
   const numericId = Number(id)
@@ -14,25 +13,7 @@ export default function CardTypeEditPage() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-          <span
-            className="cursor-pointer hover:text-foreground transition-colors"
-            onClick={() => navigate('/settings/card/card-types')}
-          >
-            {t('nav.settings', 'Sazlamalar')}
-          </span>
-          <span>›</span>
-          <span
-            className="cursor-pointer hover:text-foreground transition-colors"
-            onClick={() => navigate('/settings/card/card-types')}
-          >
-            {t('cardTypes.title', 'Kart görnüşleri')}
-          </span>
-          <span>›</span>
-          <span className="text-foreground font-medium">
-            {t('cardTypes.edit.breadcrumb', 'Üýtgetmek')}
-          </span>
-        </nav>
+    
 
         <h1 className="text-2xl font-bold text-foreground">
           {isLoading

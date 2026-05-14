@@ -125,7 +125,7 @@ export default function IntlPaymentViewPage() {
     <div className=" mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
-        <div /> {/* breadcrumb handled by layout */}
+   
         <div className="flex items-center gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>

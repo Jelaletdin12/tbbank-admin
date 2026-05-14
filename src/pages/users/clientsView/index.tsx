@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Pencil, Trash2, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -143,15 +143,7 @@ export default function ClientDetailPage() {
 
   return (
     <div className="p-6">
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
-        <span className="cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate('/clients')}>
-          {t('clients.title', 'Müşderiler')}
-        </span>
-        <ChevronRight size={14} />
-        <span className="text-foreground font-medium">
-          {t('clients.detailTitle', 'Müşderi giňişleýin')}
-        </span>
-      </nav>
+     
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">

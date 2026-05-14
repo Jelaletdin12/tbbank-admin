@@ -157,13 +157,7 @@ export function DistrictsListPage() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <span>{t('nav.settings', 'Sazlamalar')}</span>
-            <span>›</span>
-            <span className="text-foreground font-medium">
-              {t('districts.title', 'Etraplar')}
-            </span>
-          </nav>
+      
           <h1 className="text-2xl font-bold text-foreground">
             {t('districts.title', 'Etraplar')}
           </h1>
