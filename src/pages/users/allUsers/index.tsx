@@ -136,7 +136,7 @@ export default function UsersListPage() {
         row.original.isActive ? (
           <CheckCircle2 size={18} className="text-emerald-500" />
         ) : (
-          <XCircle size={18} className="text-muted-foreground/40" />
+          <XCircle size={18} className="text-destructive" />
         ),
     },
     {

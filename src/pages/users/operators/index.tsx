@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { Trash2, Eye, Pencil } from 'lucide-react'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Trash2, Eye, Pencil, CheckCircle2, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,30 +11,33 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { DataTable, type ColumnDef } from '@/components/dataTable'
-import { DataTableToolbar } from '@/components/dataTableToolbar'
-import { useOperators, useDeleteOperator } from '@/features/operators/hooks/useOperators'
-import type { Operator } from '@/features/operators/api/operatorsApi'
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { DataTable, type ColumnDef } from "@/components/dataTable";
+import { DataTableToolbar } from "@/components/dataTableToolbar";
+import {
+  useOperators,
+  useDeleteOperator,
+} from "@/features/operators/hooks/useOperators";
+import type { Operator } from "@/features/operators/api/operatorsApi";
 
 // ─── OperatorsPage ────────────────────────────────────────────────────────────
 
 export default function OperatorsPage() {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const deleteMutation = useDeleteOperator()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const deleteMutation = useDeleteOperator();
 
   // ── Table state ─────────────────────────────────────────────────────────────
-  const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(25)
-  const [search, setSearch] = useState('')
-  const [isActiveFilter, setIsActiveFilter] = useState('')
-  const [columnVisibility, setColumnVisibility] = useState({})
-  const [columnOrder, setColumnOrder] = useState<string[]>([])
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [search, setSearch] = useState("");
+  const [isActiveFilter, setIsActiveFilter] = useState("");
+  const [columnVisibility, setColumnVisibility] = useState({});
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
 
   // ── Delete dialog ────────────────────────────────────────────────────────────
-  const [deleteTarget, setDeleteTarget] = useState<Operator | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Operator | null>(null);
 
   // ── Query ────────────────────────────────────────────────────────────────────
   const { data, isLoading } = useOperators({
@@ -42,17 +45,17 @@ export default function OperatorsPage() {
     perPage,
     search: search || undefined,
     isActive: isActiveFilter || undefined,
-  })
+  });
 
-  const operators = data?.data ?? []
-  const totalPages = data?.meta.totalPages ?? 1
-  const totalCount = data?.meta.totalCount ?? 0
+  const operators = data?.data ?? [];
+  const totalPages = data?.meta.totalPages ?? 1;
+  const totalCount = data?.meta.totalCount ?? 0;
 
   // ── Columns ──────────────────────────────────────────────────────────────────
   const columns: ColumnDef<Operator>[] = [
     {
-      accessorKey: 'id',
-      header: 'ID',
+      accessorKey: "id",
+      header: "ID",
       cell: ({ row }) => (
         <span
           className="text-primary font-semibold cursor-pointer hover:underline text-sm"
@@ -64,70 +67,51 @@ export default function OperatorsPage() {
       size: 80,
     },
     {
-      accessorKey: 'username',
-      header: t('operators.fields.username', 'ULANYJY ADY'),
+      accessorKey: "username",
+      header: t("operators.fields.username", "ULANYJY ADY"),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.username}</span>
       ),
     },
     {
-      accessorKey: 'name',
-      header: t('operators.fields.name', 'ADY'),
+      accessorKey: "name",
+      header: t("operators.fields.name", "ADY"),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.name}</span>
       ),
     },
     {
-      accessorKey: 'phone',
-      header: t('operators.fields.phone', 'TELEFON'),
+      accessorKey: "phone",
+      header: t("operators.fields.phone", "TELEFON"),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {row.original.phone ?? '—'}
+          {row.original.phone ?? "—"}
         </span>
       ),
     },
     {
-      accessorKey: 'email',
-      header: t('operators.fields.email', 'E-POÇTA'),
+      accessorKey: "email",
+      header: t("operators.fields.email", "E-POÇTA"),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">
-          {row.original.email ?? '—'}
+          {row.original.email ?? "—"}
         </span>
       ),
     },
     {
-      accessorKey: 'isActive',
-      header: t('operators.fields.isActive', 'IŞJEŇ'),
+      accessorKey: "isActive",
+      header: t("operators.fields.isActive", "IŞJEŇ"),
       cell: ({ row }) =>
         row.original.isActive ? (
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary text-primary">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M2 6l3 3 5-5"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
+          <CheckCircle2 size={18} className="text-emerald-500" />
         ) : (
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-destructive text-destructive">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M3 3l6 6M9 3l-6 6"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-          </span>
+          <XCircle size={18} className="text-destructive" />
         ),
       size: 80,
     },
     {
-      id: 'actions',
-      header: '',
+      id: "actions",
+      header: "",
       cell: ({ row }) => (
         <div className="flex items-center gap-1 justify-end">
           <Button
@@ -159,17 +143,17 @@ export default function OperatorsPage() {
       size: 120,
       enableSorting: false,
     },
-  ]
+  ];
 
   const columnMetas = columns
-    .filter((c) => 'accessorKey' in c && c.accessorKey)
+    .filter((c) => "accessorKey" in c && c.accessorKey)
     .map((c) => ({
-      id: ('accessorKey' in c ? String(c.accessorKey) : c.id) as string,
+      id: ("accessorKey" in c ? String(c.accessorKey) : c.id) as string,
       label:
-        typeof c.header === 'string'
+        typeof c.header === "string"
           ? c.header
-          : ('accessorKey' in c ? String(c.accessorKey) : '') ?? '',
-    }))
+          : (("accessorKey" in c ? String(c.accessorKey) : "") ?? ""),
+    }));
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
@@ -177,61 +161,69 @@ export default function OperatorsPage() {
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">
-          {t('operators.title', 'Operatorlar')}
+          {t("operators.title", "Operatorlar")}
         </h1>
       </div>
-<div className="bg-card border border-border rounded-xl p-4">
+      <div className="bg-card border border-border rounded-xl p-4">
+        {/* Toolbar */}
+        <DataTableToolbar
+          searchValue={search}
+          onSearchChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          searchPlaceholder={t("common.search", "Gözlemek")}
+          columns={columnMetas}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
+          filterFields={[
+            {
+              id: "isActive",
+              label: t("operators.fields.isActive", "Işjeň"),
+              options: [
+                { value: "true", label: t("common.active", "Işjeň") },
+                { value: "false", label: t("common.inactive", "Işjeň däl") },
+              ],
+            },
+          ]}
+          activeFilters={[{ fieldId: "isActive", value: isActiveFilter }]}
+          onFilterChange={(fieldId, value) => {
+            if (fieldId === "isActive") setIsActiveFilter(value);
+            setPage(1);
+          }}
+          onFilterReset={() => {
+            setIsActiveFilter("");
+            setPage(1);
+          }}
+          perPageOptions={[10, 25, 50, 100]}
+          perPage={perPage}
+          onPerPageChange={(v) => {
+            setPerPage(v);
+            setPage(1);
+          }}
+          actionLabel={t("operators.createBtn", "Operator döredin")}
+          onAction={() => navigate("/operators/create")}
+        />
 
-      {/* Toolbar */}
-      <DataTableToolbar
-        searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setPage(1) }}
-        searchPlaceholder={t('common.search', 'Gözlemek')}
-        columns={columnMetas}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        columnOrder={columnOrder}
-        onColumnOrderChange={setColumnOrder}
-        filterFields={[
-          {
-            id: 'isActive',
-            label: t('operators.fields.isActive', 'Işjeň'),
-            options: [
-              { value: 'true', label: t('common.active', 'Işjeň') },
-              { value: 'false', label: t('common.inactive', 'Işjeň däl') },
-            ],
-          },
-        ]}
-        activeFilters={[{ fieldId: 'isActive', value: isActiveFilter }]}
-        onFilterChange={(fieldId, value) => {
-          if (fieldId === 'isActive') setIsActiveFilter(value)
-          setPage(1)
-        }}
-        onFilterReset={() => { setIsActiveFilter(''); setPage(1) }}
-        perPageOptions={[10, 25, 50, 100]}
-        perPage={perPage}
-        onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
-        actionLabel={t('operators.createBtn', 'Operator döredin')}
-        onAction={() => navigate('/operators/create')}
-      />
-
-      {/* Table */}
-      <DataTable
-        columns={columns}
-        data={operators}
-        isLoading={isLoading}
-        columnVisibility={columnVisibility}
-        onColumnVisibilityChange={setColumnVisibility}
-        columnOrder={columnOrder}
-        onColumnOrderChange={setColumnOrder}
-        getRowId={(row) => String(row.id)}
-        currentPage={page}
-        totalPages={totalPages}
-        totalCount={totalCount}
-        onPageChange={setPage}
-        enableRowSelection
-      />
-</div>
+        {/* Table */}
+        <DataTable
+          columns={columns}
+          data={operators}
+          isLoading={isLoading}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
+          getRowId={(row) => String(row.id)}
+          currentPage={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          enableRowSelection
+        />
+      </div>
 
       {/* Delete dialog */}
       <AlertDialog
@@ -241,33 +233,33 @@ export default function OperatorsPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {t('operators.deleteTitle', 'Operatory pozmak')}
+              {t("operators.deleteTitle", "Operatory pozmak")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                'operators.deleteConfirm',
-                '{{name}} operatoryny pozmak isleýärsiňizmi? Bu amaly yzyna gaýtaryp bolmaz.',
-                { name: deleteTarget?.name ?? '' },
+                "operators.deleteConfirm",
+                "{{name}} operatoryny pozmak isleýärsiňizmi? Bu amaly yzyna gaýtaryp bolmaz.",
+                { name: deleteTarget?.name ?? "" },
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Ýatyr')}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel", "Ýatyr")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
               onClick={() => {
                 if (deleteTarget) {
                   deleteMutation.mutate(deleteTarget.id, {
                     onSuccess: () => setDeleteTarget(null),
-                  })
+                  });
                 }
               }}
             >
-              {t('common.delete', 'Poz')}
+              {t("common.delete", "Poz")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

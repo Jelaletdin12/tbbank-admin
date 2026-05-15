@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Trash2, Eye, Pencil } from 'lucide-react'
+import { Trash2, Eye, Pencil, CheckCircle2, XCircle } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,17 +82,9 @@ export default function ClientsPage() {
       header: t('clients.fields.isActive', 'IŞJEŇ'),
       cell: ({ row }) =>
         row.original.isActive ? (
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary text-primary">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
+         <CheckCircle2 size={18} className="text-emerald-500" />
         ) : (
-          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-destructive text-destructive">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </span>
+           <XCircle size={18} className="text-destructive" />
         ),
       size: 80,
     },

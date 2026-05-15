@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { AuthLayout } from "@/layouts/AuthLayout";
 import { PageErrorFallback } from "@/app/providers/ErrorBoundary";
 import NotFoundPage from "@/pages/notFoundPage";
 
@@ -150,12 +151,19 @@ export const router = createBrowserRouter([
     errorElement: <PageErrorFallback />,
     children: [
       {
-        path: "/login",
-        element: (
-          <Suspense fallback={<PageLoader />}>
-            <LoginPage />
-          </Suspense>
-        ),
+        // AuthLayout: semantic wrapper for all public/unauthenticated pages.
+        // Login manages its own full-screen layout internally.
+        element: <AuthLayout />,
+        children: [
+          {
+            path: "/login",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoginPage />
+              </Suspense>
+            ),
+          },
+        ],
       },
     ],
   },

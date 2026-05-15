@@ -1,4 +1,3 @@
-import { ThemeProvider as NextThemesProvider } from 'next-themes'
 import type { ReactNode } from 'react'
 
 interface ThemeProviderProps {
@@ -6,9 +5,7 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  return (
-    <NextThemesProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      {children}
-    </NextThemesProvider>
-  )
+  // Theme is managed by useThemeStore in src/app/store/themeStore.ts
+  // next-themes was removed to avoid conflicts and double persistence issues.
+  return <>{children}</>
 }

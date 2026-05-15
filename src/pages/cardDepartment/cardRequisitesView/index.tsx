@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { Download, Trash2, Pencil, DownloadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/statusBadge";
+import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,24 +25,35 @@ import type { CardRequisiteStatus } from "@/features/cardRequisites/api/cardRequ
 import { InfoRow } from "@/components/viewPageComponents";
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_BADGE: Record<
-  CardRequisiteStatus,
-  { label: string; className: string }
-> = {
+const STATUS_CONFIG = {
   pending: {
-    label: "GARAŞYLÝAR",
-    className: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+    label: "Garaşylýar",
+    variant: "warning" as StatusBadgeVariant,
+    icon: AlertCircle,
   },
   approved: {
-    label: "TASSYKLANAN",
-    className:
-      "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    label: "Tassyklanan",
+    variant: "success" as StatusBadgeVariant,
+    icon: CheckCircle2,
   },
   rejected: {
-    label: "RET EDILEN",
-    className: "bg-red-500/20 text-red-400 border border-red-500/30",
+    label: "Ret edilen",
+    variant: "error" as StatusBadgeVariant,
+    icon: XCircle,
   },
-};
+} satisfies Record<
+  CardRequisiteStatus,
+  { label: string; variant: StatusBadgeVariant; icon: React.ElementType }
+>;
+
+function CardRequisiteStatusBadge({ status }: { status: CardRequisiteStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  if (!cfg)
+    return <span className="text-xs text-muted-foreground">{String(status)}</span>;
+  return (
+    <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  );
+}
 
 // ─── Section header ───────────────────────────────────────────────────────────
 
@@ -119,7 +132,6 @@ export default function CardRequisiteViewPage() {
     );
   }
 
-  const statusCfg = STATUS_BADGE[data.status] ?? STATUS_BADGE.pending;
 
   return (
     <div className="space-y-0">
@@ -160,11 +172,7 @@ export default function CardRequisiteViewPage() {
           {data.created_at}
         </InfoRow>
         <InfoRow label={t("Status", "Status")}>
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${statusCfg.className}`}
-          >
-            {statusCfg.label}
-          </span>
+          <CardRequisiteStatusBadge status={data.status} />
         </InfoRow>
         <InfoRow label={t("Note", "Bellik")}>{data.note || "—"}</InfoRow>
         <InfoRow label={t("Requested by", "Sargyt eden:")}>
