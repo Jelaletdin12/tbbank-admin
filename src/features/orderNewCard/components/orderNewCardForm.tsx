@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText, Upload } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
@@ -62,26 +64,6 @@ interface FormState {
 }
 
 type FormErrors = Partial<Record<keyof FormState, string>>
-type StepStatus = 'idle' | 'active' | 'done' | 'error'
-
-// ─── Step field mapping ───────────────────────────────────────────────────────
-
-const STEP_FIELDS: Array<Array<keyof FormState>> = [
-  // Step 0 — Kart & Lokasiýa
-  ['status', 'issuanceReasonId', 'cardTypeId', 'provinceId', 'branchId'],
-  // Step 1 — Şahsy maglumatlar
-  [
-    'firstName', 'lastName', 'birthDate', 'phone',
-    'citizenship', 'registeredAddress', 'currentAddress', 'workplace',
-  ],
-  // Step 2 — Pasport
-  [
-    'passportSeriesId', 'passportNumber', 'passportIssueDate',
-    'passportIssuedBy', 'passportBirthPlace',
-  ],
-  // Step 3 — Faýllar & Şertler
-  ['passportPage1', 'passportPage23', 'passportPage89', 'passportPage32', 'termsAccepted'],
-]
 
 // ─── Initial state ────────────────────────────────────────────────────────────
 
@@ -118,644 +100,500 @@ function getInitialState(data?: CardOrder): FormState {
   }
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── Step definitions ─────────────────────────────────────────────────────────
 
-function validate(
-  form: FormState,
-  mode: 'create' | 'edit',
-  t: (k: string, fb: string) => string,
-  stepIndex?: number,
-): FormErrors {
-  const allErrors: FormErrors = {}
-  const req = (field: keyof FormState, msg: string) => {
-    const v = form[field]
-    if (!v || (typeof v === 'string' && !v.trim())) allErrors[field] = msg
-  }
-
-  const R = t('validation.required', 'Bu meýdan hökmanydyr')
-
-  req('status',             R)
-  req('issuanceReasonId',   R)
-  req('cardTypeId',         R)
-  req('provinceId',         R)
-  req('branchId',           R)
-  req('firstName',          R)
-  req('lastName',           R)
-  req('birthDate',          R)
-  req('phone',              R)
-  req('citizenship',        R)
-  req('registeredAddress',  R)
-  req('currentAddress',     R)
-  req('workplace',          R)
-  req('passportSeriesId',   R)
-  req('passportNumber',     R)
-  req('passportIssueDate',  R)
-  req('passportIssuedBy',   R)
-  req('passportBirthPlace', R)
-
-  if (mode === 'create') {
-    if (!form.passportPage1)  allErrors.passportPage1  = R
-    if (!form.passportPage23) allErrors.passportPage23 = R
-    if (!form.passportPage89) allErrors.passportPage89 = R
-    if (!form.passportPage32) allErrors.passportPage32 = R
-    if (!form.termsAccepted)  allErrors.termsAccepted  = t('validation.terms', 'Şertnama bilen razylaşmaly')
-  }
-
-  if (stepIndex !== undefined) {
-    const stepKeys = STEP_FIELDS[stepIndex]
-    const stepErrors: FormErrors = {}
-    for (const key of stepKeys) {
-      if (allErrors[key]) stepErrors[key] = allErrors[key]
-    }
-    return stepErrors
-  }
-
-  return allErrors
+interface StepDef {
+  id: string
+  titleKey: string
+  titleFallback: string
+  subtitle: string
+  icon: LucideIcon
+  validate: (form: FormState, mode: 'create' | 'edit') => FormErrors
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+const STEPS: StepDef[] = [
+  {
+    id: 'card',
+    titleKey: 'cardOrder.step.card',
+    titleFallback: 'Kart',
+    subtitle: 'Görnüş & lokasiýa',
+    icon: CreditCard,
+    validate: (form) => {
+      const e: FormErrors = {}
+      if (!form.status)           e.status           = 'Status — hökmany'
+      if (!form.issuanceReasonId) e.issuanceReasonId = 'Kartyň çykarylmagynyň sebäbi — hökmany'
+      if (!form.cardTypeId)       e.cardTypeId       = 'Kart görnüşi — hökmany'
+      if (!form.provinceId)       e.provinceId       = 'Welaýat — hökmany'
+      if (!form.branchId)         e.branchId         = 'Şahamça — hökmany'
+      return e
+    },
+  },
+  {
+    id: 'personal',
+    titleKey: 'cardOrder.step.personal',
+    titleFallback: 'Şahsy',
+    subtitle: 'Maglumatlar',
+    icon: User,
+    validate: (form) => {
+      const e: FormErrors = {}
+      if (!form.firstName)         e.firstName         = 'Ady — hökmany'
+      if (!form.lastName)          e.lastName          = 'Familiýasy — hökmany'
+      if (!form.birthDate)         e.birthDate         = 'Doglan güni — hökmany'
+      if (!form.phone)             e.phone             = 'Telefon — hökmany'
+      if (!form.citizenship)       e.citizenship       = 'Raýatlyk — hökmany'
+      if (!form.registeredAddress) e.registeredAddress = 'Ýazgy edilen salgy — hökmany'
+      if (!form.currentAddress)    e.currentAddress    = 'Häzirki ýaşaýyş ýeri — hökmany'
+      if (!form.workplace)         e.workplace         = 'Işleýän ýeri — hökmany'
+      return e
+    },
+  },
+  {
+    id: 'passport',
+    titleKey: 'cardOrder.step.passport',
+    titleFallback: 'Pasport',
+    subtitle: 'Resmi maglumat',
+    icon: FileText,
+    validate: (form) => {
+      const e: FormErrors = {}
+      if (!form.passportSeriesId)   e.passportSeriesId   = 'Pasport seriýasy — hökmany'
+      if (!form.passportNumber)     e.passportNumber     = 'Pasport belgisi — hökmany'
+      if (!form.passportIssueDate)  e.passportIssueDate  = 'Pasport berlen senesi — hökmany'
+      if (!form.passportIssuedBy)   e.passportIssuedBy   = 'Kim tarapyndan berildi — hökmany'
+      if (!form.passportBirthPlace) e.passportBirthPlace = 'Doglan ýeri — hökmany'
+      return e
+    },
+  },
+  {
+    id: 'files',
+    titleKey: 'cardOrder.step.files',
+    titleFallback: 'Faýllar',
+    subtitle: 'Ýüklemek & Tassyklamak',
+    icon: Upload,
+    validate: (form, mode) => {
+      const e: FormErrors = {}
+      if (mode === 'create') {
+        if (!form.passportPage1)  e.passportPage1  = 'Pasport (sahypa 1) — hökmany'
+        if (!form.passportPage23) e.passportPage23 = 'Pasport (2-3-nji sahypa) — hökmany'
+        if (!form.passportPage89) e.passportPage89 = 'Pasport (8-9 sahypa) — hökmany'
+        if (!form.passportPage32) e.passportPage32 = 'Pasport (32-nji sahypa) — hökmany'
+        if (!form.termsAccepted)  e.termsAccepted  = 'Şertnama bilen razylaşmaly'
+      }
+      return e
+    },
+  },
+]
 
-function FormSection({ title, children }: { title?: string; children: React.ReactNode }) {
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({
+  cols = 2,
+  children,
+}: {
+  cols?: 1 | 2 | 3 | 4
+  children: React.ReactNode
+}) {
+  const colClass = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
+}: {
+  title?: string
+  span?: 'full' | 2 | 3
+  children: React.ReactNode
+}) {
+  const spanClass =
+    span === 'full' ? 'sm:col-span-full' :
+    span === 2      ? 'sm:col-span-2'    :
+    span === 3      ? 'sm:col-span-3'    : ''
+
   return (
-    <div className="mb-6 last:mb-0">
+    <div className={`bg-card border border-border rounded-xl p-5 space-y-4 ${spanClass}`}>
       {title && (
-        <h3 className="text-base font-semibold text-foreground mb-3">{title}</h3>
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          {title}
+        </p>
       )}
-      <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-        {children}
-      </div>
+      {children}
     </div>
   )
 }
 
-// ─── CardOrderForm ────────────────────────────────────────────────────────────
+// ─── Shared step content props ────────────────────────────────────────────────
 
-export function CardOrderForm({
-  mode,
-  initialData,
-  cardOrderId,
-  onSuccess,
-  onCancel,
-}: CardOrderFormProps) {
-  const { t } = useTranslation()
-  const isEdit = mode === 'edit'
+interface StepContentProps {
+  form: FormState
+  errors: FormErrors
+  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+}
 
-  const [form, setForm]   = useState<FormState>(() => getInitialState(initialData))
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [currentStep, setCurrentStep] = useState(0)
-  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>([
-    'active', 'idle', 'idle', 'idle',
-  ])
+// ─── Step panels ──────────────────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (initialData) setForm(getInitialState(initialData))
-  }, [initialData])
+function StepCard({
+  form, errors, set,
+  statusOptions, issuanceReasonOptions, cardTypeOptions, provinceOptions, branchOptions,
+}: StepContentProps & {
+  statusOptions: SelectOption[]
+  issuanceReasonOptions: SelectOption[]
+  cardTypeOptions: SelectOption[]
+  provinceOptions: SelectOption[]
+  branchOptions: SelectOption[]
+}) {
+  return (
+    <div className="space-y-4">
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="select"
+            label="Status"
+            required
+            value={form.status}
+            onChange={(v) => set('status', v as CardOrderStatus)}
+            options={statusOptions}
+            placeholder="Saýlaň"
+            error={errors.status}
+          />
+          <FormInput
+            type="textarea"
+            label="Bellik"
+            value={form.note}
+            onChange={(v) => set('note', v)}
+            placeholder="Bellik..."
+            rows={3}
+          />
+        </BentoCard>
 
-  // Lookup data
-  const { data: reasons   = [] } = useCardIssuanceReasons()
-  const { data: cardTypes = [] } = useCardTypes()
-  const { data: provinces = [] } = useProvinces()
-  const { data: branches  = [] } = useBranches(
-    form.provinceId ? Number(form.provinceId) : undefined,
+        <BentoCard>
+          <div className="flex items-center gap-2">
+            <input
+              id="isPaid"
+              type="checkbox"
+              checked={form.isPaid}
+              onChange={(e) => set('isPaid', e.target.checked)}
+              className="w-4 h-4 accent-primary cursor-pointer"
+            />
+            <label
+              htmlFor="isPaid"
+              className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer select-none"
+            >
+              Tölenen
+            </label>
+          </div>
+        </BentoCard>
+      </BentoGrid>
+
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="searchable-select"
+            label="Kartyň çykarylmagynyň sebäbi"
+            required
+            value={form.issuanceReasonId}
+            onChange={(v) => set('issuanceReasonId', v)}
+            options={issuanceReasonOptions}
+            placeholder="Saýlamak üçin basyň"
+            error={errors.issuanceReasonId}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="searchable-select"
+            label="Kart görnüşi"
+            required
+            value={form.cardTypeId}
+            onChange={(v) => set('cardTypeId', v)}
+            options={cardTypeOptions}
+            placeholder="Saýlamak üçin basyň"
+            error={errors.cardTypeId}
+          />
+        </BentoCard>
+      </BentoGrid>
+
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="select"
+            label="Welaýat"
+            required
+            value={form.provinceId}
+            onChange={(v) => { set('provinceId', v); set('branchId', '') }}
+            options={provinceOptions}
+            placeholder="Saýlaň"
+            error={errors.provinceId}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="searchable-select"
+            label="Şahamça"
+            required
+            value={form.branchId}
+            onChange={(v) => set('branchId', v)}
+            options={branchOptions}
+            disabled={!form.provinceId}
+            placeholder="Saýlamak üçin basyň"
+            error={errors.branchId}
+          />
+        </BentoCard>
+      </BentoGrid>
+    </div>
   )
+}
 
-  // Mutations
-  const createMutation = useCreateCardOrder()
-  const updateMutation = useUpdateCardOrder(cardOrderId ?? '')
-  const isPending = createMutation.isPending || updateMutation.isPending
+function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProps & {
+  citizenshipOptions: SelectOption[]
+}) {
+  return (
+    <div className="space-y-4">
+      <BentoGrid cols={3}>
+        <BentoCard>
+          <FormInput
+            type="text" label="Ady" required
+            value={form.firstName} onChange={(v) => set('firstName', v)}
+            placeholder="Ady" error={errors.firstName}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="text" label="Familiýasy" required
+            value={form.lastName} onChange={(v) => set('lastName', v)}
+            placeholder="Familiýasy" error={errors.lastName}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="text" label="Atasynyň ady"
+            value={form.middleName} onChange={(v) => set('middleName', v)}
+            placeholder="Atasynyň ady"
+          />
+        </BentoCard>
+      </BentoGrid>
 
-  // Helpers
-  const set = (key: keyof FormState) => (value: string) =>
-    setForm((f) => {
-      const next = { ...f, [key]: value }
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
-      return next
-    })
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="text" label="Köne familiýaňyz (eger üýtgän bolsa)"
+            value={form.formerLastName} onChange={(v) => set('formerLastName', v)}
+            placeholder="Köne familiýaňyz"
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="date" label="Doglan güni" required
+            value={form.birthDate} onChange={(v) => set('birthDate', v)}
+            error={errors.birthDate}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-  const setFile = (key: keyof FormState) => (file: File | null) => {
-    setForm((f) => ({ ...f, [key]: file }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-  }
+      <BentoGrid cols={3}>
+        <BentoCard>
+          <FormInput
+            type="phone" label="Telefon" required
+            value={form.phone} onChange={(v) => set('phone', v)}
+            error={errors.phone}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="phone" label="Telefon goşmaça"
+            value={form.phoneExtra} onChange={(v) => set('phoneExtra', v)}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="select" label="Raýatlyk" required
+            value={form.citizenship} onChange={(v) => set('citizenship', v)}
+            options={citizenshipOptions}
+            error={errors.citizenship}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-  const toOptions = (arr: { id: number; name: string }[]): SelectOption[] =>
-    arr.map((x) => ({ value: String(x.id), label: x.name }))
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="text" label="Ýazgy edilen salgyňyz" required
+            value={form.registeredAddress} onChange={(v) => set('registeredAddress', v)}
+            placeholder="Ýazgy edilen salgyňyz"
+            error={errors.registeredAddress}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="text" label="Häzirki ýaşaýyş ýeri" required
+            value={form.currentAddress} onChange={(v) => set('currentAddress', v)}
+            placeholder="Häzirki ýaşaýyş ýeri"
+            error={errors.currentAddress}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-  // ── Step navigation ────────────────────────────────────────────────────────
+      <BentoGrid cols={1}>
+        <BentoCard>
+          <FormInput
+            type="text" label="Işleýän ýeriňiz we wezipäňiz" required
+            value={form.workplace} onChange={(v) => set('workplace', v)}
+            placeholder="Işleýän ýeriňiz we wezipäňiz"
+            error={errors.workplace}
+          />
+        </BentoCard>
+      </BentoGrid>
+    </div>
+  )
+}
 
-  const updateStatus = (index: number, status: StepStatus) => {
-    setStepStatuses((prev) => {
-      const next = [...prev]
-      next[index] = status
-      return next
-    })
-  }
+function StepPassport({ form, errors, set, passportSeriesOptions }: StepContentProps & {
+  passportSeriesOptions: SelectOption[]
+}) {
+  return (
+    <div className="space-y-4">
+      <BentoGrid cols={3}>
+        <BentoCard>
+          <FormInput
+            type="select" label="Pasport seriýasy" required
+            value={form.passportSeriesId} onChange={(v) => set('passportSeriesId', v)}
+            options={passportSeriesOptions}
+            placeholder="Saýlaň"
+            error={errors.passportSeriesId}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="text" label="Pasport belgisi" required
+            value={form.passportNumber} onChange={(v) => set('passportNumber', v)}
+            placeholder="Pasport belgisi"
+            error={errors.passportNumber}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="date" label="Pasport berlen senesi" required
+            value={form.passportIssueDate} onChange={(v) => set('passportIssueDate', v)}
+            error={errors.passportIssueDate}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-  const goToStep = (index: number) => {
-    updateStatus(currentStep, stepStatuses[currentStep] === 'error' ? 'error' : 'done')
-    updateStatus(index, 'active')
-    setCurrentStep(index)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="text" label="Kim tarapyndan berildi" required
+            value={form.passportIssuedBy} onChange={(v) => set('passportIssuedBy', v)}
+            placeholder="Kim tarapyndan berildi"
+            error={errors.passportIssuedBy}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="text" label="Doglan ýeri (pasport)" required
+            value={form.passportBirthPlace} onChange={(v) => set('passportBirthPlace', v)}
+            placeholder="Doglan ýeri (pasport)"
+            error={errors.passportBirthPlace}
+          />
+        </BentoCard>
+      </BentoGrid>
+    </div>
+  )
+}
 
-  const handleNext = () => {
-    const stepErrors = validate(form, mode, t, currentStep)
-    if (Object.keys(stepErrors).length > 0) {
-      setErrors((prev) => ({ ...prev, ...stepErrors }))
-      updateStatus(currentStep, 'error')
-      toast.error(t('validation.fixErrors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
-      const firstKey = Object.keys(stepErrors)[0]
-      document.getElementById(`field-${firstKey}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      return
-    }
-    updateStatus(currentStep, 'done')
-    const next = currentStep + 1
-    updateStatus(next, 'active')
-    setCurrentStep(next)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  const handlePrev = () => {
-    const prev = currentStep - 1
-    updateStatus(currentStep, stepStatuses[currentStep] === 'error' ? 'error' : 'idle')
-    updateStatus(prev, 'active')
-    setCurrentStep(prev)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // ── Submit ─────────────────────────────────────────────────────────────────
-
-  const handleSubmit = async () => {
-    const allErrors = validate(form, mode, t)
-    if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
-      const newStatuses = stepStatuses.map((s, i) => {
-        const stepKeys = STEP_FIELDS[i]
-        const hasError = stepKeys.some((k) => allErrors[k])
-        if (i === currentStep) return hasError ? 'error' : 'active'
-        if (hasError) return 'error'
-        return s === 'idle' ? 'idle' : 'done'
-      }) as StepStatus[]
-      setStepStatuses(newStatuses)
-      toast.error(t('validation.fixErrors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
-      return
-    }
-
-    const payload = {
-      isPaid:             form.isPaid,
-      status:             form.status as CardOrderStatus,
-      note:               form.note || null,
-      issuanceReasonId:   Number(form.issuanceReasonId),
-      cardTypeId:         Number(form.cardTypeId),
-      provinceId:         Number(form.provinceId),
-      branchId:           Number(form.branchId),
-      firstName:          form.firstName,
-      lastName:           form.lastName,
-      middleName:         form.middleName     || null,
-      formerLastName:     form.formerLastName || null,
-      birthDate:          form.birthDate,
-      phone:              form.phone,
-      phoneExtra:         form.phoneExtra || null,
-      citizenship:        form.citizenship,
-      registeredAddress:  form.registeredAddress,
-      currentAddress:     form.currentAddress,
-      workplace:          form.workplace,
-      passportSeriesId:   Number(form.passportSeriesId),
-      passportNumber:     form.passportNumber,
-      passportIssueDate:  form.passportIssueDate,
-      passportIssuedBy:   form.passportIssuedBy,
-      passportBirthPlace: form.passportBirthPlace,
-      ...(form.passportPage1  && { passportPage1:  form.passportPage1  }),
-      ...(form.passportPage23 && { passportPage23: form.passportPage23 }),
-      ...(form.passportPage89 && { passportPage89: form.passportPage89 }),
-      ...(form.passportPage32 && { passportPage32: form.passportPage32 }),
-    }
-
-    try {
-      if (isEdit) {
-        await updateMutation.mutateAsync(payload)
-      } else {
-        await createMutation.mutateAsync(payload as CreateCardOrderPayload)
-      }
-      onSuccess?.()
-    } catch {
-      // errors handled in hooks via toast
-    }
-  }
-
-  // ── Options ────────────────────────────────────────────────────────────────
-
-  const statusOptions: SelectOption[] = [
-    { value: 'PENDING',  label: t('cardOrder.status.pending',  'Garaşylýar') },
-    { value: 'APPROVED', label: t('cardOrder.status.approved', 'Tassyklandy') },
-    { value: 'REJECTED', label: t('cardOrder.status.rejected', 'Ýatyryldy') },
-  ]
-
-  const citizenshipOptions: SelectOption[] = [
-    { value: 'Turkmenistan', label: t('citizenship.tm',    'Turkmenistan') },
-    { value: 'Russia',       label: t('citizenship.ru',    'Russiýa') },
-    { value: 'Other',        label: t('citizenship.other', 'Beýlekiler') },
-  ]
-
-  // ── Step bar items ─────────────────────────────────────────────────────────
-
-  const stepDefs = [
-    {
-      id: 'card',
-      title: t('cardOrder.step.card', 'Kart'),
-      subtitle: t('cardOrder.step.cardSub', 'Görnüş & lokasiýa'),
-      icon: CreditCard,
-    },
-    {
-      id: 'personal',
-      title: t('cardOrder.step.personal', 'Şahsy'),
-      subtitle: t('cardOrder.step.personalSub', 'Maglumatlar'),
-      icon: User,
-    },
-    {
-      id: 'passport',
-      title: t('cardOrder.step.passport', 'Pasport'),
-      subtitle: t('cardOrder.step.passportSub', 'Resmi maglumat'),
-      icon: FileText,
-    },
-    {
-      id: 'files',
-      title: t('cardOrder.step.files', 'Faýllar'),
-      subtitle: t('cardOrder.step.filesSub', 'Ýüklemek & Tassyklamak'),
-      icon: Upload,
-    },
-  ]
-
-  const stepItems: StepCardItem[] = stepDefs.map((def, i) => ({
-    ...def,
-    status: stepStatuses[i],
-  }))
-
-  const isFirstStep = currentStep === 0
-  const isLastStep  = currentStep === stepDefs.length - 1
-
-  // ── Render ────────────────────────────────────────────────────────────────
+function StepFiles({
+  form, errors, set, mode, initialData,
+}: StepContentProps & { mode: 'create' | 'edit'; initialData?: CardOrder }) {
+  const existingFiles =
+    mode === 'edit' && initialData
+      ? [
+          { url: initialData.passportFiles.page1,  label: 'Pasport (sahypa 1)'       },
+          { url: initialData.passportFiles.page23, label: 'Pasport (2-3-nji sahypa)' },
+          { url: initialData.passportFiles.page89, label: 'Pasport (8-9 sahypa)'     },
+          { url: initialData.passportFiles.page32, label: 'Pasport (32-nji sahypa)'  },
+        ].filter((f): f is { url: string; label: string } => !!f.url)
+      : []
 
   return (
-    <div className="flex flex-col gap-5">
-
-      {/* ── Step Bar ─────────────────────────────────────────────────────── */}
-      <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
-        <StepBarCards steps={stepItems} onGoTo={goToStep} />
-      </div>
-
-      {/* ── Step 0: Kart & Lokasiýa ──────────────────────────────────────── */}
-      {currentStep === 0 && (
-        <>
-          <FormSection>
-            {/* isPaid toggle */}
-            <div className="flex items-center gap-2">
-              <input
-                id="isPaid"
-                type="checkbox"
-                checked={form.isPaid}
-                onChange={(e) => setForm((f) => ({ ...f, isPaid: e.target.checked }))}
-                className="w-4 h-4 accent-primary cursor-pointer"
-              />
-              <label
-                htmlFor="isPaid"
-                className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider cursor-pointer select-none"
+    <div className="space-y-4">
+      {existingFiles.length > 0 && (
+        <BentoGrid cols={4}>
+          {existingFiles.map(({ url, label }) => (
+            <BentoCard key={label} title={label}>
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline truncate block"
               >
-                {t('cardOrder.field.isPaid', 'Tölenen')}
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div id="field-status">
-                <FormInput
-                  type="select"
-                  label={t('cardOrder.field.status', 'Status')}
-                  required
-                  value={form.status}
-                  onChange={set('status')}
-                  options={statusOptions}
-                  placeholder={t('common.selectPlaceholder', 'Saýlamak üçin basyň')}
-                  error={errors.status}
-                />
-              </div>
-              <FormInput
-                type="textarea"
-                label={t('cardOrder.field.note', 'Bellik')}
-                value={form.note}
-                onChange={set('note')}
-                placeholder={t('cardOrder.field.note', 'Bellik')}
-                rows={2}
-              />
-            </div>
-          </FormSection>
-
-          <FormSection title={t('cardOrder.section.card', 'Kart')}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div id="field-issuanceReasonId">
-                <FormInput
-                  type="searchable-select"
-                  label={t('cardOrder.field.issuanceReason', 'Kartyň çykarylmagynyň sebäbi')}
-                  required
-                  value={form.issuanceReasonId}
-                  onChange={set('issuanceReasonId')}
-                  options={toOptions(reasons)}
-                  error={errors.issuanceReasonId}
-                />
-              </div>
-              <div id="field-cardTypeId">
-                <FormInput
-                  type="searchable-select"
-                  label={t('cardOrder.field.cardType', 'Kart görnüşi')}
-                  required
-                  value={form.cardTypeId}
-                  onChange={set('cardTypeId')}
-                  options={toOptions(cardTypes)}
-                  error={errors.cardTypeId}
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          <FormSection title={t('cardOrder.section.location', 'Lokasiýa')}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div id="field-provinceId">
-                <FormInput
-                  type="select"
-                  label={t('cardOrder.field.province', 'Welaýat')}
-                  required
-                  value={form.provinceId}
-                  onChange={(v) => {
-                    setForm((f) => ({ ...f, provinceId: v, branchId: '' }))
-                    setErrors((prev) => ({ ...prev, provinceId: undefined, branchId: undefined }))
-                  }}
-                  options={toOptions(provinces)}
-                  error={errors.provinceId}
-                />
-              </div>
-              <div id="field-branchId">
-                <FormInput
-                  type="searchable-select"
-                  label={t('cardOrder.field.branch', 'Şahamça')}
-                  required
-                  value={form.branchId}
-                  onChange={set('branchId')}
-                  options={toOptions(branches)}
-                  disabled={!form.provinceId}
-                  error={errors.branchId}
-                />
-              </div>
-            </div>
-          </FormSection>
-        </>
+                Faýly gör
+              </a>
+            </BentoCard>
+          ))}
+        </BentoGrid>
       )}
 
-      {/* ── Step 1: Şahsy maglumatlar ─────────────────────────────────────── */}
-      {currentStep === 1 && (
-        <FormSection title={t('cardOrder.section.personal', 'Şahsy maglumatlar')}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div id="field-firstName">
-              <FormInput
-                label={t('cardOrder.field.firstName', 'Ady')}
-                required
-                value={form.firstName}
-                onChange={set('firstName')}
-                placeholder={t('cardOrder.field.firstName', 'Ady')}
-                error={errors.firstName}
-              />
-            </div>
-            <div id="field-lastName">
-              <FormInput
-                label={t('cardOrder.field.lastName', 'Familiýasy')}
-                required
-                value={form.lastName}
-                onChange={set('lastName')}
-                placeholder={t('cardOrder.field.lastName', 'Familiýasy')}
-                error={errors.lastName}
-              />
-            </div>
-            <FormInput
-              label={t('cardOrder.field.middleName', 'Atasynyn ady')}
-              value={form.middleName}
-              onChange={set('middleName')}
-              placeholder={t('cardOrder.field.middleName', 'Atasynyn ady')}
-            />
-          </div>
+      <BentoGrid cols={2}>
+        <BentoCard>
+          <FormInput
+            type="file"
+            label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'}
+            required={mode === 'create'}
+            accept="image/*,.pdf"
+            fileValue={form.passportPage1}
+            onFileChange={(f) => set('passportPage1', f)}
+            error={errors.passportPage1}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="file"
+            label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'}
+            required={mode === 'create'}
+            accept="image/*,.pdf"
+            fileValue={form.passportPage23}
+            onFileChange={(f) => set('passportPage23', f)}
+            error={errors.passportPage23}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="file"
+            label="Pasport (8-9 sahypa)"
+            required={mode === 'create'}
+            accept="image/*,.pdf"
+            fileValue={form.passportPage89}
+            onFileChange={(f) => set('passportPage89', f)}
+            error={errors.passportPage89}
+          />
+        </BentoCard>
+        <BentoCard>
+          <FormInput
+            type="file"
+            label="Pasport (32-nji sahypa)"
+            required={mode === 'create'}
+            accept="image/*,.pdf"
+            fileValue={form.passportPage32}
+            onFileChange={(f) => set('passportPage32', f)}
+            error={errors.passportPage32}
+          />
+        </BentoCard>
+      </BentoGrid>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormInput
-              label={t('cardOrder.field.formerLastName', 'Köne familiýaňyz (eger üýtgän bolsa)')}
-              value={form.formerLastName}
-              onChange={set('formerLastName')}
-              placeholder={t('cardOrder.field.formerLastName', 'Köne familiýaňyz (eger üýtgän bolsa)')}
-            />
-            <div id="field-birthDate">
-              <FormInput
-                type="date"
-                label={t('cardOrder.field.birthDate', 'Doglan güni')}
-                required
-                value={form.birthDate}
-                onChange={set('birthDate')}
-                error={errors.birthDate}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div id="field-phone">
-              <FormInput
-                type="phone"
-                label={t('cardOrder.field.phone', 'Telefon')}
-                required
-                value={form.phone}
-                onChange={set('phone')}
-                error={errors.phone}
-              />
-            </div>
-            <FormInput
-              type="phone"
-              label={t('cardOrder.field.phoneExtra', 'Telefon goşmaça')}
-              value={form.phoneExtra}
-              onChange={set('phoneExtra')}
-            />
-            <div id="field-citizenship">
-              <FormInput
-                type="select"
-                label={t('cardOrder.field.citizenship', 'Raýatlyk')}
-                required
-                value={form.citizenship}
-                onChange={set('citizenship')}
-                options={citizenshipOptions}
-                error={errors.citizenship}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div id="field-registeredAddress">
-              <FormInput
-                label={t('cardOrder.field.registeredAddress', 'Ýazgy edilen salgyňyz')}
-                required
-                value={form.registeredAddress}
-                onChange={set('registeredAddress')}
-                placeholder={t('cardOrder.field.registeredAddress', 'Ýazgy edilen salgyňyz')}
-                error={errors.registeredAddress}
-              />
-            </div>
-            <div id="field-currentAddress">
-              <FormInput
-                label={t('cardOrder.field.currentAddress', 'Häzirki ýaşaýyş ýeri')}
-                required
-                value={form.currentAddress}
-                onChange={set('currentAddress')}
-                placeholder={t('cardOrder.field.currentAddress', 'Häzirki ýaşaýyş ýeri')}
-                error={errors.currentAddress}
-              />
-            </div>
-          </div>
-
-          <div id="field-workplace">
-            <FormInput
-              label={t('cardOrder.field.workplace', 'Işleýän ýeriňiz we wezipäňiz')}
-              required
-              value={form.workplace}
-              onChange={set('workplace')}
-              placeholder={t('cardOrder.field.workplace', 'Işleýän ýeriňiz we wezipäňiz')}
-              error={errors.workplace}
-            />
-          </div>
-        </FormSection>
-      )}
-
-      {/* ── Step 2: Pasport ───────────────────────────────────────────────── */}
-      {currentStep === 2 && (
-        <FormSection title={t('cardOrder.section.passport', 'Pasport')}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div id="field-passportSeriesId">
-              <FormInput
-                type="select"
-                label={t('cardOrder.field.passportSeries', 'Pasport seriýasy')}
-                required
-                value={form.passportSeriesId}
-                onChange={set('passportSeriesId')}
-                options={[
-                  { value: '1', label: 'I'   },
-                  { value: '2', label: 'II'  },
-                  { value: '3', label: 'III' },
-                ]}
-                error={errors.passportSeriesId}
-              />
-            </div>
-            <div id="field-passportNumber">
-              <FormInput
-                label={t('cardOrder.field.passportNumber', 'Pasport belgisi')}
-                required
-                value={form.passportNumber}
-                onChange={set('passportNumber')}
-                placeholder={t('cardOrder.field.passportNumber', 'Pasport belgisi')}
-                error={errors.passportNumber}
-              />
-            </div>
-            <div id="field-passportIssueDate">
-              <FormInput
-                type="date"
-                label={t('cardOrder.field.passportIssueDate', 'Pasport berlen senesi')}
-                required
-                value={form.passportIssueDate}
-                onChange={set('passportIssueDate')}
-                error={errors.passportIssueDate}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div id="field-passportIssuedBy">
-              <FormInput
-                label={t('cardOrder.field.passportIssuedBy', 'Kim tarapyndan berildi')}
-                required
-                value={form.passportIssuedBy}
-                onChange={set('passportIssuedBy')}
-                placeholder={t('cardOrder.field.passportIssuedBy', 'Kim tarapyndan berildi')}
-                error={errors.passportIssuedBy}
-              />
-            </div>
-            <div id="field-passportBirthPlace">
-              <FormInput
-                label={t('cardOrder.field.passportBirthPlace', 'Doglan ýeri (pasport)')}
-                required
-                value={form.passportBirthPlace}
-                onChange={set('passportBirthPlace')}
-                placeholder={t('cardOrder.field.passportBirthPlace', 'Doglan ýeri (pasport)')}
-                error={errors.passportBirthPlace}
-              />
-            </div>
-          </div>
-        </FormSection>
-      )}
-
-      {/* ── Step 3: Faýllar & Şertler ─────────────────────────────────────── */}
-      {currentStep === 3 && (
-        <>
-          <FormSection title={t('cardOrder.section.passportFiles', 'Pasport faýýlar')}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div id="field-passportPage1">
-                <FormInput
-                  type="file"
-                  label={t('cardOrder.field.passportPage1', 'Pasport (sahypa 1)')}
-                  required
-                  accept="image/*,.pdf"
-                  fileValue={form.passportPage1}
-                  onFileChange={setFile('passportPage1')}
-                  error={errors.passportPage1}
-                />
-              </div>
-              <div id="field-passportPage23">
-                <FormInput
-                  type="file"
-                  label={t('cardOrder.field.passportPage23', 'Pasport (2-3-nji sahypa)')}
-                  required
-                  accept="image/*,.pdf"
-                  fileValue={form.passportPage23}
-                  onFileChange={setFile('passportPage23')}
-                  error={errors.passportPage23}
-                />
-              </div>
-              <div id="field-passportPage89">
-                <FormInput
-                  type="file"
-                  label={t('cardOrder.field.passportPage89', 'Pasport (8-9 sahypa)')}
-                  required
-                  accept="image/*,.pdf"
-                  fileValue={form.passportPage89}
-                  onFileChange={setFile('passportPage89')}
-                  error={errors.passportPage89}
-                />
-              </div>
-              <div id="field-passportPage32">
-                <FormInput
-                  type="file"
-                  label={t('cardOrder.field.passportPage32', 'Pasport (32-nji sahypa)')}
-                  required
-                  accept="image/*,.pdf"
-                  fileValue={form.passportPage32}
-                  onFileChange={setFile('passportPage32')}
-                  error={errors.passportPage32}
-                />
-              </div>
-            </div>
-          </FormSection>
-
-          {/* Terms — only in create mode */}
-          {!isEdit && (
+      {mode === 'create' && (
+        <BentoGrid cols={1}>
+          <BentoCard>
             <div
-              id="field-termsAccepted"
               className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors
                 ${errors.termsAccepted
                   ? 'bg-destructive/10 border border-destructive/30'
                   : 'bg-primary/5 border border-primary/20'
                 }`}
-              onClick={() => {
-                setForm((f) => ({ ...f, termsAccepted: !f.termsAccepted }))
-                setErrors((prev) => ({ ...prev, termsAccepted: undefined }))
-              }}
+              onClick={() => set('termsAccepted', !form.termsAccepted)}
             >
               <div
                 className={`w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors
@@ -776,31 +614,254 @@ export function CardOrderForm({
                   </svg>
                 )}
               </div>
-              <span className={`text-sm font-medium ${errors.termsAccepted ? 'text-destructive' : 'text-primary'}`}>
-                {t('cardOrder.terms', 'Şertnama bilen razylaşýaryn (Okamak üçin bas)')}
+              <span
+                className={`text-sm font-medium ${errors.termsAccepted ? 'text-destructive' : 'text-primary'}`}
+              >
+                Şertnama bilen razylaşýaryn (Okamak üçin bas)
               </span>
             </div>
-          )}
-        </>
+          </BentoCard>
+        </BentoGrid>
+      )}
+    </div>
+  )
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export function CardOrderForm({
+  mode,
+  initialData,
+  cardOrderId,
+  onSuccess,
+  onCancel,
+}: CardOrderFormProps) {
+  const { t } = useTranslation()
+
+  const createMutation = useCreateCardOrder()
+  const updateMutation = useUpdateCardOrder(cardOrderId ?? '')
+  const isPending = createMutation.isPending || updateMutation.isPending
+
+  const [form, setForm]   = useState<FormState>(() => getInitialState(initialData))
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [currentStep, setCurrentStep] = useState(0)
+  const [visited, setVisited] = useState<Set<number>>(
+    () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
+  )
+
+  useEffect(() => {
+    if (initialData) setForm(getInitialState(initialData))
+  }, [initialData])
+
+  // ── Lookup data ────────────────────────────────────────────────────────────
+
+  const { data: reasons   = [] } = useCardIssuanceReasons()
+  const { data: cardTypes = [] } = useCardTypes()
+  const { data: provinces = [] } = useProvinces()
+  const { data: branches  = [] } = useBranches(
+    form.provinceId ? Number(form.provinceId) : undefined,
+  )
+
+  const toOptions = (arr: { id: number; name: string }[]): SelectOption[] =>
+    arr.map((x) => ({ value: String(x.id), label: x.name }))
+
+  const statusOptions: SelectOption[] = [
+    { value: 'PENDING',  label: t('cardOrder.status.pending',  'Garaşylýar')  },
+    { value: 'APPROVED', label: t('cardOrder.status.approved', 'Tassyklandy') },
+    { value: 'REJECTED', label: t('cardOrder.status.rejected', 'Ýatyryldy')   },
+  ]
+
+  const citizenshipOptions: SelectOption[] = [
+    { value: 'Turkmenistan', label: t('citizenship.tm',    'Turkmenistan') },
+    { value: 'Russia',       label: t('citizenship.ru',    'Russiýa')      },
+    { value: 'Other',        label: t('citizenship.other', 'Beýlekiler')   },
+  ]
+
+  const passportSeriesOptions: SelectOption[] = [
+    { value: '1', label: 'I'   },
+    { value: '2', label: 'II'  },
+    { value: '3', label: 'III' },
+  ]
+
+  // ── Computed step error state ──────────────────────────────────────────────
+
+  const stepsWithErrors = useMemo(() => {
+    const out = new Set<number>()
+    visited.forEach((i) => {
+      if (Object.keys(STEPS[i].validate(form, mode)).length > 0) out.add(i)
+    })
+    return out
+  }, [form, mode, visited])
+
+  // ── set helper ─────────────────────────────────────────────────────────────
+
+  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }, [])
+
+  const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+
+  const markVisited = (i: number) =>
+    setVisited((prev) => new Set([...prev, i]))
+
+  const handleNext = () => {
+    markVisited(currentStep)
+    const errs = STEPS[currentStep].validate(form, mode)
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      toast.error(t('validation.fixErrors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
+      return
+    }
+    setErrors({})
+    setCurrentStep(currentStep + 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleBack = () => {
+    markVisited(currentStep)
+    setErrors({})
+    setCurrentStep(currentStep - 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleGoTo = (i: number) => {
+    markVisited(currentStep)
+    setErrors({})
+    setCurrentStep(i)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  const handleSubmit = async () => {
+    setVisited(new Set(STEPS.map((_, i) => i)))
+
+    const allErrors: FormErrors = {}
+    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
+
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors)
+      toast.error(t('validation.fixErrors', 'Käbir hökmany meýdanlar doldurylan däldir.'))
+      for (let i = 0; i < STEPS.length; i++) {
+        if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
+          setCurrentStep(i)
+          break
+        }
+      }
+      return
+    }
+
+    const payload = {
+      isPaid:             form.isPaid,
+      status:             form.status as CardOrderStatus,
+      note:               form.note               || null,
+      issuanceReasonId:   Number(form.issuanceReasonId),
+      cardTypeId:         Number(form.cardTypeId),
+      provinceId:         Number(form.provinceId),
+      branchId:           Number(form.branchId),
+      firstName:          form.firstName,
+      lastName:           form.lastName,
+      middleName:         form.middleName         || null,
+      formerLastName:     form.formerLastName      || null,
+      birthDate:          form.birthDate,
+      phone:              form.phone,
+      phoneExtra:         form.phoneExtra          || null,
+      citizenship:        form.citizenship,
+      registeredAddress:  form.registeredAddress,
+      currentAddress:     form.currentAddress,
+      workplace:          form.workplace,
+      passportSeriesId:   Number(form.passportSeriesId),
+      passportNumber:     form.passportNumber,
+      passportIssueDate:  form.passportIssueDate,
+      passportIssuedBy:   form.passportIssuedBy,
+      passportBirthPlace: form.passportBirthPlace,
+      ...(form.passportPage1  && { passportPage1:  form.passportPage1  }),
+      ...(form.passportPage23 && { passportPage23: form.passportPage23 }),
+      ...(form.passportPage89 && { passportPage89: form.passportPage89 }),
+      ...(form.passportPage32 && { passportPage32: form.passportPage32 }),
+    }
+
+    try {
+      if (mode === 'edit') {
+        await updateMutation.mutateAsync(payload)
+      } else {
+        await createMutation.mutateAsync(payload as CreateCardOrderPayload)
+      }
+      onSuccess?.()
+    } catch {
+      // errors handled in hooks via toast
+    }
+  }
+
+  // ── StepBar items ───────────────────────────────────────────────────────────
+
+  const stepBarItems: StepCardItem[] = STEPS.map((s, i) => {
+    const isActive  = i === currentStep
+    const hasErrors = stepsWithErrors.has(i)
+    const isDone    = visited.has(i) && !hasErrors
+    return {
+      id:       s.id,
+      title:    t(s.titleKey) || s.titleFallback,
+      subtitle: s.subtitle,
+      icon:     s.icon,
+      status: isActive ? 'active' : hasErrors ? 'error' : isDone ? 'done' : 'idle',
+    }
+  })
+
+  const isLastStep = currentStep === STEPS.length - 1
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="flex flex-col gap-5">
+    
+
+      {/* Step bar */}
+      <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
+        <StepBarCards steps={stepBarItems} onGoTo={handleGoTo} />
+      </div>
+
+      {/* Step content */}
+      {currentStep === 0 && (
+        <StepCard
+          {...stepProps}
+          statusOptions={statusOptions}
+          issuanceReasonOptions={toOptions(reasons)}
+          cardTypeOptions={toOptions(cardTypes)}
+          provinceOptions={toOptions(provinces)}
+          branchOptions={toOptions(branches)}
+        />
+      )}
+      {currentStep === 1 && (
+        <StepPersonal {...stepProps} citizenshipOptions={citizenshipOptions} />
+      )}
+      {currentStep === 2 && (
+        <StepPassport {...stepProps} passportSeriesOptions={passportSeriesOptions} />
+      )}
+      {currentStep === 3 && (
+        <StepFiles {...stepProps} mode={mode} initialData={initialData} />
       )}
 
-      {/* ── Form Actions ──────────────────────────────────────────────────── */}
+      {/* Actions */}
       <FormActions
         isPending={isPending}
-        onCancel={onCancel}
-        cancelLabel={t('common.cancel', 'Ýatyr')}
-        loadingLabel={t('common.saving', 'Saklanylýar...')}
-        onPrev={!isFirstStep ? handlePrev : undefined}
-        prevLabel={t('common.prev', 'Yza')}
+        onCancel={currentStep === 0 ? onCancel : undefined}
+        onPrev={currentStep > 0 ? handleBack : undefined}
         onNext={!isLastStep ? handleNext : undefined}
-        nextLabel={t('common.next', 'Indiki')}
         showSubmit={isLastStep}
-        onSubmit={handleSubmit}
+        onSubmit={isLastStep ? handleSubmit : undefined}
         submitLabel={
-          isEdit
-            ? t('common.save', 'Ýatda sakla')
-            : t('cardOrder.submit', 'Kart sargyt dörediň')
+          mode === 'create'
+            ? (t('cardOrder.submit') || 'Kart sargyt dörediň')
+            : (t('common.save')     || 'Ýatda sakla')
         }
+        loadingLabel={t('common.saving') || 'Ýüklenilýär...'}
+        cancelLabel={t('common.cancel')  || 'Ýatyr'}
+        prevLabel={t('common.prev')      || 'Yza'}
+        nextLabel={t('common.next')      || 'Indiki'}
       />
     </div>
   )

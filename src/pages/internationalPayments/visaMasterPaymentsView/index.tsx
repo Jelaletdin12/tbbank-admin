@@ -1,10 +1,7 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useIntlPayment, useDeleteIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
-import type { IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
-import { Spinner } from '@/components/ui/spinner'
-import { Button } from '@/components/ui/button'
-import { Pencil, Trash2, Download, Search } from 'lucide-react'
+import { Pencil, Trash2, Download, Search, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,58 +13,119 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { useState } from 'react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
-import { InfoRow, Section } from '@/components/viewPageComponents'  
-// ─── Status Badge ─────────────────────────────────────────────────────────────
+import { InfoRow } from '@/components/viewPageComponents'
+import { useIntlPayment, useDeleteIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
+import type { IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
 
-const STATUS_MAP: Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant }> = {
-  pending:  { label: 'Garaşylýar', variant: 'warning' },
-  approved: { label: 'Tassyklandy', variant: 'success' },
-  rejected: { label: 'Ret edildi',  variant: 'error' },
+// ─── Status config ────────────────────────────────────────────────────────────
+
+const STATUS_MAP: Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
+  pending:  { label: 'Garaşylýar',  variant: 'warning', icon: AlertCircle  },
+  approved: { label: 'Tassyklandy', variant: 'success', icon: CheckCircle2 },
+  rejected: { label: 'Ret edildi',  variant: 'error',   icon: XCircle      },
 }
 
 function PaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
   const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+}
+
+// ─── Bento primitives ─────────────────────────────────────────────────────────
+
+function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+  const colClass = {
+    1: 'grid-cols-1',
+    2: 'grid-cols-1 sm:grid-cols-2',
+    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+function BentoCard({
+  title,
+  span,
+  children,
+}: {
+  title?: string
+  span?: 'full' | 2 | 3
+  children: React.ReactNode
+}) {
+  const spanClass =
+    span === 'full' ? 'sm:col-span-full' :
+    span === 2      ? 'sm:col-span-2'    :
+    span === 3      ? 'sm:col-span-3'    : ''
+
   return (
-    <StatusBadge label={cfg.label} variant={cfg.variant} />
+    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
+      {title && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {title}
+          </p>
+        </div>
+      )}
+      {children}
+    </div>
   )
 }
 
-
-
-
-// ─── DocFile row ─────────────────────────────────────────────────────────────
+// ─── DocFile row ──────────────────────────────────────────────────────────────
 
 function DocFileRow({ label, url }: { label: string; url: string | null }) {
   if (!url) return (
-    <div className="flex items-start gap-4 py-3 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground flex-1 leading-snug">{label}</span>
-      <span className="text-sm text-muted-foreground/50">—</span>
-    </div>
+    <InfoRow label={label}>
+      <span className="text-muted-foreground/50">—</span>
+    </InfoRow>
   )
 
   const filename = url.split('/').pop() ?? 'faýl'
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
+  const isImage  = /\.(jpg|jpeg|png|gif|webp)$/i.test(url)
 
   return (
-    <div className="flex items-start gap-4 py-3 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground flex-1 leading-snug">{label}</span>
-      <div className="flex items-center gap-2 shrink-0">
+    <InfoRow label={label}>
+      <div className="flex items-center gap-2">
         {isImage && (
-          <a href={url} target="_blank" rel="noreferrer"
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-xs text-foreground transition-colors"
           >
             <Search size={12} />
             <span className="max-w-[140px] truncate">{filename}</span>
           </a>
         )}
-        <a href={url} download
+        <a
+          href={url}
+          download
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/10 hover:bg-primary/20 text-xs text-primary transition-colors"
         >
           <Download size={12} />
           <span className="max-w-[140px] truncate">{filename}</span>
         </a>
+      </div>
+    </InfoRow>
+  )
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function IntlPaymentViewSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-7 w-64" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+            <Skeleton className="h-3 w-24 mb-1" />
+            {[...Array(3)].map((_, j) => (
+              <Skeleton key={j} className="h-4 w-full" />
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -76,62 +134,62 @@ function DocFileRow({ label, url }: { label: string; url: string | null }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function IntlPaymentViewPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-
-  const { data, isLoading, isError } = useIntlPayment(id!)
-  const { mutate: deletePayment, isPending: isDeleting } = useDeleteIntlPayment()
+  const { id }     = useParams<{ id: string }>()
+  const navigate   = useNavigate()
+  const { t }      = useTranslation()
   const [historySearch, setHistorySearch] = useState('')
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="size-8 text-primary" />
-      </div>
-    )
-  }
+  const { data, isLoading, isError }           = useIntlPayment(id!)
+  const { mutate: deletePayment, isPending: isDeleting } = useDeleteIntlPayment()
+
+  if (isLoading) return <IntlPaymentViewSkeleton />
 
   if (isError || !data) {
     return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground">
+      <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
         {t('common.notFound', 'Maglumat tapylmady')}
       </div>
     )
   }
 
   const KABUL_DOCS = [
-    { label: 'Talypyň degişli welaýata "SBERBANK" kartyň rekwizitleri',                    url: data.doc_sberbank_account },
-    { label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwänamasy', url: data.doc_school_enrollment },
-    { label: 'Talypyň bilendiriň göçürmesi',                                                url: data.doc_summons },
-    { label: 'Talypyň degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi', url: data.doc_passport_tm },
-    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi',         url: data.doc_foreign_passport },
-    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurtda galan döwründe bakýan döwleti baradaky bellenen sahypasynyň göçürmesi', url: data.doc_foreign_passport_copy },
-    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň dowletiniň girmesiz baradaky bellenen sahypasynyň göçürmesi', url: data.doc_exit_permission },
-    { label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy barada maglumatlary daşary ýurt döwletiniň ýokary okuw mekdebinden haty', url: data.doc_school_foreign_info },
-    { label: 'Talypyň daşary ýurt döwletinde okaýandygy baradaky güwänamany daşary ýurt döwletiniň ýokary okuw mekdebinden haty', url: data.doc_school_departure_info },
+    { label: 'Talypyň degişli welaýata "SBERBANK" kartyň rekwizitleri',                                                                                                      url: data.doc_sberbank_account       },
+    { label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy baradaky güwänamasy',                                                                          url: data.doc_school_enrollment      },
+    { label: 'Talypyň bilendiriň göçürmesi',                                                                                                                                  url: data.doc_summons                },
+    { label: 'Talypyň degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi',                                                                      url: data.doc_passport_tm            },
+    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi',                                                                              url: data.doc_foreign_passport       },
+    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurtda galan döwründe bakýan döwleti baradaky bellenen sahypasynyň göçürmesi',    url: data.doc_foreign_passport_copy  },
+    { label: 'Talypyň Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň dowletiniň girmesiz baradaky bellenen sahypasynyň göçürmesi',                            url: data.doc_exit_permission        },
+    { label: 'Talypyň daşary ýurt döwletiniň ýokary okuw mekdebinde okaýandygy barada maglumatlary daşary ýurt döwletiniň ýokary okuw mekdebinden haty',                      url: data.doc_school_foreign_info    },
+    { label: 'Talypyň daşary ýurt döwletinde okaýandygy baradaky güwänamany daşary ýurt döwletiniň ýokary okuw mekdebinden haty',                                              url: data.doc_school_departure_info  },
   ]
 
   const UPGRAD_DOCS = [
-    { label: 'Upgradyý degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi', url: data.upd_doc_passport_tm },
-    { label: 'Upgradyý degişli Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi', url: data.upd_doc_foreign_passport },
-    { label: 'Upgradyý Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurt döwletinde galýandygy baradaky şaýmynyň bellenen sahypasynyň göçürmesi', url: data.upd_doc_visa },
-    { label: 'Upgradyýyň we kabul edijiniň resminamalarynyň göçürmesi', url: data.upd_doc_acceptance_letter },
-    { label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra pasportynyň seriýasy baradaky maglumatlary', url: data.upd_doc_passport_biometric },
-    { label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra pasportynyň seriýasy baradaky göwnamasy', url: data.upd_doc_passport_old },
+    { label: 'Upgradyý degişli Türkmenistanyň raýatynyň içki milli pasportynyň asyl görnüşi we göçürmesi',                                                                                     url: data.upd_doc_passport_tm           },
+    { label: 'Upgradyý degişli Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň göçürmesi',                                                                                     url: data.upd_doc_foreign_passport       },
+    { label: 'Upgradyý Türkmenistandan çykmak we Türkmenistana girmek üçin pasportynyň daşary ýurt döwletinde galýandygy baradaky şaýmynyň bellenen sahypasynyň göçürmesi',                   url: data.upd_doc_visa                   },
+    { label: 'Upgradyýyň we kabul edijiniň resminamalarynyň göçürmesi',                                                                                                                        url: data.upd_doc_acceptance_letter      },
+    { label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra pasportynyň seriýasy baradaky maglumatlary',                                                                                  url: data.upd_doc_passport_biometric     },
+    { label: 'Upgradyý we kabul ediji täze 2015-nji ýyldan soňra pasportynyň seriýasy baradaky göwnamasy',                                                                                     url: data.upd_doc_passport_old           },
   ]
 
   return (
-    <div className=" mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-   
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-6">
+
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold text-foreground">
+          {t('intlPayment.viewTitle', 'Halkara töleg')}: {data.id}
+        </h1>
+        <div className="flex items-center gap-1.5">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
-                <Trash2 size={15} />
-              </Button>
+              <button
+                className="p-2 rounded-md cursor-pointer hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+                title={t('common.delete', 'Poz')}
+              >
+                <Trash2 size={16} />
+              </button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
@@ -153,17 +211,19 @@ export default function IntlPaymentViewPage() {
             </AlertDialogContent>
           </AlertDialog>
 
-          <Button size="icon" variant="ghost" className="h-8 w-8"
+          <button
             onClick={() => navigate(`/intl-payments/visa-master/${id}/edit`)}
+            className="p-2 rounded-md cursor-pointer hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+            title={t('common.edit', 'Redaktirle')}
           >
-            <Pencil size={15} />
-          </Button>
+            <Pencil size={16} />
+          </button>
         </div>
       </div>
 
-      {/* Status */}
-      <Section title={t('intlPayment.statusSection', 'Status')}>
-        <div className="divide-y divide-border">
+      {/* ── Row 1: Meta + Ýüztuman + Lokasiýa ───────────────────────────── */}
+      <BentoGrid cols={3}>
+        <BentoCard title={t('intlPayment.statusSection', 'Esasy maglumatlar')}>
           <InfoRow label={t('intlPayment.client', 'Ulanyjy')}>
             <span className="text-primary font-medium">{data.client_label}</span>
           </InfoRow>
@@ -173,125 +233,89 @@ export default function IntlPaymentViewPage() {
           <InfoRow label={t('intlPayment.status', 'Status')}>
             <PaymentStatusBadge status={data.status} />
           </InfoRow>
-          <InfoRow label={t('intlPayment.tilowanMonth', 'Tölewan (Aý/aý)')}>
-            {data.created_at}
-          </InfoRow>
-          <InfoRow label={t('intlPayment.note', 'Bellik')}>
-            {data.note}
-          </InfoRow>
-        </div>
-      </Section>
+          <InfoRow label={t('intlPayment.tilowanMonth', 'Tölewan (Aý/aý)')} value={data.created_at} />
+          <InfoRow label={t('intlPayment.note', 'Bellik')} value={data.note} />
+        </BentoCard>
 
-      {/* Ýüztumanyň görnüşi */}
-      <Section title={t('intlPayment.currencySection', 'Ýüztumanyň görnüşi')}>
-        <div className="divide-y divide-border">
-          <InfoRow label={t('intlPayment.currencyType', 'Ýüztumanyň görnüşi')}>
-            {data.currency_type_label}
-          </InfoRow>
-        </div>
-      </Section>
+        <BentoCard title={t('intlPayment.currencySection', 'Ýüztumanyň görnüşi')}>
+          <InfoRow label={t('intlPayment.currencyType', 'Görnüşi')} value={data.currency_type_label} />
+        </BentoCard>
 
-      {/* Lokasiýa */}
-      <Section title={t('intlPayment.locationSection', 'Lokasiýa')}>
-        <div className="divide-y divide-border">
-          <InfoRow label={t('intlPayment.province', 'Welaýat')}>{data.province_label}</InfoRow>
+        <BentoCard title={t('intlPayment.locationSection', 'Lokasiýa')}>
+          <InfoRow label={t('intlPayment.province', 'Welaýat')} value={data.province_label} />
           <InfoRow label={t('intlPayment.branch', 'Şahamça')}>
             <span className="text-primary font-medium">{data.branch_label}</span>
           </InfoRow>
-        </div>
-      </Section>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Şahsy maglumatlar */}
-      <Section title={t('intlPayment.personalSection', 'Şahsy maglumatlar')}>
-        <div className="divide-y divide-border">
-          <InfoRow label={t('intlPayment.passportFirstName', 'Pasportdaky ady')}>{data.passport_first_name}</InfoRow>
-          <InfoRow label={t('intlPayment.passportLastName', 'Pasportdaky familiýa')}>{data.passport_last_name}</InfoRow>
-          <InfoRow label={t('intlPayment.phone', 'Telefon')}>+{data.phone}</InfoRow>
-          <InfoRow label={t('intlPayment.email', 'E-poçta')}>{data.email}</InfoRow>
-          <InfoRow label={t('intlPayment.homeAddress', 'Häzirki ýaşyş ýeri')}>{data.home_address}</InfoRow>
-        </div>
-      </Section>
-
-      {/* Töleg */}
-      <Section title={t('intlPayment.paymentSection', 'Töleg')}>
-        <div className="divide-y divide-border mb-4">
-          <InfoRow label={t('intlPayment.payerFullName', 'Töleg upgradyjynyň maglumatlary')}>
-            {data.payer_full_name}
+      {/* ── Row 2: Şahsy maglumatlar + Töleg ─────────────────────────────── */}
+      <BentoGrid cols={2}>
+        <BentoCard title={t('intlPayment.personalSection', 'Şahsy maglumatlar')}>
+          <InfoRow label={t('intlPayment.passportFirstName', 'Pasportdaky ady')}     value={data.passport_first_name} />
+          <InfoRow label={t('intlPayment.passportLastName',  'Pasportdaky familiýa')} value={data.passport_last_name}  />
+          <InfoRow label={t('intlPayment.phone', 'Telefon')}>
+            <span>+{data.phone}</span>
           </InfoRow>
-          <InfoRow label={t('intlPayment.payerAccount', 'Töleg upgradyjynyň goşun hasaby')}>
-            {data.payer_account_number}
-          </InfoRow>
-        </div>
-        {/* Receiver table */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40">
-              <tr>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">
-                  {t('intlPayment.passportSeries', 'Pasport seriýasy')}
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">
-                  {t('intlPayment.passportNumber', 'Pasport nomeri')}
-                </th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase">
-                  {t('intlPayment.payerFullName', 'Ady Familiýasy Atasnyň ady')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t border-border">
-                <td className="px-4 py-3">{data.passport_series} – {data.passport_number}</td>
-                <td className="px-4 py-3">{data.passport_number}</td>
-                <td className="px-4 py-3">{data.payer_full_name}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Section>
+          <InfoRow label={t('intlPayment.email',       'E-poçta')}             value={data.email}        />
+          <InfoRow label={t('intlPayment.homeAddress', 'Häzirki ýaşyş ýeri')} value={data.home_address} />
+        </BentoCard>
 
-      {/* Kabul ediji talyp boyunca resminamalar */}
-      <Section title={t('intlPayment.kabulDocsSection', 'Kabul ediji talyp boyunca resminamalar')}>
-        <div>
+        <BentoCard title={t('intlPayment.paymentSection', 'Töleg')}>
+          <InfoRow label={t('intlPayment.payerFullName',    'Töleg upgradyjynyň maglumatlary')}   value={data.payer_full_name}      />
+          <InfoRow label={t('intlPayment.payerAccount',     'Töleg upgradyjynyň goşun hasaby')}   value={data.payer_account_number} />
+          <InfoRow label={t('intlPayment.passportSeries',   'Pasport seriýasy')}                  value={data.passport_series}      />
+          <InfoRow label={t('intlPayment.passportNumber',   'Pasport nomeri')}                    value={data.passport_number}      />
+        </BentoCard>
+      </BentoGrid>
+
+      {/* ── Row 3: Kabul ediji resminamalar ──────────────────────────────── */}
+      <BentoGrid cols={1}>
+        <BentoCard title={t('intlPayment.kabulDocsSection', 'Kabul ediji talyp boyunca resminamalar')}>
           {KABUL_DOCS.map((doc, i) => (
             <DocFileRow key={i} label={doc.label} url={doc.url} />
           ))}
-        </div>
-      </Section>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Upgradyý boyunca resminamalar */}
-      <Section title={t('intlPayment.upgradDocsSection', 'Upgradyý boyunca resminamalar')}>
-        <div>
+      {/* ── Row 4: Upgradyý resminamalar ─────────────────────────────────── */}
+      <BentoGrid cols={1}>
+        <BentoCard title={t('intlPayment.upgradDocsSection', 'Upgradyý boyunca resminamalar')}>
           {UPGRAD_DOCS.map((doc, i) => (
             <DocFileRow key={i} label={doc.label} url={doc.url} />
           ))}
-        </div>
-      </Section>
+        </BentoCard>
+      </BentoGrid>
 
-      {/* Töleg taryhy */}
-      <Section title={t('intlPayment.paymentHistory', 'Töleg taryhy')}>
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1 max-w-xs">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={historySearch}
-              onChange={(e) => setHistorySearch(e.target.value)}
-              placeholder={t('intlPayment.search', 'Gözlemek')}
-              className="h-9 w-full pl-9 pr-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+      {/* ── Row 5: Töleg taryhy ───────────────────────────────────────────── */}
+      <BentoGrid cols={1}>
+        <BentoCard title={t('intlPayment.paymentHistory', 'Töleg taryhy')}>
+          <div className="p-4">
+            <div className="relative max-w-xs mb-4">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={historySearch}
+                onChange={(e) => setHistorySearch(e.target.value)}
+                placeholder={t('intlPayment.search', 'Gözlemek')}
+                className="h-9 w-full pl-9 pr-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground/50">
+              <div className="w-12 h-12 mb-3 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="3" y1="9" x2="21" y2="9" />
+                  <line x1="9" y1="9" x2="9" y2="21" />
+                </svg>
+              </div>
+              <p className="text-sm">{t('intlPayment.noHistory', 'Beriilen kriteriýalara Töleg gabat gelmedi')}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/50">
-          <div className="w-12 h-12 mb-3 rounded-lg border-2 border-dashed border-muted-foreground/20 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="3" y1="9" x2="21" y2="9" />
-              <line x1="9" y1="9" x2="9" y2="21" />
-            </svg>
-          </div>
-          <p className="text-sm">{t('intlPayment.noHistory', 'Beriilen kriteriýalara Töleg gabat gelmedi')}</p>
-        </div>
-      </Section>
+        </BentoCard>
+      </BentoGrid>
+
     </div>
   )
 }

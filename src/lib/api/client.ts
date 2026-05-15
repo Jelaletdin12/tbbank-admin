@@ -1,40 +1,79 @@
-import axios from 'axios'
+import axios from "axios";
+import { useAuthStore } from "@/app/store/authStore";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api'
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  timeout: 10000,
+});
 
-export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 15_000,
-})
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-// Request interceptor — attach token
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error);
+    else prom.resolve(token);
+  });
+  failedQueue = [];
+};
+
+// Request Interceptor (Token ekleme)
 apiClient.interceptors.request.use((config) => {
-  const raw = localStorage.getItem('tbbank-auth')
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as { state?: { token?: string } }
-      const token = parsed?.state?.token
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    } catch {
-      // ignore parse errors
-    }
+  const token = useAuthStore.getState().token;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+}, (error) => Promise.reject(error));
 
-// Response interceptor — handle 401
+// Response Interceptor (Senior Hata Yönetimi)
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      localStorage.removeItem('tbbank-auth')
-      window.location.replace('/login')
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+
+    // 1. 401 Unauthorized & Refresh Token Yönetimi
+    if (status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Sessizce yeni token almayı dene (Zustand içindeki refresh action'ı)
+        const newToken = await useAuthStore.getState().refreshToken();
+        processQueue(null, newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        // Refresh de patladıysa kullanıcıyı temizce çıkışa zorla
+        useAuthStore.getState().logout();
+        // SPA dostu yönlendirme: Sayfa yenilemeden custom bir event veya global history ile
+        window.dispatchEvent(new Event("auth:unauthorized"));
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
-    return Promise.reject(error)
-  },
-)
+
+    // 2. 403 Forbidden Yönetimi (Kullanıcıyı haberdar et, akışı durdur)
+    if (status === 403) {
+      window.dispatchEvent(new Event("auth:forbidden"));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;

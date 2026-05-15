@@ -3,87 +3,44 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import NotFoundPage from "@/pages/notFoundPage";
 
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const LoanOrdersPage = lazy(() => import("@/pages/loanDepartment/loanOrders"));
-const LoanOrderMobilesPage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderMobile"),
-);
-const LoanRemainingPage = lazy(
-  () => import("@/pages/loanDepartment/loanRemaining"),
-);
-const LoanRemainingCreatePage = lazy(
-  () => import("@/pages/loanDepartment/loanRemainingCreate"),
-);
-const LoanRemainingViewPage = lazy(
-  () => import("@/pages/loanDepartment/loanRemainingView"),
-);
-const LoanRemainingEditPage = lazy(
-  () => import("@/pages/loanDepartment/loanRemainingEdit"),
-);
-const LoanPaidOffLettersPage = lazy(
-  () => import("@/pages/loanDepartment/loanPaidOffLetters"),
-);
-const LoanOrderCreatePage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderCreate"),
-);
-const LoanOrderViewPage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderView"),
-);
-const LoanOrderMobileViewPage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderMobileView"),
-);
-const LoanOrderMobileEditPage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderMobileEdit"),
-);
-const LoanOrderMobileCreatePage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderMobileCreate"),
-);
-const LoanOrderEditPage = lazy(
-  () => import("@/pages/loanDepartment/loanOrderEdit"),
-);
-const OrderNewCardPage = lazy(
-  () => import("@/pages/cardDepartment/orderNewCard"),
-);
-const OrderNewCardCreatePage = lazy(
-  () => import("@/pages/cardDepartment/orderNewCardCreate"),
-);
-const OrderNewCardViewPage = lazy(
-  () => import("@/pages/cardDepartment/orderNewCardView"),
-);
-const OrderNewCardEditPage = lazy(
-  () => import("@/pages/cardDepartment/orderNewCardEdit"),
-);
-const CardTransactionsPage = lazy(
-  () => import("@/pages/cardDepartment/cardTransactions"),
-);
-const CardTransactionViewPage = lazy(
-  () => import("@/pages/cardDepartment/cardTransactionsView"),
-);
-const CardTransactionCreatePage = lazy(
-  () => import("@/pages/cardDepartment/cardTransactionsCreate"),
-);
-const CardTransactionEditPage = lazy(
-  () => import("@/pages/cardDepartment/cardTransactionsEdit"),
-);
+const LoanOrderMobilesPage = lazy(() => import("@/pages/loanDepartment/loanOrderMobile"));
+const LoanRemainingPage = lazy(() => import("@/pages/loanDepartment/loanRemaining"));
+const LoanRemainingCreatePage = lazy(() => import("@/pages/loanDepartment/loanRemainingCreate"));
+const LoanRemainingViewPage = lazy(() => import("@/pages/loanDepartment/loanRemainingView"));
+const LoanRemainingEditPage = lazy(() => import("@/pages/loanDepartment/loanRemainingEdit"));
+const LoanPaidOffLettersPage = lazy(() => import("@/pages/loanDepartment/loanPaidOffLetters"));
+const LoanOrderCreatePage = lazy(() => import("@/pages/loanDepartment/loanOrderCreate"));
+const LoanOrderViewPage = lazy(() => import("@/pages/loanDepartment/loanOrderView"));
+const LoanOrderMobileViewPage = lazy(() => import("@/pages/loanDepartment/loanOrderMobileView"));
+const LoanOrderMobileEditPage = lazy(() => import("@/pages/loanDepartment/loanOrderMobileEdit"));
+const LoanOrderMobileCreatePage = lazy(() => import("@/pages/loanDepartment/loanOrderMobileCreate"));
+const LoanOrderEditPage = lazy(() => import("@/pages/loanDepartment/loanOrderEdit"));
 
-const CardRequisitesPage = lazy(
-  () => import("@/pages/cardDepartment/cardRequisites"),
-);
-const CardRequisiteViewPage = lazy(
-  () => import("@/pages/cardDepartment/cardRequisitesView"),
-);
-const CardRequisiteCreatePage = lazy(
-  () => import("@/pages/cardDepartment/cardRequisitesCreate"),
-);
-const CardRequisiteEditPage = lazy(
-  () => import("@/pages/cardDepartment/cardRequisitesEdit"),
-);
+const OrderNewCardPage = lazy(() => import("@/pages/cardDepartment/orderNewCard"));
+const OrderNewCardCreatePage = lazy(() => import("@/pages/cardDepartment/orderNewCardCreate"));
+const OrderNewCardViewPage = lazy(() => import("@/pages/cardDepartment/orderNewCardView"));
+const OrderNewCardEditPage = lazy(() => import("@/pages/cardDepartment/orderNewCardEdit"));
+
+const CardTransactionsPage = lazy(() => import("@/pages/cardDepartment/cardTransactions"));
+const CardTransactionViewPage = lazy(() => import("@/pages/cardDepartment/cardTransactionsView"));
+const CardTransactionCreatePage = lazy(() => import("@/pages/cardDepartment/cardTransactionsCreate"));
+const CardTransactionEditPage = lazy(() => import("@/pages/cardDepartment/cardTransactionsEdit"));
+
+const CardRequisitesPage = lazy(() => import("@/pages/cardDepartment/cardRequisites"));
+const CardRequisiteViewPage = lazy(() => import("@/pages/cardDepartment/cardRequisitesView"));
+const CardRequisiteCreatePage = lazy(() => import("@/pages/cardDepartment/cardRequisitesCreate"));
+const CardRequisiteEditPage = lazy(() => import("@/pages/cardDepartment/cardRequisitesEdit"));
+
 const CardBalancePage = lazy(() => import("@/pages/cardDepartment/cardBalance"));
 const CardBalanceCreatePage = lazy(() => import("@/pages/cardDepartment/cardBalanceCreate"));
 const CardBalanceViewPage = lazy(() => import("@/pages/cardDepartment/cardBalanceView"));
 const CardBalanceEditPage = lazy(() => import("@/pages/cardDepartment/cardBalanceEdit"));
+
 const CardPinsPage = lazy(() => import("@/pages/cardDepartment/cardPins"));
 const CardPinsCreatePage = lazy(() => import("@/pages/cardDepartment/cardPinsCreate"));
 const CardPinsViewPage = lazy(() => import("@/pages/cardDepartment/cardPinsView"));
@@ -93,12 +50,11 @@ const VisaMasterPaymentsPage = lazy(() => import("@/pages/internationalPayments/
 const VisaMasterPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsCreate"));
 const VisaMasterPaymentViewPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsView"));
 const VisaMasterPaymentEditPage = lazy(() => import("@/pages/internationalPayments/visaMasterPaymentsEdit"));
+
 const SberPaymentPage = lazy(() => import("@/pages/internationalPayments/sberPayments"));
 const SberPaymentCreatePage = lazy(() => import("@/pages/internationalPayments/sberPaymentsCreate"));
 const SberPaymentViewPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsView"));
 const SberPaymentEditPage = lazy(() => import("@/pages/internationalPayments/sberPaymentsEdit"));
-
-
 
 const OperatorsPage = lazy(() => import("@/pages/users/operators"));
 const OperatorCreatePage = lazy(() => import("@/pages/users/operatorsCreate"));
@@ -487,7 +443,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /visa-master-payments
+          {
+            // Sidebar: /visa-master-payments
             path: "/visa-master",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -519,7 +476,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /sber-payments
+          {
+            // Sidebar: /sber-payments
             path: "/sber-payments",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -551,7 +509,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /operators
+          {
+            // Sidebar: /operators
             path: "/operators",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -583,7 +542,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /all-users
+          {
+            // Sidebar: /all-users
             path: "/all-users",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -615,7 +575,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /clients
+          {
+            // Sidebar: /clients
             path: "/clients",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -647,7 +608,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /currencies-rates
+          {
+            // Sidebar: /currencies-rates
             path: "/currency-rates",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -679,7 +641,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /visa-master-sber-settings
+          {
+            // Sidebar: /visa-master-sber-settings
             path: "/visa-master-sber-settings",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -911,7 +874,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /settings/location/districts
+          {
+            // Sidebar: /settings/location/districts
             path: "/settings/location/districts",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -943,7 +907,8 @@ export const router = createBrowserRouter([
               </Suspense>
             ),
           },
-          { // Sidebar: /settings/location/branches
+          {
+            // Sidebar: /settings/location/branches
             path: "/settings/location/branches",
             element: (
               <Suspense fallback={<PageLoader />}>
@@ -981,6 +946,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: <NotFoundPage />,
   },
 ]);

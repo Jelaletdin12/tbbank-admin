@@ -95,3 +95,15 @@ src/
        [Feature]CreatePage.tsx ← <[Feature]Form mode="create" />
        [Feature]EditPage.tsx   ← id fetch → <[Feature]Form mode="edit" initialData={data} loanOrderId={id} />
      ```
+8. **Hata Yönetimi Kuralları:**
+    - Custom hook'lar veya API istekleri yazarken, hatalar zaten merkezi QueryCache ve MutationCache tarafından yakalandığı için hook içinde tekrar toast.error() yazma (kod tekrarını önle).
+    - İstisnai olarak, bir hatanın ekrana toast basmasını istemiyorsan, query veya mutation tanımına meta: { silent: true } parametresini geç.
+    - Kod bloklarında asla ham try-catch kullanarak hataları yutma (catch (e) { } boş bırakılamaz). Hata yutulacaksa bile konsola console.error ile basılmalı veya log servisine yönlendirilmelidir.
+9. **Senior Authentication (Refresh Token & Session) Kuralları:**
+    - **Giriş (Login):** API'den dönen `token` ve `user` verilerini `authStore.setAuth()` ile zustand state'ine kaydet.
+    - **İstekler (Requests):** `axios` client'ı otomatik olarak zustand'dan token çeker ve `Authorization: Bearer <token>` header'ını ekler.
+    - **401 Unauthorized:** Kullanıcı başka bir yerde oturum açar veya token süresi solar ve istek 401 dönerse:
+        1. **Otomatik Yenileme (Auto-Refresh):** Interceptor, durumu yakalar ve gizlice yeni token almaya çalışır.
+        2. **Çakışma Önleme:** Aynı anda birden fazla 401 gelirse, `isRefreshing` bayrağı ile diğer istekler beklemede tutulur.
+    - **Başarısız Refresh:** Yeni token alınamazsa (`refreshToken` hata dönerse), sistem kullanıcıyı otomatik olarak çıkışa zorlar (`logout()`) ve kullanıcıyı Login sayfasına yönlendirir.
+    - **403 Forbidden:** Kullanıcının o sayfaya erişim izni yoksa (Rol yetkisi eksik), toast ile uyarı verilir ancak kullanıcı aynı sayfada kalır (Kritik sayfadan atılmaz).
