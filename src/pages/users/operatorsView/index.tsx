@@ -3,16 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Pencil, Trash2, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirmDialog";
 import { InfoRow, AuditLog } from "@/components/viewPageComponents";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
@@ -427,32 +418,15 @@ export default function OperatorDetailPage() {
       {/* ── Audit log ────────────────────────────────────────────────────── */}
       <AuditLog logs={auditLogs} />
 
-      {/* ── Delete dialog ────────────────────────────────────────────────── */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("operators.deleteTitle", "Operatory pozmak")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("operators.deleteConfirm", "{{name}} operatoryny pozmak isleýärsiňizmi?", {
-                name: operator.name,
-              })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel", "Ýatyr")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-              onClick={() =>
-                deleteMutation.mutate(operatorId, {
-                  onSuccess: () => navigate("/operators"),
-                })
-              }
-            >
-              {t("common.delete", "Poz")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t("operators.deleteTitle", "Operatory pozmak")}
+        description={t("operators.deleteConfirm", "{{name}} operatoryny pozmak isleýärsiňizmi?", { name: operator.name })}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={() => deleteMutation.mutate(operatorId, { onSuccess: () => navigate("/operators") })}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

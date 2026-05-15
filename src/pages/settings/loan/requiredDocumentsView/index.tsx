@@ -1,24 +1,25 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Section, InfoRow } from '@/components/viewPageComponents'
 import { useGetRequiredDocumentById, useDeleteRequiredDocument } from '@/features/requiredDocuments/hooks/useRequiredDocuments'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 export default function RequiredDocumentsViewPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const docId = Number(id)
   const { data, isLoading } = useGetRequiredDocumentById(docId)
   const deleteMutation = useDeleteRequiredDocument()
 
   const handleDelete = async () => {
-    if (window.confirm(t('loanDocuments.deleteConfirm', 'Bu resminamany öçürmek isleýärsiňizmi?'))) {
-      await deleteMutation.mutateAsync(docId)
-      navigate('/settings/loan/loan-documents')
-    }
+    await deleteMutation.mutateAsync(docId)
+    navigate('/settings/loan/loan-documents')
   }
 
   if (isLoading) {
@@ -50,7 +51,7 @@ export default function RequiredDocumentsViewPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           >
@@ -112,6 +113,15 @@ export default function RequiredDocumentsViewPage() {
           </div>
         </div>
       </Section>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t('loanDocuments.deleteConfirm', 'Bu resminamany öçürmek isleýärsiňizmi?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

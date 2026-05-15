@@ -1,30 +1,26 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateSberPaymentPayload, PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
 
-// ─── File helper ─────────────────────────────────────────────────────
+const t = i18next.t.bind(i18next)
 
 const fileField = z.custom<File | null>((val) => val === null || val instanceof File).nullable()
 
-// ─── Full form schema ─────────────────────────────────────────────────
-
 export const sberPaymentFormSchema = z.object({
-  // From SberPaymentFormData
-  welayat: z.string().min(1, 'Welaýat hökmany'),
-  sahamca: z.string().min(1, 'Şahamça hökmany'),
-  firstName: z.string().min(1, 'Ady hökmany'),
-  lastName: z.string().min(1, 'Familiýasy hökmany'),
-  phone: z.string().min(1, 'Telefon hökmany'),
+  welayat: z.string().min(1, t('validation.required', '')),
+  sahamca: z.string().min(1, t('validation.required', '')),
+  firstName: z.string().min(1, t('validation.required', '')),
+  lastName: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
   email: z.string(),
-  address: z.string().min(1, 'Salgy hökmany'),
-  status: z.string().min(1, 'Status hökmany'),
+  address: z.string().min(1, t('validation.required', '')),
+  status: z.string().min(1, t('validation.required', '')),
   bellik: z.string(),
-  accountNumber: z.string().min(1, 'Goýum hasaby hökmany'),
-  passportSeries: z.string().min(1, 'Pasport seriýasy hökmany'),
-  passportNumber: z.string().min(1, 'Pasport nomeri hökmany'),
-  fullName: z.string().min(1, 'Doly ady hökmany'),
-  // Client id
+  accountNumber: z.string().min(1, t('validation.required', '')),
+  passportSeries: z.string().min(1, t('validation.required', '')),
+  passportNumber: z.string().min(1, t('validation.required', '')),
+  fullName: z.string().min(1, t('validation.required', '')),
   client_id: z.string().optional(),
-  // File fields
   acc_sberbank_card: fileField,
   acc_enrollment: fileField,
   acc_summons: fileField,
@@ -43,16 +39,12 @@ export const sberPaymentFormSchema = z.object({
 
 export type SberPaymentFormData = z.infer<typeof sberPaymentFormSchema>
 
-// ─── Step schemas ─────────────────────────────────────────────────────
-
 export const stepSchemas: Record<number, z.ZodType<Partial<SberPaymentFormData>>> = {
   0: sberPaymentFormSchema.pick({ status: true }),
   1: sberPaymentFormSchema.pick({ welayat: true, sahamca: true }),
   2: sberPaymentFormSchema.pick({ firstName: true, lastName: true, phone: true, address: true }),
   3: sberPaymentFormSchema.pick({ passportSeries: true, passportNumber: true, fullName: true, accountNumber: true }),
 }
-
-// ─── validateStep ─────────────────────────────────────────────────────
 
 export function validateStep(
   stepIndex: number,
@@ -71,8 +63,6 @@ export function validateStep(
   }
   return errors
 }
-
-// ─── Default values ───────────────────────────────────────────────────
 
 export const DEFAULT_FORM_VALUES: SberPaymentFormData = {
   client_id: '',
@@ -104,8 +94,6 @@ export const DEFAULT_FORM_VALUES: SberPaymentFormData = {
   snt_new_passport_series: null,
   snt_old_passport_series: null,
 }
-
-// ─── buildPayload ─────────────────────────────────────────────────────
 
 export function buildPayload(data: SberPaymentFormData): CreateSberPaymentPayload {
   return {

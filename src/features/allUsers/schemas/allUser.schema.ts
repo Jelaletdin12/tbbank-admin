@@ -1,18 +1,21 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateUserPayload } from '../api/allUsersApi'
+
+const t = i18next.t.bind(i18next)
 
 const baseSchema = z.object({
   username: z.string()
-    .min(1, 'Ulanyjy ady hökmany')
-    .min(3, 'Ulanyjy ady iň az 3 harp bolmaly'),
-  name: z.string().min(1, 'Ady hökmany'),
+    .min(1, t('validation.required', 'Ulanyjy ady hökmany'))
+    .min(3, t('validation.minLength', 'Ulanyjy ady iň az 3 harp bolmaly')),
+  name: z.string().min(1, t('validation.required', 'Ady hökmany')),
   phone: z.string()
-    .min(1, 'Telefon hökmany')
-    .regex(/^\d[\d\s-]{6,}$/, 'Nädogry telefon formaty'),
+    .min(1, t('validation.required', 'Telefon hökmany'))
+    .regex(/^\d[\d\s-]{6,}$/, t('validation.invalidPhone', 'Nädogry telefon formaty')),
   email: z.string()
     .refine(
       (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-      'Nädogry e-poçta formaty',
+      t('validation.invalidEmail', 'Nädogry e-poçta formaty'),
     )
     .default(''),
   password: z.string(),
@@ -24,8 +27,8 @@ export function allUserFormSchema(mode: 'create' | 'edit') {
   return mode === 'create'
     ? baseSchema.extend({
         password: z.string()
-          .min(1, 'Açar sözi hökmany')
-          .min(6, 'Açar sözi iň az 6 harp bolmaly'),
+          .min(1, t('validation.required', 'Açar sözi hökmany'))
+          .min(6, t('validation.minLength', 'Açar sözi iň az 6 harp bolmaly')),
       })
     : baseSchema
 }

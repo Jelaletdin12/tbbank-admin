@@ -8,8 +8,6 @@ import {
   type UsersListParams,
 } from '../api/allUsersApi'
 
-// ─── Query Keys ───────────────────────────────────────────────────────────────
-
 export const userKeys = {
   all: ['users'] as const,
   lists: () => [...userKeys.all, 'list'] as const,
@@ -17,8 +15,6 @@ export const userKeys = {
   details: () => [...userKeys.all, 'detail'] as const,
   detail: (id: number) => [...userKeys.details(), id] as const,
 }
-
-// ─── useUsers ─────────────────────────────────────────────────────────────────
 
 export function useUsers(params: UsersListParams = {}) {
   return useQuery({
@@ -28,8 +24,6 @@ export function useUsers(params: UsersListParams = {}) {
   })
 }
 
-// ─── useUser ──────────────────────────────────────────────────────────────────
-
 export function useUser(id: number) {
   return useQuery({
     queryKey: userKeys.detail(id),
@@ -37,8 +31,6 @@ export function useUser(id: number) {
     enabled: !!id,
   })
 }
-
-// ─── useCreateUser ────────────────────────────────────────────────────────────
 
 export function useCreateUser() {
   const { t } = useTranslation()
@@ -50,13 +42,8 @@ export function useCreateUser() {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
       toast.success(t('users.toast.createSuccess', 'Ulanyjy üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('users.toast.createError', 'Ulanyjy döretmek başartmady'))
-    },
   })
 }
-
-// ─── useUpdateUser ────────────────────────────────────────────────────────────
 
 export function useUpdateUser(id: number) {
   const { t } = useTranslation()
@@ -69,13 +56,8 @@ export function useUpdateUser(id: number) {
       queryClient.setQueryData(userKeys.detail(id), updatedUser)
       toast.success(t('users.toast.updateSuccess', 'Ulanyjy üstünlikli täzelendi'))
     },
-    onError: () => {
-      toast.error(t('users.toast.updateError', 'Ulanyjy täzelemek başartmady'))
-    },
   })
 }
-
-// ─── useDeleteUser ────────────────────────────────────────────────────────────
 
 export function useDeleteUser() {
   const { t } = useTranslation()
@@ -86,9 +68,6 @@ export function useDeleteUser() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() })
       toast.success(t('users.toast.deleteSuccess', 'Ulanyjy üstünlikli öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('users.toast.deleteError', 'Ulanyjy öçürmek başartmady'))
     },
   })
 }

@@ -35,9 +35,6 @@ export function useCreateCardBalance() {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card balance created successfully', 'Kart galyndysy üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to create card balance', 'Kart galyndysy döredilmedi'))
-    },
   })
 }
 
@@ -51,9 +48,6 @@ export function useUpdateCardBalance(id: number) {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card balance updated successfully', 'Kart galyndysy üstünlikli üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to update card balance', 'Kart galyndysy üýtgedilmedi'))
-    },
   })
 }
 
@@ -66,9 +60,6 @@ export function useDeleteCardBalance() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card balance deleted successfully', 'Kart galyndysy üstünlikli öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('Failed to delete card balance', 'Kart galyndysy öçürilmedi'))
     },
   })
 }
@@ -88,9 +79,6 @@ export function useDownloadCardBalance() {
     },
     onSuccess: () => {
       toast.success(t('Downloaded successfully', 'Üstünlikli ýüklenildi'))
-    },
-    onError: () => {
-      toast.error(t('Download failed', 'Ýüklemek başartmady'))
     },
   })
 }

@@ -70,18 +70,12 @@ export function LoanRemainingForm({
           toast.success(t('common.success.create', 'Üstünlikli döredildi'))
           navigate('/loan-remaining')
         },
-        onError: () => {
-          toast.error(t('common.errors.somethingWentWrong', 'Näsazlyk ýüze çykdy'))
-        },
       })
     } else {
       updateMutation.mutate(payload, {
         onSuccess: () => {
           toast.success(t('common.success.save', 'Üstünlikli ýatda saklandy'))
           navigate('/loan-remaining')
-        },
-        onError: () => {
-          toast.error(t('common.errors.somethingWentWrong', 'Näsazlyk ýüze çykdy'))
         },
       })
     }

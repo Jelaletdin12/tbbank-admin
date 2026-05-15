@@ -42,9 +42,6 @@ export function useCreateCardTransaction() {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card transaction created successfully', 'Kart herekedi üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to create card transaction', 'Kart herekedi döredilmedi'))
-    },
   })
 }
 
@@ -61,9 +58,6 @@ export function useUpdateCardTransaction(id: number) {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card transaction updated successfully', 'Kart herekedi üstünlikli üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to update card transaction', 'Kart herekedi üýtgedilmedi'))
-    },
   })
 }
 
@@ -78,9 +72,6 @@ export function useDeleteCardTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card transaction deleted successfully', 'Kart herekedi üstünlikli öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('Failed to delete card transaction', 'Kart herekedi öçürilmedi'))
     },
   })
 }
@@ -102,9 +93,6 @@ export function useDownloadCardTransaction() {
     },
     onSuccess: () => {
       toast.success(t('Downloaded successfully', 'Üstünlikli ýüklenildi'))
-    },
-    onError: () => {
-      toast.error(t('Download failed', 'Ýüklemek başartmady'))
     },
   })
 }

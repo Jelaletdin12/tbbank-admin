@@ -105,20 +105,12 @@ export default function AuthPage() {
       return;
     }
     
-    loginMutation.mutate({ email: username, password }, {
-      onSuccess: () => {
-        toast.success(t("Success login", "Login successful"));
-      },
-      onError: (error: any) => {
-        const message = error?.response?.data?.message || t("Server Error", "An error occurred during login");
-        toast.error(message);
-      }
-    });
+    loginMutation.mutate({ email: username, password });
   };
 
   // Mock submit for other views
   const handleOtherSubmit = async () => {
-    toast.info(t("Not Implemented", "This feature is not implemented yet"));
+    toast.info(t("featureNotImplemented", "This feature is not implemented yet"));
   };
 
   return (
@@ -170,7 +162,7 @@ export default function AuthPage() {
 
                 <div className="text-center mt-8">
                   <span className="text-[13px] text-muted-foreground underline cursor-pointer hover:text-foreground transition-colors">
-                    Privacy Policy
+                    {t("Privacy Policy")}
                   </span>
                 </div>
               </>
@@ -218,7 +210,7 @@ export default function AuthPage() {
 
                 <div className="text-center mt-8">
                   <span className="text-[13px] text-muted-foreground underline cursor-pointer hover:text-foreground transition-colors">
-                    Privacy Policy
+                    {t("Privacy Policy")}
                   </span>
                 </div>
               </>
@@ -248,7 +240,7 @@ export default function AuthPage() {
 
                 <div className="text-center mt-8">
                   <span className="text-[13px] text-muted-foreground underline cursor-pointer hover:text-foreground transition-colors">
-                    Privacy Policy
+                    {t("Privacy Policy")}
                   </span>
                 </div>
               </>

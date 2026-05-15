@@ -50,9 +50,6 @@ export function useCreateOperator() {
       queryClient.invalidateQueries({ queryKey: operatorKeys.lists() })
       toast.success(t('operators.createSuccess', 'Operator üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('operators.createError', 'Operator döretmekde ýalňyşlyk'))
-    },
   })
 }
 
@@ -69,13 +66,8 @@ export function useUpdateOperator(id: number) {
       queryClient.invalidateQueries({ queryKey: operatorKeys.detail(id) })
       toast.success(t('operators.updateSuccess', 'Operator üstünlikli täzelendi'))
     },
-    onError: () => {
-      toast.error(t('operators.updateError', 'Operator täzelemekde ýalňyşlyk'))
-    },
   })
 }
-
-// ─── useDeleteOperator ────────────────────────────────────────────────────────
 
 export function useDeleteOperator() {
   const queryClient = useQueryClient()
@@ -86,9 +78,6 @@ export function useDeleteOperator() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: operatorKeys.lists() })
       toast.success(t('operators.deleteSuccess', 'Operator üstünlikli pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('operators.deleteError', 'Operator pozmakda ýalňyşlyk'))
     },
   })
 }
@@ -105,9 +94,6 @@ export function useAssignRole(operatorId: number) {
       queryClient.invalidateQueries({ queryKey: operatorKeys.detail(operatorId) })
       toast.success(t('operators.roleAssigned', 'Rol birikdirildi'))
     },
-    onError: () => {
-      toast.error(t('operators.roleAssignError', 'Rol birikdirmekde ýalňyşlyk'))
-    },
   })
 }
 
@@ -122,9 +108,6 @@ export function useRemoveRole(operatorId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: operatorKeys.detail(operatorId) })
       toast.success(t('operators.roleRemoved', 'Rol aýryldy'))
-    },
-    onError: () => {
-      toast.error(t('operators.roleRemoveError', 'Rol aýyrmakda ýalňyşlyk'))
     },
   })
 }

@@ -41,9 +41,6 @@ export function useDeleteLoanRemaining() {
       queryClient.invalidateQueries({ queryKey: loanRemainingKeys.lists() })
       toast.success(t('loanRemaining.deleteSuccess', 'Ýazgy üstünlikli pozuldy'))
     },
-    onError: () => {
-      toast.error(t('loanRemaining.deleteError', 'Pozmak başartmady, gaýtadan synanyşyň'))
-    },
   })
 }
 
@@ -65,9 +62,6 @@ export function useCreateLoanRemaining() {
       queryClient.invalidateQueries({ queryKey: loanRemainingKeys.lists() })
       toast.success(t('loanRemaining.createSuccess', 'Üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('loanRemaining.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -81,9 +75,6 @@ export function useUpdateLoanRemaining(id: number) {
       queryClient.invalidateQueries({ queryKey: loanRemainingKeys.lists() })
       queryClient.invalidateQueries({ queryKey: loanRemainingKeys.detail(id) })
       toast.success(t('loanRemaining.updateSuccess', 'Üstünlikli üýtgedildi'))
-    },
-    onError: () => {
-      toast.error(t('loanRemaining.updateError', 'Üýtgetmek başartmady'))
     },
   })
 }

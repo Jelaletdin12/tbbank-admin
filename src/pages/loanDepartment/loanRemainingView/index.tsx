@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Trash2, Pencil } from "lucide-react";
@@ -6,8 +7,8 @@ import {
   useDeleteLoanRemaining,
 } from "@/features/loanRemaining/hooks/useLoanRemaining";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { InfoRow, Section } from "@/components/viewPageComponents";
+import { ConfirmDialog } from "@/components/confirmDialog";
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
@@ -31,29 +32,17 @@ export default function LoanRemainingViewPage() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const deleteMutation = useDeleteLoanRemaining();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: record, isLoading } = useLoanRemainingById(id!);
 
   const handleDelete = () => {
-    if (
-      !window.confirm(t("loanRemaining.deleteConfirm", "Bu ýazgy pozulsynmy?"))
-    )
-      return;
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
     deleteMutation.mutate(Number(id!), {
-      onSuccess: () => {
-        toast.success(
-          t("loanRemaining.deleteSuccess", "Ýazgy üstünlikli pozuldy"),
-        );
-        navigate("/loan-remaining");
-      },
-      onError: () => {
-        toast.error(
-          t(
-            "loanRemaining.deleteError",
-            "Pozmak başartmady, gaýtadan synanyşyň",
-          ),
-        );
-      },
+      onSuccess: () => navigate("/loan-remaining"),
     });
   };
 
@@ -110,6 +99,15 @@ export default function LoanRemainingViewPage() {
           value={record.loanAccount}
         />
       </Section>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={t("loanRemaining.deleteConfirm", "Bu ýazgy pozulsynmy?")}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

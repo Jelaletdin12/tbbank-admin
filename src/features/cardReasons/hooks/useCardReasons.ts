@@ -57,9 +57,6 @@ export function useCreateCardReason() {
       queryClient.invalidateQueries({ queryKey: cardReasonKeys.lists() })
       toast.success(t('CardReasons.toast.createSuccess', 'Kart ýagdaýy döredildi'))
     },
-    onError: () => {
-      toast.error(t('CardReasons.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -76,9 +73,6 @@ export function useUpdateCardReason() {
       queryClient.invalidateQueries({ queryKey: cardReasonKeys.detail(data.id) })
       toast.success(t('CardReasons.toast.updateSuccess', 'Kart ýagdaýy täzelendi'))
     },
-    onError: () => {
-      toast.error(t('CardReasons.toast.updateError', 'Täzelemek başartmady'))
-    },
   })
 }
 
@@ -93,9 +87,6 @@ export function useDeleteCardReason() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cardReasonKeys.lists() })
       toast.success(t('CardReasons.toast.deleteSuccess', 'Kart ýagdaýy öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('CardReasons.toast.deleteError', 'Öçürmek başartmady'))
     },
   })
 }

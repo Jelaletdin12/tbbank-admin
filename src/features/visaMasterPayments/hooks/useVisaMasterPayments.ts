@@ -40,9 +40,6 @@ export function useCreateIntlPayment() {
       qc.invalidateQueries({ queryKey: INTL_PAYMENT_KEYS.lists() })
       toast.success(t('intlPayment.createSuccess', 'Töleg döredildi'))
     },
-    onError: () => {
-      toast.error(t('intlPayment.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -56,9 +53,6 @@ export function useUpdateIntlPayment(id: string) {
       qc.invalidateQueries({ queryKey: INTL_PAYMENT_KEYS.detail(id) })
       toast.success(t('intlPayment.updateSuccess', 'Töleg üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('intlPayment.updateError', 'Üýtgetmek başartmady'))
-    },
   })
 }
 
@@ -70,9 +64,6 @@ export function useDeleteIntlPayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: INTL_PAYMENT_KEYS.lists() })
       toast.success(t('intlPayment.deleteSuccess', 'Töleg pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('intlPayment.deleteError', 'Pozmak başartmady'))
     },
   })
 }

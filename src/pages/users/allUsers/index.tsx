@@ -6,20 +6,11 @@ import { Eye, Pencil, Trash2, CheckCircle2, XCircle } from 'lucide-react'
 import { DataTable, type ColumnDef } from '@/components/dataTable'
 import { DataTableToolbar, type ActiveFilter } from '@/components/dataTableToolbar'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import type { VisibilityState } from '@tanstack/react-table'
 
 import { useUsers, useDeleteUser } from '@/features/allUsers/hooks/useAllUsers'
 import type { UserListItem } from '@/features/allUsers/api/allUsersApi'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -245,31 +236,18 @@ export default function UsersListPage() {
       />
    </div>
 
-      {/* Delete confirm dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('users.deleteDialog.title', 'Ulanyjyny öçürmek')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                'users.deleteDialog.description',
-                'Siz "{name}" ulanyjysyny öçürjekmi? Bu amal yzyna gaýtarylyp bilinmez.',
-              ).replace('{name}', deleteTarget?.username ?? '')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Ýok')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {t('common.delete', 'Öçür')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}
+        title={t('users.deleteDialog.title', 'Ulanyjyny öçürmek')}
+        description={t(
+          'users.deleteDialog.description',
+          'Siz "{name}" ulanyjysyny öçürjekmi? Bu amal yzyna gaýtarylyp bilinmez.',
+        ).replace('{name}', deleteTarget?.username ?? '')}
+        confirmLabel={t('common.delete', 'Öçür')}
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleteUser.isPending}
+      />
     </div>
   )
 }

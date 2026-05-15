@@ -1,18 +1,9 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2, ChevronDown } from 'lucide-react'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirmDialog'
 import { InfoRow, AuditLog } from '@/components/viewPageComponents'
 import { DataTable, type ColumnDef } from '@/components/dataTable'
 import { DataTableToolbar } from '@/components/dataTableToolbar'
@@ -448,26 +439,15 @@ export default function ClientDetailPage() {
       {/* ── Audit log ────────────────────────────────────────────────────── */}
       <AuditLog logs={auditLogs} />
 
-      {/* ── Delete dialog ────────────────────────────────────────────────── */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('clients.deleteTitle', 'Müşderini pozmak')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('clients.deleteConfirm', '{{name}} müşderisini pozmak isleýärsiňizmi?', { name: client.name })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Ýatyr')}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-              onClick={() => deleteMutation.mutate(clientId, { onSuccess: () => navigate('/clients') })}
-            >
-              {t('common.delete', 'Poz')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t('clients.deleteTitle', 'Müşderini pozmak')}
+        description={t('clients.deleteConfirm', '{{name}} müşderisini pozmak isleýärsiňizmi?', { name: client.name })}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={() => deleteMutation.mutate(clientId, { onSuccess: () => navigate('/clients') })}
+        isLoading={deleteMutation.isPending}
+      />
 
     </div>
   )

@@ -39,9 +39,6 @@ export function useCreateLoanOrder() {
       queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
       toast.success(t('loanOrders.createSuccess', 'Karz sargyt üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('loanOrders.createError', 'Karz sargyt döretmekde säwlik ýüze çykdy'))
-    },
   })
 }
 
@@ -56,9 +53,6 @@ export function useUpdateLoanOrder() {
       queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
       toast.success(t('loanOrders.updateSuccess', 'Karz sargyt üstünlikli üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('loanOrders.updateError', 'Karz sargyt üýtgetmekde säwlik ýüze çykdy'))
-    },
   })
 }
 
@@ -71,9 +65,6 @@ export function useDeleteLoanOrder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [LOAN_ORDERS_KEY] })
       toast.success(t('loanOrders.deleteSuccess', 'Karz sargyt üstünlikli pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('loanOrders.deleteError', 'Karz sargyt pozmakda säwlik ýüze çykdy'))
     },
   })
 }

@@ -65,10 +65,6 @@ export function useCreateCardOrder() {
       qc.invalidateQueries({ queryKey: cardOrderKeys.lists() })
       toast.success(t('cardOrder.createSuccess', 'Kart sargyt üstünlikli döredildi'))
     },
-
-    onError: () => {
-      toast.error(t('cardOrder.createError', 'Kart sargyt döredilende ýalňyşlyk ýüze çykdy'))
-    },
   })
 }
 
@@ -86,10 +82,6 @@ export function useUpdateCardOrder(id: string) {
       qc.setQueryData(cardOrderKeys.detail(id), updated)
       toast.success(t('cardOrder.updateSuccess', 'Kart sargyt üstünlikli täzelendi'))
     },
-
-    onError: () => {
-      toast.error(t('cardOrder.updateError', 'Kart sargyt täzelende ýalňyşlyk ýüze çykdy'))
-    },
   })
 }
 
@@ -106,10 +98,6 @@ export function useDeleteCardOrder() {
       qc.invalidateQueries({ queryKey: cardOrderKeys.lists() })
       qc.removeQueries({ queryKey: cardOrderKeys.detail(id) })
       toast.success(t('cardOrder.deleteSuccess', 'Kart sargyt üstünlikli pozuldy'))
-    },
-
-    onError: () => {
-      toast.error(t('cardOrder.deleteError', 'Kart sargyt pozulanda ýalňyşlyk ýüze çykdy'))
     },
   })
 }

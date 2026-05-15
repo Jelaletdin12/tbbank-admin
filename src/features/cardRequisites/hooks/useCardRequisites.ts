@@ -41,9 +41,6 @@ export function useCreateCardRequisite() {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card requisite created successfully', 'Kart rekwiziti üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to create card requisite', 'Kart rekwiziti döredilmedi'))
-    },
   })
 }
 
@@ -59,9 +56,6 @@ export function useUpdateCardRequisite(id: string) {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card requisite updated successfully', 'Kart rekwiziti üstünlikli üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('Failed to update card requisite', 'Kart rekwiziti üýtgedilmedi'))
-    },
   })
 }
 
@@ -76,9 +70,6 @@ export function useDeleteCardRequisite() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
       toast.success(t('Card requisite deleted successfully', 'Kart rekwiziti üstünlikli öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('Failed to delete card requisite', 'Kart rekwiziti öçürilmedi'))
     },
   })
 }
@@ -100,9 +91,6 @@ export function useDownloadCardRequisite() {
     },
     onSuccess: () => {
       toast.success(t('Downloaded successfully', 'Üstünlikli ýüklenildi'))
-    },
-    onError: () => {
-      toast.error(t('Download failed', 'Ýüklemek başartmady'))
     },
   })
 }

@@ -7,6 +7,7 @@ import { DataTableToolbar } from '@/components/dataTableToolbar'
 import { useGetRequiredDocuments, useDeleteRequiredDocument } from '@/features/requiredDocuments/hooks/useRequiredDocuments'
 import type { LoanDocument } from '@/features/requiredDocuments/api/requiredDocumentsApi'
 import type { VisibilityState } from '@tanstack/react-table'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Column visibility defaults ───────────────────────────────────────────────
 
@@ -27,11 +28,16 @@ export default function RequiredDocumentsListPage() {
   // ── Data ────────────────────────────────────────────────────────────────────
   const { data, isLoading } = useGetRequiredDocuments({ page, perPage, search })
   const deleteMutation = useDeleteRequiredDocument()
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   const handleDelete = (id: number) => {
-    if (window.confirm(t('loanDocuments.deleteConfirm', 'Bu resminamany öçürmek isleýärsiňizmi?'))) {
-      deleteMutation.mutate(id)
-    }
+    setDeleteId(id)
+  }
+
+  const confirmDelete = () => {
+    if (deleteId === null) return
+    deleteMutation.mutate(deleteId)
+    setDeleteId(null)
   }
 
   // ── Columns ─────────────────────────────────────────────────────────────────
@@ -133,6 +139,15 @@ export default function RequiredDocumentsListPage() {
         totalPages={data?.totalPages ?? 1}
         totalCount={data?.total}
         onPageChange={setPage}
+      />
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t('loanDocuments.deleteConfirm', 'Bu resminamany öçürmek isleýärsiňizmi?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
       />
     </div>
 </div>

@@ -14,6 +14,7 @@ import {
 } from '@/features/orderNewCard/hooks/useOrderNewCard'
 import type { CardOrderListItem, CardOrderStatus } from '@/features/orderNewCard/api/orderNewCardApi'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -80,6 +81,7 @@ export default function CardOrdersPage() {
   const { t }      = useTranslation()
   const navigate   = useNavigate()
   const deleteMutation = useDeleteCardOrder()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search,           setSearch]           = useState('')
@@ -130,13 +132,15 @@ export default function CardOrdersPage() {
     setPage(1)
   }, [])
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (!window.confirm(t('cardOrder.deleteConfirm', 'Bu sargyt pozulsynmy?'))) return
-      deleteMutation.mutate(id)
-    },
-    [deleteMutation, t]
-  )
+  const handleDelete = useCallback((id: string) => {
+    setDeleteId(id)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteId) return
+    deleteMutation.mutate(deleteId)
+    setDeleteId(null)
+  }, [deleteId, deleteMutation])
 
   // ── Columns ────────────────────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<CardOrderListItem>[]>(
@@ -318,6 +322,15 @@ export default function CardOrdersPage() {
           onPageChange={setPage}
         />
       </div>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t('cardOrder.deleteConfirm', 'Bu sargyt pozulsynmy?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

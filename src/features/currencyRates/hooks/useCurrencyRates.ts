@@ -56,9 +56,6 @@ export function useCreateCurrencyRate() {
       queryClient.invalidateQueries({ queryKey: currencyRateKeys.lists() })
       toast.success(t('currencyRates.toast.created', 'Walýuta kursy döredildi'))
     },
-    onError: () => {
-      toast.error(t('currencyRates.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -75,9 +72,6 @@ export function useUpdateCurrencyRate(id: number) {
       queryClient.invalidateQueries({ queryKey: currencyRateKeys.detail(id) })
       toast.success(t('currencyRates.toast.updated', 'Walýuta kursy üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('currencyRates.toast.updateError', 'Üýtgetmek başartmady'))
-    },
   })
 }
 
@@ -92,9 +86,6 @@ export function useDeleteCurrencyRate() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: currencyRateKeys.lists() })
       toast.success(t('currencyRates.toast.deleted', 'Walýuta kursy pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('currencyRates.toast.deleteError', 'Pozmak başartmady'))
     },
   })
 }

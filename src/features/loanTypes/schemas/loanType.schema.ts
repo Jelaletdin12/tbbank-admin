@@ -1,20 +1,23 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateLoanTypePayload } from '../api/loanTypesApi'
 
+const t = i18next.t.bind(i18next)
+
 export const loanTypeFormSchema = z.object({
-  nameTk: z.string().min(1, 'Hökmany meýdan'),
-  nameRu: z.string().min(1, 'Hökmany meýdan'),
-  nameEn: z.string().min(1, 'Hökmany meýdan'),
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', '')),
   notesTk: z.string().optional(),
   notesRu: z.string().optional(),
   notesEn: z.string().optional(),
   tax: z.string().refine(
     (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
-    'Oňyn san gerek',
+    t('validation.positiveNumber', 'Oňyn san gerek'),
   ),
   loanTerm: z.string().refine(
     (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
-    'Oňyn san gerek',
+    t('validation.positiveNumber', 'Oňyn san gerek'),
   ),
   isActive: z.boolean(),
 })

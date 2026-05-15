@@ -50,9 +50,6 @@ export function useCreateClient() {
       queryClient.invalidateQueries({ queryKey: clientKeys.lists() })
       toast.success(t('clients.createSuccess', 'Müşderi üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('clients.createError', 'Müşderi döretmekde ýalňyşlyk'))
-    },
   })
 }
 
@@ -69,13 +66,8 @@ export function useUpdateClient(id: number) {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(id) })
       toast.success(t('clients.updateSuccess', 'Müşderi üstünlikli täzelendi'))
     },
-    onError: () => {
-      toast.error(t('clients.updateError', 'Müşderi täzelemekde ýalňyşlyk'))
-    },
   })
 }
-
-// ─── useDeleteClient ──────────────────────────────────────────────────────────
 
 export function useDeleteClient() {
   const queryClient = useQueryClient()
@@ -86,9 +78,6 @@ export function useDeleteClient() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.lists() })
       toast.success(t('clients.deleteSuccess', 'Müşderi üstünlikli pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('clients.deleteError', 'Müşderi pozmakda ýalňyşlyk'))
     },
   })
 }
@@ -105,9 +94,6 @@ export function useAssignClientRole(clientId: number) {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(clientId) })
       toast.success(t('clients.roleAssigned', 'Rol birikdirildi'))
     },
-    onError: () => {
-      toast.error(t('clients.roleAssignError', 'Rol birikdirmekde ýalňyşlyk'))
-    },
   })
 }
 
@@ -123,9 +109,6 @@ export function useRemoveClientRole(clientId: number) {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(clientId) })
       toast.success(t('clients.roleRemoved', 'Rol aýryldy'))
     },
-    onError: () => {
-      toast.error(t('clients.roleRemoveError', 'Rol aýyrmakda ýalňyşlyk'))
-    },
   })
 }
 
@@ -140,9 +123,6 @@ export function useAssignClientBranch(clientId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: clientKeys.detail(clientId) })
       toast.success(t('clients.branchAssigned', 'Şahamça birikdirildi'))
-    },
-    onError: () => {
-      toast.error(t('clients.branchAssignError', 'Şahamça birikdirmekde ýalňyşlyk'))
     },
   })
 }

@@ -2,16 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Trash2, Eye, Pencil, CheckCircle2, XCircle } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirmDialog";
 import { Button } from "@/components/ui/button";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
@@ -226,40 +217,20 @@ export default function OperatorsPage() {
       </div>
 
       {/* Delete dialog */}
-      <AlertDialog
+      <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("operators.deleteTitle", "Operatory pozmak")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "operators.deleteConfirm",
-                "{{name}} operatoryny pozmak isleýärsiňizmi? Bu amaly yzyna gaýtaryp bolmaz.",
-                { name: deleteTarget?.name ?? "" },
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel", "Ýatyr")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-              onClick={() => {
-                if (deleteTarget) {
-                  deleteMutation.mutate(deleteTarget.id, {
-                    onSuccess: () => setDeleteTarget(null),
-                  });
-                }
-              }}
-            >
-              {t("common.delete", "Poz")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}
+        title={t("operators.deleteTitle", "Operatory pozmak")}
+        description={t("operators.deleteDescription", 'Siz "{name}" operatoryny pozjakmy?').replace("{name}", deleteTarget?.name ?? "")}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMutation.mutate(deleteTarget.id)
+            setDeleteTarget(null)
+          }
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

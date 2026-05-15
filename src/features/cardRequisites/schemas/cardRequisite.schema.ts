@@ -1,24 +1,27 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CardRequisiteStatus, CreateCardRequisitePayload } from '../api/cardRequisitesApi'
 
-const fileRequired = z.custom<File>((val) => val instanceof File, 'Faýl hökmany')
+const t = i18next.t.bind(i18next)
+
+const fileRequired = z.custom<File>((val) => val instanceof File, t('validation.requiredFile', ''))
 
 export const cardRequisiteFormSchema = z.object({
-  status: z.string().min(1, 'Status hökmanydyr'),
+  status: z.string().min(1, t('validation.required', '')),
   note: z.string().optional(),
-  card_type: z.string().min(1, 'Görnüşi hökmanydyr'),
-  card_number: z.string().min(1, 'Kart belgisi hökmanydyr'),
-  card_expiry_month: z.string().min(1, 'Möhleti (aý) hökmanydyr'),
-  card_expiry_year: z.string().min(1, 'Möhleti (ýyl) hökmanydyr'),
-  province_id: z.string().min(1, 'Welaýat hökmanydyr'),
-  branch_id: z.string().min(1, 'Şahamça hökmanydyr'),
-  first_name: z.string().min(1, 'Ady hökmanydyr'),
-  last_name: z.string().min(1, 'Familiýasy hökmanydyr'),
+  card_type: z.string().min(1, t('validation.required', '')),
+  card_number: z.string().min(1, t('validation.required', '')),
+  card_expiry_month: z.string().min(1, t('validation.required', '')),
+  card_expiry_year: z.string().min(1, t('validation.required', '')),
+  province_id: z.string().min(1, t('validation.required', '')),
+  branch_id: z.string().min(1, t('validation.required', '')),
+  first_name: z.string().min(1, t('validation.required', '')),
+  last_name: z.string().min(1, t('validation.required', '')),
   middle_name: z.string().optional(),
-  birth_date: z.string().min(1, 'Doglan güni hökmanydyr'),
-  phone: z.string().min(1, 'Telefon hökmanydyr'),
-  passport_series: z.string().min(1, 'Pasport seriýasy hökmanydyr'),
-  passport_number: z.string().min(1, 'Pasport belgisi hökmanydyr'),
+  birth_date: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
+  passport_series: z.string().min(1, t('validation.required', '')),
+  passport_number: z.string().min(1, t('validation.required', '')),
   passport_page1: z.custom<File | null>().nullable(),
   passport_page2_3: z.custom<File | null>().nullable(),
   passport_page8_9: z.custom<File | null>().nullable(),
@@ -37,8 +40,8 @@ export const stepSchemas: Record<number, z.ZodType<Partial<CardRequisiteFormData
     first_name: true, last_name: true, birth_date: true, phone: true,
   }),
   2: z.object({
-    passport_series: z.string().min(1, 'Pasport seriýasy hökmanydyr'),
-    passport_number: z.string().min(1, 'Pasport belgisi hökmanydyr'),
+    passport_series: z.string().min(1, t('validation.required', '')),
+    passport_number: z.string().min(1, t('validation.required', '')),
     passport_page1: fileRequired,
     passport_page2_3: fileRequired,
     passport_page8_9: fileRequired,
@@ -53,8 +56,8 @@ export function validateStep(
 ): Partial<Record<keyof CardRequisiteFormData, string>> {
   if (stepIndex === 2 && mode === 'edit') {
     const schema = z.object({
-      passport_series: z.string().min(1, 'Pasport seriýasy hökmanydyr'),
-      passport_number: z.string().min(1, 'Pasport belgisi hökmanydyr'),
+      passport_series: z.string().min(1, t('validation.required', '')),
+      passport_number: z.string().min(1, t('validation.required', '')),
     })
     const result = schema.safeParse(form)
     if (result.success) return {}

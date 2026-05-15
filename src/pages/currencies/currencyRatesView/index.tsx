@@ -1,22 +1,13 @@
 // pages/CurrencyRateDetailPage.tsx
 
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Section, InfoRow } from '@/components/viewPageComponents'
 import { useGetCurrencyRateById, useDeleteCurrencyRate } from '@/features/currencyRates/hooks/useCurrencyRates'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── CurrencyRateDetailPage ───────────────────────────────────────────────────
 
@@ -104,34 +95,15 @@ export default function CurrencyRateDetailPage() {
         />
       </Section>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('currencyRates.deleteDialog.title', 'Pozmak isleýärsiňizmi?')}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                'currencyRates.deleteDialog.description',
-                'Bu amal yzyna gaýtarylyp bilinmez. Walýuta kursy hemişelik pozular.'
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel', 'Ýatyr')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending
-                ? t('common.deleting', 'Pozulýar...')
-                : t('common.delete', 'Pozmak')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t('currencyRates.deleteDialog.title', 'Pozmak isleýärsiňizmi?')}
+        description={t('currencyRates.deleteDialog.description', 'Bu amal yzyna gaýtarylyp bilinmez. Walýuta kursy hemişelik pozular.')}
+        confirmLabel={deleteMutation.isPending ? t('common.deleting', 'Pozulýar...') : t('common.delete', 'Pozmak')}
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

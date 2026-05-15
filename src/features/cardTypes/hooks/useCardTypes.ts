@@ -57,9 +57,6 @@ export function useCreateCardType() {
       queryClient.invalidateQueries({ queryKey: cardTypeKeys.lists() })
       toast.success(t('cardTypes.toast.createSuccess', 'Kart görnüşi döredildi'))
     },
-    onError: () => {
-      toast.error(t('cardTypes.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -76,9 +73,6 @@ export function useUpdateCardType() {
       queryClient.invalidateQueries({ queryKey: cardTypeKeys.detail(data.id) })
       toast.success(t('cardTypes.toast.updateSuccess', 'Kart görnüşi täzelendi'))
     },
-    onError: () => {
-      toast.error(t('cardTypes.toast.updateError', 'Täzelemek başartmady'))
-    },
   })
 }
 
@@ -93,9 +87,6 @@ export function useDeleteCardType() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: cardTypeKeys.lists() })
       toast.success(t('cardTypes.toast.deleteSuccess', 'Kart görnüşi öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('cardTypes.toast.deleteError', 'Öçürmek başartmady'))
     },
   })
 }

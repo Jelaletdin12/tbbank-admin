@@ -41,9 +41,6 @@ export function useDeleteLoanOrderMobile() {
       queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.lists() })
       toast.success(t('loanOrderMobiles.deleteSuccess', 'Sargyt üstünlikli pozuldy'))
     },
-    onError: () => {
-      toast.error(t('loanOrderMobiles.deleteError', 'Pozmak başartmady, gaýtadan synanyşyň'))
-    },
   })
 }
 
@@ -65,9 +62,6 @@ export function useCreateLoanOrderMobile() {
       queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.lists() })
       toast.success(t('loanOrderMobiles.createSuccess', 'Sargyt üstünlikli döredildi'))
     },
-    onError: () => {
-      toast.error(t('loanOrderMobiles.createError', 'Sargyt döretmek başartmady'))
-    },
   })
 }
 
@@ -82,9 +76,6 @@ export function useUpdateLoanOrderMobile() {
       queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.lists() })
       queryClient.invalidateQueries({ queryKey: loanOrderMobileKeys.detail(variables.id) })
       toast.success(t('loanOrderMobiles.updateSuccess', 'Sargyt üstünlikli üýtgedildi'))
-    },
-    onError: () => {
-      toast.error(t('loanOrderMobiles.updateError', 'Üýtgetmek başartmady'))
     },
   })
 }

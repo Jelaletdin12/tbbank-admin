@@ -9,6 +9,7 @@ import { DataTableToolbar, type ActiveFilter, type FilterField } from '@/compone
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { useLoanOrders, useDeleteLoanOrder } from '@/features/loanOrders/hooks/useLoanOrders'
 import type { LoanOrder, LoanOrderStatus } from '@/features/loanOrders/api/loanOrdersApi'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Status Badge (inline) ────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ export default function LoanOrdersPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const deleteMutation = useDeleteLoanOrder()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const [search, setSearch]               = useState('')
   const [page, setPage]                   = useState(1)
@@ -95,13 +97,15 @@ export default function LoanOrdersPage() {
     setPage(1)
   }, [])
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (!window.confirm(t('loanOrders.deleteConfirm', 'Bu sargyt pozulsynmy?'))) return
-      deleteMutation.mutate(id)
-    },
-    [deleteMutation, t]
-  )
+  const handleDelete = useCallback((id: string) => {
+    setDeleteId(id)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteId) return
+    deleteMutation.mutate(deleteId)
+    setDeleteId(null)
+  }, [deleteId, deleteMutation])
 
   const columns = useMemo<ColumnDef<LoanOrder>[]>(
     () => [
@@ -300,6 +304,15 @@ export default function LoanOrdersPage() {
           onPageChange={setPage}
         />
       </div>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t('loanOrders.deleteConfirm', 'Bu sargyt pozulsynmy?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

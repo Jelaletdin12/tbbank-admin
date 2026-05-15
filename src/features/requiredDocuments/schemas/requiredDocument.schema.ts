@@ -1,13 +1,16 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { LoanDocument, LoanDocumentPayload } from '../api/requiredDocumentsApi'
 
+const t = i18next.t.bind(i18next)
+
 export const requiredDocumentFormSchema = z.object({
-  nameTk: z.string().min(1, 'Hökmany meýdan'),
-  nameRu: z.string().min(1, 'Hökmany meýdan'),
-  nameEn: z.string().min(1, 'Hökmany meýdan'),
-  descTk: z.string().min(1, 'Hökmany meýdan'),
-  descRu: z.string().min(1, 'Hökmany meýdan'),
-  descEn: z.string().min(1, 'Hökmany meýdan'),
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', '')),
+  descTk: z.string().min(1, t('validation.required', '')),
+  descRu: z.string().min(1, t('validation.required', '')),
+  descEn: z.string().min(1, t('validation.required', '')),
 })
 
 export type RequiredDocumentFormData = z.infer<typeof requiredDocumentFormSchema>

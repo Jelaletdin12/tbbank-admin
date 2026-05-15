@@ -15,10 +15,10 @@ export default function NotFoundPage() {
         
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            {t("errors.pageNotFoundTitle")}
+            {t("errors.pageNotFoundTitle", "Sahypa tapylmady")}
           </h2>
           <p className="text-muted-foreground">
-            {t("errors.pageNotFoundDescription")}
+            {t("errors.pageNotFoundDescription", "Gözleýän sahypaňyz ýok ýa-da başga ýere geçirilen bolup biler.")}
           </p>
         </div>
 
@@ -27,13 +27,13 @@ export default function NotFoundPage() {
             variant="outline" 
             onClick={() => navigate(-1)}
           >
-            {t("common.goBack")}
+            {t("common.goBack", "Yza gaýt")}
           </Button>
           
           <Button 
             onClick={() => navigate("/")}
           >
-            {t("common.backToHome")}
+            {t("common.backToHome", "Baş sahypa")}
           </Button>
         </div>
       </div>

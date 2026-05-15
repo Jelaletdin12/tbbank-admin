@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { User, MapPin, IdCard, CreditCard, Files } from 'lucide-react'
@@ -406,6 +407,7 @@ function mapInitialData(data: SberPaymentOrder): Partial<SberPaymentFormData> {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const createMutation = useCreateSberPayment()
   const updateMutation = useUpdateSberPayment()
@@ -481,22 +483,18 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   const handleSubmit = async () => {
     const allErrors = doValidateAll()
     if (Object.keys(allErrors).length > 0) {
-      toast.error('Meýdanlary dolduryň')
+      toast.error(t('common.errors.requiredFieldsMissing', 'Meýdanlary dolduryň'))
       return
     }
-    try {
-      const payload = buildPayload(getValues())
-      if (mode === 'create') {
-        await createMutation.mutateAsync(payload)
-        toast.success('Töleg üstünlikli döredildi')
-        navigate('/sber-payments')
-      } else if (orderId) {
-        await updateMutation.mutateAsync({ ...payload, id: orderId })
-        toast.success('Töleg üstünlikli täzelendi')
-        navigate(`/sber-payments/${orderId}`)
-      }
-    } catch {
-      toast.error('Ýalňyşlyk ýüze çykdy')
+    const payload = buildPayload(getValues())
+    if (mode === 'create') {
+      await createMutation.mutateAsync(payload)
+      toast.success(t('sberPayments.toast.created', 'Töleg üstünlikli döredildi'))
+      navigate('/sber-payments')
+    } else if (orderId) {
+      await updateMutation.mutateAsync({ ...payload, id: orderId })
+      toast.success(t('sberPayments.toast.updated', 'Töleg üstünlikli täzelendi'))
+      navigate(`/sber-payments/${orderId}`)
     }
   }
 

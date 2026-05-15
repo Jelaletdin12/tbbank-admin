@@ -441,7 +441,7 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     markVisited(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
+      toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
     setCurrentStep(currentStep + 1)
@@ -470,7 +470,7 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     for (const step of STEPS) Object.assign(allErrors, step.validate(values, mode))
 
     if (Object.keys(allErrors).length > 0) {
-      toast.error('Käbir hökmany meýdanlar doldurylan däldir.')
+      toast.error(t('common.errors.requiredFieldsMissing', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(values, mode)).length > 0) {
           setCurrentStep(i)

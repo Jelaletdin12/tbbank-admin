@@ -53,8 +53,5 @@ export function useTriggerPaymentCallback() {
       queryClient.invalidateQueries({ queryKey: onlinePaymentKeys.lists() })
       toast.success(t('onlinePayments.toast.callbackTriggered', 'Callback ugradyldy'))
     },
-    onError: () => {
-      toast.error(t('onlinePayments.toast.callbackError', 'Callback ugratmak başartmady'))
-    },
   })
 }

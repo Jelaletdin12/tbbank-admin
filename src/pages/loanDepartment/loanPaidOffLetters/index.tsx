@@ -14,6 +14,7 @@ import {
   useDeleteLoanPaidOffLetter,
 } from "@/features/loanPaidOffLetters/hooks/useLoanPaidOffLetters";
 import type { LoanPaidOffLetter } from "@/features/loanPaidOffLetters/api/loanPaidOffLettersApi";
+import { ConfirmDialog } from "@/components/confirmDialog";
 
 // ─── Column IDs ────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,7 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
 export default function LoanPaidOffLettersPage() {
   const { t } = useTranslation();
   const deleteMutation = useDeleteLoanPaidOffLetter();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch] = useState("");
@@ -92,18 +94,15 @@ export default function LoanPaidOffLettersPage() {
     setPage(1);
   }, []);
 
-  const handleDelete = useCallback(
-    (id: number) => {
-      if (
-        !window.confirm(
-          t("loanPaidOffLetters.deleteConfirm", "Bu ýazgy pozulsynmy?"),
-        )
-      )
-        return;
-      deleteMutation.mutate(id);
-    },
-    [deleteMutation, t],
-  );
+  const handleDelete = useCallback((id: number) => {
+    setDeleteId(id);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (deleteId === null) return;
+    deleteMutation.mutate(deleteId);
+    setDeleteId(null);
+  }, [deleteId, deleteMutation]);
 
   const handleCreate = useCallback(() => {
     // navigate to create page or open modal
@@ -288,6 +287,15 @@ export default function LoanPaidOffLettersPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t("loanPaidOffLetters.deleteConfirm", "Bu ýazgy pozulsynmy?")}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

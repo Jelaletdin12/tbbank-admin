@@ -7,6 +7,7 @@ import { InfoRow, AuditLog, type AuditRowProps } from '@/components/viewPageComp
 import { useSberPaymentOrder, useDeleteSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
 import type { PaymentPaidStatus, PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
 import { useState } from 'react'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -137,12 +138,12 @@ export default function SberPaymentViewPage() {
   const { id }     = useParams<{ id: string }>()
   const navigate   = useNavigate()
   const [historySearch, setHistorySearch] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { data: order, isLoading } = useSberPaymentOrder(id!)
   const deleteMutation = useDeleteSberPayment()
 
   const handleDelete = async () => {
-    if (!window.confirm('Bu tolegi pozmak isleyanizmi?')) return
     await deleteMutation.mutateAsync(id!)
     navigate('/sber-payments')
   }
@@ -179,7 +180,7 @@ export default function SberPaymentViewPage() {
         </h1>
         <div className="flex items-center gap-1.5">
           <button
-            onClick={handleDelete}
+            onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
             className="p-2 rounded-md cursor-pointer hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
             title="Poz"
@@ -301,6 +302,14 @@ export default function SberPaymentViewPage() {
       {/* ── Audit log ────────────────────────────────────────────────────── */}
       <AuditLog logs={auditLogs} />
 
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Bu tölegi pozmak isleýärsiňizmi?"
+        confirmLabel="Poz"
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

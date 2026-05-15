@@ -52,9 +52,6 @@ export function useCreateRequiredDocument() {
       queryClient.invalidateQueries({ queryKey: requiredDocumentsKeys.lists() })
       toast.success(t('loanDocuments.toast.created', 'Resminama üstünlikli döredildi!'))
     },
-    onError: () => {
-      toast.error(t('loanDocuments.toast.createError', 'Resminama döredilende ýalňyşlyk ýüze çykdy!'))
-    },
   })
 }
 
@@ -71,9 +68,6 @@ export function useUpdateRequiredDocument(id: number) {
       queryClient.invalidateQueries({ queryKey: requiredDocumentsKeys.detail(id) })
       toast.success(t('loanDocuments.toast.updated', 'Resminama üstünlikli täzelendi!'))
     },
-    onError: () => {
-      toast.error(t('loanDocuments.toast.updateError', 'Resminama täzelenende ýalňyşlyk ýüze çykdy!'))
-    },
   })
 }
 
@@ -88,9 +82,6 @@ export function useDeleteRequiredDocument() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requiredDocumentsKeys.lists() })
       toast.success(t('loanDocuments.toast.deleted', 'Resminama üstünlikli öçürildi!'))
-    },
-    onError: () => {
-      toast.error(t('loanDocuments.toast.deleteError', 'Resminama öçürilende ýalňyşlyk ýüze çykdy!'))
     },
   })
 }

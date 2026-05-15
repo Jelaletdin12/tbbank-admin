@@ -50,9 +50,6 @@ export function useCreateBranch() {
       queryClient.invalidateQueries({ queryKey: branchKeys.lists() })
       toast.success(t('branches.toast.createSuccess', 'Şahamça döredildi'))
     },
-    onError: () => {
-      toast.error(t('branches.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -67,9 +64,6 @@ export function useUpdateBranch() {
       queryClient.invalidateQueries({ queryKey: branchKeys.detail(data.id) })
       toast.success(t('branches.toast.updateSuccess', 'Şahamça täzelendi'))
     },
-    onError: () => {
-      toast.error(t('branches.toast.updateError', 'Täzelemek başartmady'))
-    },
   })
 }
 
@@ -82,9 +76,6 @@ export function useDeleteBranch() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: branchKeys.lists() })
       toast.success(t('branches.toast.deleteSuccess', 'Şahamça öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('branches.toast.deleteError', 'Öçürmek başartmady'))
     },
   })
 }

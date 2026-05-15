@@ -8,16 +8,7 @@ import { useIntlPayments, useDeleteIntlPayment } from '@/features/visaMasterPaym
 import type { IntlPaymentItem, IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
 import { Button } from '@/components/ui/button'
 import { Eye, Pencil, Trash2, ChevronDown } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirmDialog'
 import { cn } from '@/lib/utils'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
@@ -265,30 +256,19 @@ export default function IntlPaymentsPage() {
       />
 </div>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('intlPayment.deleteTitle', 'Pozmak isleýärsiňizmi?')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('intlPayment.deleteDesc', 'Bu amal yzyna dolanyp bolmaz.')} {deleteTarget?.id}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('common.cancel', 'Ýatyr')}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={() => {
-                if (deleteTarget) {
-                  deletePayment(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })
-                }
-              }}
-            >
-              {t('common.delete', 'Poz')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}
+        title={t('intlPayment.deleteTitle', 'Pozmak isleýärsiňizmi?')}
+        description={`${t('intlPayment.deleteDesc', 'Bu amal yzyna dolanyp bolmaz.')} ${deleteTarget?.id ?? ''}`}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deletePayment(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) })
+          }
+        }}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

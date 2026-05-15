@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateClientPayload } from '../api/clientsApi'
 
+const t = i18next.t.bind(i18next)
+
 const baseSchema = z.object({
-  username: z.string().min(1, 'Ulanyjy ady hökmany'),
-  name: z.string().min(1, 'Ady hökmany'),
-  phone: z.string().min(1, 'Telefon hökmany'),
+  username: z.string().min(1, t('validation.required', '')),
+  name: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
   email: z.string().default(''),
   password: z.string(),
   isActive: z.boolean(),
@@ -13,7 +16,7 @@ const baseSchema = z.object({
 export function clientFormSchema(mode: 'create' | 'edit') {
   return mode === 'create'
     ? baseSchema.extend({
-        password: z.string().min(1, 'Açar sözi hökmany'),
+        password: z.string().min(1, t('validation.required', '')),
       })
     : baseSchema
 }

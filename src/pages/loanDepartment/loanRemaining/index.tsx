@@ -8,6 +8,7 @@ import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ActiveFilter, type FilterField } from '@/components/dataTableToolbar'
 import { useLoanRemaining, useDeleteLoanRemaining } from '@/features/loanRemaining/hooks/useLoanRemaining'
 import type { LoanRemaining } from '@/features/loanRemaining/api/loanRemainingApi'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Column IDs ────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,7 @@ export default function LoanRemainingPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const deleteMutation = useDeleteLoanRemaining()
+  const [deleteId, setDeleteId] = useState<number | null>(null)
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch]                         = useState('')
@@ -48,13 +50,15 @@ export default function LoanRemainingPage() {
     setPage(1)
   }, [])
 
-  const handleDelete = useCallback(
-    (id: number) => {
-      if (!window.confirm(t('loanRemaining.deleteConfirm', 'Bu ýazgy pozulsynmy?'))) return
-      deleteMutation.mutate(id)
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = useCallback((id: number) => {
+    setDeleteId(id)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (deleteId === null) return
+    deleteMutation.mutate(deleteId)
+    setDeleteId(null)
+  }, [deleteId, deleteMutation])
 
   // ── Columns ────────────────────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<LoanRemaining>[]>(
@@ -188,6 +192,15 @@ export default function LoanRemainingPage() {
           onPageChange={setPage}
         />
       </div>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t('loanRemaining.deleteConfirm', 'Bu ýazgy pozulsynmy?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

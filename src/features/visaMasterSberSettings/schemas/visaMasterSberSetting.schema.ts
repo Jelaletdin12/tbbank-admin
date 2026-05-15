@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { VisaMasterSettingPayload } from '../api/visaMasterSberSettingsApi'
 
+const t = i18next.t.bind(i18next)
+
 export const visaMasterSettingFormSchema = z.object({
-  kod: z.string().min(1, 'Hökmany meýdan'),
-  ady: z.string().min(1, 'Hökmany meýdan'),
-  yazgy: z.string().min(1, 'Hökmany meýdan'),
+  kod: z.string().min(1, t('validation.required', '')),
+  ady: z.string().min(1, t('validation.required', '')),
+  yazgy: z.string().min(1, t('validation.required', '')),
 })
 
 export type VisaMasterSettingFormData = z.infer<typeof visaMasterSettingFormSchema>

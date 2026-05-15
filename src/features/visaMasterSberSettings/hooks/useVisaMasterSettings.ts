@@ -55,9 +55,6 @@ export function useCreateVisaMasterSetting() {
       queryClient.invalidateQueries({ queryKey: visaMasterSettingKeys.lists() })
       toast.success(t('visaMasterSettings.toast.created', 'Sazlama döredildi'))
     },
-    onError: () => {
-      toast.error(t('visaMasterSettings.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -74,9 +71,6 @@ export function useUpdateVisaMasterSetting(id: number) {
       queryClient.invalidateQueries({ queryKey: visaMasterSettingKeys.detail(id) })
       toast.success(t('visaMasterSettings.toast.updated', 'Sazlama üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('visaMasterSettings.toast.updateError', 'Üýtgetmek başartmady'))
-    },
   })
 }
 
@@ -91,9 +85,6 @@ export function useDeleteVisaMasterSetting() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: visaMasterSettingKeys.lists() })
       toast.success(t('visaMasterSettings.toast.deleted', 'Sazlama pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('visaMasterSettings.toast.deleteError', 'Pozmak başartmady'))
     },
   })
 }

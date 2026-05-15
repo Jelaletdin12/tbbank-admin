@@ -2,17 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2, Download, Search, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
+import { ConfirmDialog } from '@/components/confirmDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { InfoRow } from '@/components/viewPageComponents'
@@ -138,9 +128,14 @@ export default function IntlPaymentViewPage() {
   const navigate   = useNavigate()
   const { t }      = useTranslation()
   const [historySearch, setHistorySearch] = useState('')
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const { data, isLoading, isError }           = useIntlPayment(id!)
   const { mutate: deletePayment, isPending: isDeleting } = useDeleteIntlPayment()
+
+  const confirmDelete = () => {
+    deletePayment(data!.id, { onSuccess: () => navigate('/intl-payments/visa-master') })
+  }
 
   if (isLoading) return <IntlPaymentViewSkeleton />
 
@@ -182,34 +177,13 @@ export default function IntlPaymentViewPage() {
           {t('intlPayment.viewTitle', 'Halkara töleg')}: {data.id}
         </h1>
         <div className="flex items-center gap-1.5">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button
-                className="p-2 rounded-md cursor-pointer hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-                title={t('common.delete', 'Poz')}
-              >
-                <Trash2 size={16} />
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t('intlPayment.deleteTitle', 'Pozmak isleýärsiňizmi?')}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t('intlPayment.deleteDesc', 'Bu amal yzyna dolanyp bolmaz.')} {data.id}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>{t('common.cancel', 'Ýatyr')}</AlertDialogCancel>
-                <AlertDialogAction
-                  disabled={isDeleting}
-                  className="bg-destructive hover:bg-destructive/90"
-                  onClick={() => deletePayment(data.id, { onSuccess: () => navigate('/intl-payments/visa-master') })}
-                >
-                  {t('common.delete', 'Poz')}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <button
+            className="p-2 rounded-md cursor-pointer hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
+            title={t('common.delete', 'Poz')}
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 size={16} />
+          </button>
 
           <button
             onClick={() => navigate(`/intl-payments/visa-master/${id}/edit`)}
@@ -316,6 +290,15 @@ export default function IntlPaymentViewPage() {
         </BentoCard>
       </BentoGrid>
 
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title={t('intlPayment.deleteTitle', 'Pozmak isleýärsiňizmi?')}
+        description={`${t('intlPayment.deleteDesc', 'Bu amal yzyna dolanyp bolmaz.')} ${data?.id}`}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

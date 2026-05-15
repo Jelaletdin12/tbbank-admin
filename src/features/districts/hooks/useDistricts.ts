@@ -49,9 +49,6 @@ export function useCreateDistrict() {
       queryClient.invalidateQueries({ queryKey: districtKeys.lists() })
       toast.success(t('districts.toast.createSuccess', 'Etrap döredildi'))
     },
-    onError: () => {
-      toast.error(t('districts.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -66,9 +63,6 @@ export function useUpdateDistrict() {
       queryClient.invalidateQueries({ queryKey: districtKeys.detail(data.id) })
       toast.success(t('districts.toast.updateSuccess', 'Etrap täzelendi'))
     },
-    onError: () => {
-      toast.error(t('districts.toast.updateError', 'Täzelemek başartmady'))
-    },
   })
 }
 
@@ -81,9 +75,6 @@ export function useDeleteDistrict() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: districtKeys.lists() })
       toast.success(t('districts.toast.deleteSuccess', 'Etrap öçürildi'))
-    },
-    onError: () => {
-      toast.error(t('districts.toast.deleteError', 'Öçürmek başartmady'))
     },
   })
 }

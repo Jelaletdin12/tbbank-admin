@@ -1,13 +1,16 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateCardTypePayload } from '../api/cardTypesApi'
 
+const t = i18next.t.bind(i18next)
+
 export const cardTypeFormSchema = z.object({
-  nameTk: z.string().min(1, 'Hökmany meýdan'),
-  nameRu: z.string().min(1, 'Hökmany meýdan'),
-  nameEn: z.string().min(1, 'Hökmany meýdan'),
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', 'Hökmany meýdan')),
   value: z.string().refine(
     (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) >= 0,
-    'Dogry san giriziň',
+    t('validation.invalidNumber', 'Dogry san giriziň'),
   ),
   description: z.string().optional(),
   isActive: z.boolean(),

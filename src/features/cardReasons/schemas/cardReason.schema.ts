@@ -1,13 +1,16 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateCardReasonPayload } from '../api/cardReasonsApi'
 
+const t = i18next.t.bind(i18next)
+
 export const cardReasonFormSchema = z.object({
-  nameTk: z.string().min(1, 'Hökmany meýdan'),
-  nameRu: z.string().min(1, 'Hökmany meýdan'),
-  nameEn: z.string().min(1, 'Hökmany meýdan'),
-  value: z.string().min(1, 'Dogry san giriziň').refine(
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', '')),
+  value: z.string().min(1, t('validation.invalidNumber', '')).refine(
     (v) => !isNaN(Number(v)) && Number(v) >= 0,
-    { message: 'Dogry san giriziň' },
+    { message: t('validation.invalidNumber', 'Dogry san giriziň') },
   ),
   description: z.string().optional(),
   isActive: z.boolean(),

@@ -47,9 +47,6 @@ export function useCreatePermission() {
       queryClient.invalidateQueries({ queryKey: permissionKeys.all })
       toast.success(t('permissions.toast.created', 'Rugsat üstünlikli döredildi!'))
     },
-    onError: () => {
-      toast.error(t('permissions.toast.createError', 'Rugsat döretmekde ýalňyşlyk ýüze çykdy.'))
-    },
   })
 }
 
@@ -67,9 +64,6 @@ export function useUpdatePermission(id: number) {
       queryClient.invalidateQueries({ queryKey: permissionKeys.detail(id) })
       toast.success(t('permissions.toast.updated', 'Rugsat üstünlikli üýtgedildi!'))
     },
-    onError: () => {
-      toast.error(t('permissions.toast.updateError', 'Rugsat üýtgetmekde ýalňyşlyk ýüze çykdy.'))
-    },
   })
 }
 
@@ -84,9 +78,6 @@ export function useDeletePermission() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: permissionKeys.all })
       toast.success(t('permissions.toast.deleted', 'Rugsat üstünlikli pozuldy!'))
-    },
-    onError: () => {
-      toast.error(t('permissions.toast.deleteError', 'Rugsat pozmakda ýalňyşlyk ýüze çykdy.'))
     },
   })
 }

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Trash2, Pencil } from "lucide-react";
@@ -6,7 +7,6 @@ import {
   useDeleteLoanOrder,
 } from "@/features/loanOrders/hooks/useLoanOrders";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import {
   StatusBadge,
   type StatusBadgeVariant,
@@ -19,6 +19,7 @@ import {
   AuditLog,
   type AuditRowProps,
 } from "@/components/viewPageComponents";
+import { ConfirmDialog } from "@/components/confirmDialog";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -102,19 +103,17 @@ export default function LoanOrderViewPage() {
   const navigate = useNavigate()
   const { id }   = useParams<{ id: string }>()
   const deleteMutation = useDeleteLoanOrder()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const { data: order, isLoading } = useLoanOrderById(id!)
 
   const handleDelete = () => {
-    if (!window.confirm(t("loanOrders.deleteConfirm", "Bu sargyt pozulsynmy?"))) return
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = () => {
     deleteMutation.mutate(id!, {
-      onSuccess: () => {
-        toast.success(t("loanOrders.deleteSuccess", "Sargyt pozuldy"))
-        navigate("/loan-orders")
-      },
-      onError: () => {
-        toast.error(t("loanOrders.deleteError", "Pozma wagty ýalňyşlyk ýüze çykdy"))
-      },
+      onSuccess: () => navigate("/loan-orders"),
     })
   }
 
@@ -352,6 +351,14 @@ export default function LoanOrderViewPage() {
       {/* ── Audit log ────────────────────────────────────────────────────── */}
       <AuditLog logs={auditLogs} />
 
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={t("loanOrders.deleteConfirm", "Bu sargyt pozulsynmy?")}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

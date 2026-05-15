@@ -1,18 +1,21 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateBranchPayload } from '@/features/branches/api/branchesApi'
 
+const t = i18next.t.bind(i18next)
+
 export const branchFormSchema = z.object({
-  nameTk: z.string().min(1, 'Türkmen ady — hökmany'),
-  nameRu: z.string().min(1, 'Rus ady — hökmany'),
-  nameEn: z.string().min(1, 'Iňlis ady — hökmany'),
-  code: z.string().min(1, 'Kod — hökmany'),
-  districtId: z.string().min(1, 'Etrap — hökmany'),
-  addressTk: z.string().min(1, 'Türkmen salgysy — hökmany'),
-  addressRu: z.string().min(1, 'Rus salgysy — hökmany'),
-  addressEn: z.string().min(1, 'Iňlis salgysy — hökmany'),
-  phone: z.string().min(1, 'Telefon — hökmany'),
-  email: z.string().min(1, 'E-poçta — hökmany'),
-  workingHours: z.string().min(1, 'Iş wagty — hökmany'),
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', '')),
+  code: z.string().min(1, t('validation.required', '')),
+  districtId: z.string().min(1, t('validation.required', '')),
+  addressTk: z.string().min(1, t('validation.required', '')),
+  addressRu: z.string().min(1, t('validation.required', '')),
+  addressEn: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
+  email: z.string().min(1, t('validation.required', '')),
+  workingHours: z.string().min(1, t('validation.required', '')),
   description: z.string().optional(),
   isActive: z.boolean(),
 })

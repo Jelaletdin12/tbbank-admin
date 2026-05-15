@@ -1,10 +1,13 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CreateDistrictPayload } from '../api/districtsApi'
 
+const t = i18next.t.bind(i18next)
+
 export const districtFormSchema = z.object({
-  nameTk: z.string().min(1, 'Hökmany meýdan'),
-  nameRu: z.string().min(1, 'Hökmany meýdan'),
-  nameEn: z.string().min(1, 'Hökmany meýdan'),
+  nameTk: z.string().min(1, t('validation.required', '')),
+  nameRu: z.string().min(1, t('validation.required', '')),
+  nameEn: z.string().min(1, t('validation.required', '')),
   description: z.string().optional(),
   isActive: z.boolean(),
 })

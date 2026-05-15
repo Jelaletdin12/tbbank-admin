@@ -42,9 +42,6 @@ export function useCreateRole() {
       queryClient.invalidateQueries({ queryKey: roleKeys.all })
       toast.success(t('roles.toast.created', 'Rol üstünlikli döredildi!'))
     },
-    onError: () => {
-      toast.error(t('roles.toast.createError', 'Rol döretmekde ýalňyşlyk ýüze çykdy.'))
-    },
   })
 }
 
@@ -61,9 +58,6 @@ export function useUpdateRole(id: number) {
       queryClient.invalidateQueries({ queryKey: roleKeys.detail(id) })
       toast.success(t('roles.toast.updated', 'Rol üstünlikli üýtgedildi!'))
     },
-    onError: () => {
-      toast.error(t('roles.toast.updateError', 'Roly üýtgetmekde ýalňyşlyk ýüze çykdy.'))
-    },
   })
 }
 
@@ -78,9 +72,6 @@ export function useDeleteRole() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: roleKeys.all })
       toast.success(t('roles.toast.deleted', 'Rol üstünlikli pozuldy!'))
-    },
-    onError: () => {
-      toast.error(t('roles.toast.deleteError', 'Roly pozmakda ýalňyşlyk ýüze çykdy.'))
     },
   })
 }

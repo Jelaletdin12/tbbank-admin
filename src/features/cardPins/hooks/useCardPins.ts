@@ -42,9 +42,6 @@ export function useCreateCardPin() {
       qc.invalidateQueries({ queryKey: CARD_PIN_KEYS.lists() })
       toast.success(t('cardPin.createSuccess', 'Kart pin bukja döredildi'))
     },
-    onError: () => {
-      toast.error(t('cardPin.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -61,9 +58,6 @@ export function useUpdateCardPin(id: string) {
       qc.invalidateQueries({ queryKey: CARD_PIN_KEYS.detail(id) })
       toast.success(t('cardPin.updateSuccess', 'Kart pin bukja üýtgedildi'))
     },
-    onError: () => {
-      toast.error(t('cardPin.updateError', 'Üýtgetmek başartmady'))
-    },
   })
 }
 
@@ -78,9 +72,6 @@ export function useDeleteCardPin() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: CARD_PIN_KEYS.lists() })
       toast.success(t('cardPin.deleteSuccess', 'Kart pin bukja pozuldy'))
-    },
-    onError: () => {
-      toast.error(t('cardPin.deleteError', 'Pozmak başartmady'))
     },
   })
 }

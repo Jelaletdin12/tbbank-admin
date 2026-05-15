@@ -11,6 +11,7 @@ import {
   useDeleteLoanOrderMobile,
 } from '@/features/loanOrderMobiles/hooks/useLoanOrderMobiles'
 import type { LoanOrderMobile, LoanOrderMobileStatus } from '@/features/loanOrderMobiles/api/loanOrderMobilesApi'
+import { ConfirmDialog } from '@/components/confirmDialog'
 
 
 
@@ -55,6 +56,7 @@ export default function LoanOrderMobilesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const deleteMutation = useDeleteLoanOrderMobile()
+  const [deleteId, setDeleteId] = useState<string | null>(null)
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch]                         = useState('')
@@ -97,13 +99,15 @@ export default function LoanOrderMobilesPage() {
     setPage(1)
   }, [])
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (!window.confirm(t('loanOrderMobiles.deleteConfirm', 'Bu sargyt pozulsynmy?'))) return
-      deleteMutation.mutate(id)
-    },
-    [deleteMutation, t],
-  )
+  const handleDelete = useCallback((id: string) => {
+    setDeleteId(id)
+  }, [])
+
+  const confirmDelete = useCallback(() => {
+    if (!deleteId) return
+    deleteMutation.mutate(deleteId)
+    setDeleteId(null)
+  }, [deleteId, deleteMutation])
 
   // ── Columns ────────────────────────────────────────────────────────────────
   const columns = useMemo<ColumnDef<LoanOrderMobile>[]>(
@@ -309,6 +313,15 @@ export default function LoanOrderMobilesPage() {
           onPageChange={setPage}
         />
       </div>
+
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        title={t('loanOrderMobiles.deleteConfirm', 'Bu sargyt pozulsynmy?')}
+        confirmLabel={t('common.delete', 'Poz')}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

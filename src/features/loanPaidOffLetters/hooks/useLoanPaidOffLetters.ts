@@ -36,8 +36,5 @@ export function useDeleteLoanPaidOffLetter() {
       queryClient.invalidateQueries({ queryKey: loanPaidOffLetterKeys.lists() })
       toast.success(t('loanPaidOffLetters.deleteSuccess', 'Güwanama üstünlikli pozuldy'))
     },
-    onError: () => {
-      toast.error(t('loanPaidOffLetters.deleteError', 'Pozmak başartmady, gaýtadan synanyşyň'))
-    },
   })
 }

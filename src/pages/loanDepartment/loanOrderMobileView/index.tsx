@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Trash2, Pencil } from "lucide-react";
@@ -7,7 +8,6 @@ import {
 } from "@/features/loanOrderMobiles/hooks/useLoanOrderMobiles";
 import { CreditCardVisual } from "@/components/creditCardVisual";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import type { LoanOrderMobileStatus } from "@/features/loanOrderMobiles/api/loanOrderMobilesApi";
 import {
   StatusBadge,
@@ -20,6 +20,7 @@ import {
   AuditLog,
   type AuditRowProps,
 } from "@/components/viewPageComponents";
+import { ConfirmDialog } from "@/components/confirmDialog";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -105,19 +106,17 @@ export default function LoanOrderMobilesViewPage() {
   const navigate = useNavigate()
   const { id }   = useParams<{ id: string }>()
   const deleteMutation = useDeleteLoanOrderMobile()
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   const { data: order, isLoading } = useLoanOrderMobileById(id!)
 
   const handleDelete = () => {
-    if (!window.confirm(t("loanOrderMobiles.deleteConfirm", "Bu sargyt pozulsynmy?"))) return
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDelete = () => {
     deleteMutation.mutate(id!, {
-      onSuccess: () => {
-        toast.success(t("loanOrderMobiles.deleteSuccess", "Sargyt pozuldy"))
-        navigate("/loan-order-mobiles")
-      },
-      onError: () => {
-        toast.error(t("loanOrderMobiles.deleteError", "Pozma wagty ýalňyşlyk ýüze çykdy"))
-      },
+      onSuccess: () => navigate("/loan-order-mobiles"),
     })
   }
 
@@ -436,6 +435,14 @@ export default function LoanOrderMobilesViewPage() {
       {/* ── Audit log ────────────────────────────────────────────────────── */}
       <AuditLog logs={auditLogs} />
 
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={t("loanOrderMobiles.deleteConfirm", "Bu sargyt pozulsynmy?")}
+        confirmLabel={t("common.delete", "Poz")}
+        onConfirm={confirmDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   )
 }

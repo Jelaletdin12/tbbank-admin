@@ -54,9 +54,6 @@ export function useCreateLoanType() {
       queryClient.invalidateQueries({ queryKey: loanTypeKeys.all() })
       toast.success(t('loanTypes.toast.created', 'Karz görnüşi üstünlikli döredildi'))
     },
-    onError: (error: Error) => {
-      toast.error(error.message || t('loanTypes.toast.createError', 'Döretmek başartmady'))
-    },
   })
 }
 
@@ -72,9 +69,6 @@ export function useUpdateLoanType(id: number) {
       queryClient.invalidateQueries({ queryKey: loanTypeKeys.all() })
       toast.success(t('loanTypes.toast.updated', 'Karz görnüşi üstünlikli täzelendi'))
     },
-    onError: (error: Error) => {
-      toast.error(error.message || t('loanTypes.toast.updateError', 'Täzelemek başartmady'))
-    },
   })
 }
 
@@ -89,9 +83,6 @@ export function useDeleteLoanType() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: loanTypeKeys.all() })
       toast.success(t('loanTypes.toast.deleted', 'Karz görnüşi üstünlikli pozuldy'))
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || t('loanTypes.toast.deleteError', 'Pozmak başartmady'))
     },
   })
 }

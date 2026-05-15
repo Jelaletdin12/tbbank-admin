@@ -1,25 +1,28 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { IntlPaymentCreatePayload, IntlPaymentStatus, CurrencyType } from '../api/visaMasterPaymentsApi'
+
+const t = i18next.t.bind(i18next)
 
 const fileField = z.custom<File | null>().nullable()
 
 export const visaMasterPaymentFormSchema = z.object({
-  client_id: z.string().min(1, 'Ulanyjy hökmany'),
-  status: z.string().min(1, 'Status hökmany'),
+  client_id: z.string().min(1, t('validation.required', '')),
+  status: z.string().min(1, t('validation.required', '')),
   note: z.string().optional().default(''),
-  currency_type: z.string().min(1, 'Ýüztumanyň görnüşi hökmany'),
-  province: z.string().min(1, 'Welaýat hökmany'),
-  branch: z.string().min(1, 'Şahamça hökmany'),
-  passport_first_name: z.string().min(1, 'Ady hökmany'),
-  passport_last_name: z.string().min(1, 'Familiýasy hökmany'),
-  phone: z.string().min(1, 'Telefon hökmany'),
+  currency_type: z.string().min(1, t('validation.required', '')),
+  province: z.string().min(1, t('validation.required', '')),
+  branch: z.string().min(1, t('validation.required', '')),
+  passport_first_name: z.string().min(1, t('validation.required', '')),
+  passport_last_name: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
   email: z.string().optional().default(''),
   home_address: z.string().optional().default(''),
-  passport_series: z.string().min(1, 'Pasport seriýasy hökmany'),
-  passport_number: z.string().min(1, 'Pasport nomeri hökmany'),
-  payer_full_name: z.string().min(1, 'Doly ady hökmany'),
-  payer_account_number: z.string().min(1, 'Goşun hasaby hökmany'),
-  receiver_info: z.string().min(1, 'Kabul edijiniň maglumatlary hökmany'),
+  passport_series: z.string().min(1, t('validation.required', '')),
+  passport_number: z.string().min(1, t('validation.required', '')),
+  payer_full_name: z.string().min(1, t('validation.required', '')),
+  payer_account_number: z.string().min(1, t('validation.required', '')),
+  receiver_info: z.string().min(1, t('validation.required', '')),
   doc_sberbank_account: fileField,
   doc_school_enrollment: fileField,
   doc_summons: fileField,

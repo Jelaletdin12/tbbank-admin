@@ -1,32 +1,35 @@
 import { z } from 'zod'
+import i18next from 'i18next'
 import type { CardOrderStatus } from '../api/orderNewCardApi'
 
-const fileRequired = z.custom<File>((val) => val instanceof File, 'Faýl hökmany')
+const t = i18next.t.bind(i18next)
+
+const fileRequired = z.custom<File>((val) => val instanceof File, t('validation.requiredFile', ''))
 
 export const orderNewCardFormSchema = z.object({
   isPaid: z.boolean(),
-  status: z.string().min(1, 'Status — hökmany'),
+  status: z.string().min(1, t('validation.required', '')),
   note: z.string().optional(),
-  issuanceReasonId: z.string().min(1, 'Kartyň çykarylmagynyň sebäbi — hökmany'),
-  cardTypeId: z.string().min(1, 'Kart görnüşi — hökmany'),
-  provinceId: z.string().min(1, 'Welaýat — hökmany'),
-  branchId: z.string().min(1, 'Şahamça — hökmany'),
-  firstName: z.string().min(1, 'Ady — hökmany'),
-  lastName: z.string().min(1, 'Familiýasy — hökmany'),
+  issuanceReasonId: z.string().min(1, t('validation.required', '')),
+  cardTypeId: z.string().min(1, t('validation.required', '')),
+  provinceId: z.string().min(1, t('validation.required', '')),
+  branchId: z.string().min(1, t('validation.required', '')),
+  firstName: z.string().min(1, t('validation.required', '')),
+  lastName: z.string().min(1, t('validation.required', '')),
   middleName: z.string().optional(),
   formerLastName: z.string().optional(),
-  birthDate: z.string().min(1, 'Doglan güni — hökmany'),
-  phone: z.string().min(1, 'Telefon — hökmany'),
+  birthDate: z.string().min(1, t('validation.required', '')),
+  phone: z.string().min(1, t('validation.required', '')),
   phoneExtra: z.string().optional(),
-  citizenship: z.string().min(1, 'Raýatlyk — hökmany'),
-  registeredAddress: z.string().min(1, 'Ýazgy edilen salgy — hökmany'),
-  currentAddress: z.string().min(1, 'Häzirki ýaşaýyş ýeri — hökmany'),
-  workplace: z.string().min(1, 'Işleýän ýeri — hökmany'),
-  passportSeriesId: z.string().min(1, 'Pasport seriýasy — hökmany'),
-  passportNumber: z.string().min(1, 'Pasport belgisi — hökmany'),
-  passportIssueDate: z.string().min(1, 'Pasport berlen senesi — hökmany'),
-  passportIssuedBy: z.string().min(1, 'Kim tarapyndan berildi — hökmany'),
-  passportBirthPlace: z.string().min(1, 'Doglan ýeri — hökmany'),
+  citizenship: z.string().min(1, t('validation.required', '')),
+  registeredAddress: z.string().min(1, t('validation.required', '')),
+  currentAddress: z.string().min(1, t('validation.required', '')),
+  workplace: z.string().min(1, t('validation.required', '')),
+  passportSeriesId: z.string().min(1, t('validation.required', '')),
+  passportNumber: z.string().min(1, t('validation.required', '')),
+  passportIssueDate: z.string().min(1, t('validation.required', '')),
+  passportIssuedBy: z.string().min(1, t('validation.required', '')),
+  passportBirthPlace: z.string().min(1, t('validation.required', '')),
   passportPage1: z.custom<File | null>().nullable(),
   passportPage23: z.custom<File | null>().nullable(),
   passportPage89: z.custom<File | null>().nullable(),
@@ -53,7 +56,7 @@ export const stepSchemas: Record<number, z.ZodType<Partial<OrderNewCardFormData>
     passportPage23: fileRequired,
     passportPage89: fileRequired,
     passportPage32: fileRequired,
-    termsAccepted: z.literal(true, { message: 'Şertnama bilen razylaşmaly' }),
+    termsAccepted: z.literal(true, { message: t('validation.requiredTerms', '') }),
   }),
 }
 
