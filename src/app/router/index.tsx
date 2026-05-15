@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { Spinner } from "@/components/ui/spinner";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageErrorFallback } from "@/app/providers/ErrorBoundary";
 import NotFoundPage from "@/pages/notFoundPage";
 
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -146,6 +147,7 @@ function PageLoader() {
 export const router = createBrowserRouter([
   {
     element: <PublicGuard />,
+    errorElement: <PageErrorFallback />,
     children: [
       {
         path: "/login",
@@ -159,9 +161,11 @@ export const router = createBrowserRouter([
   },
   {
     element: <AuthGuard />,
+    errorElement: <PageErrorFallback />,
     children: [
       {
         element: <DashboardLayout />,
+        errorElement: <PageErrorFallback />,
         children: [
           {
             path: "/dashboard",

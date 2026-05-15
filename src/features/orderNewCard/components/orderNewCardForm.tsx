@@ -1,8 +1,9 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText, Upload } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { useForm } from 'react-hook-form'
 
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
@@ -21,6 +22,8 @@ import {
   useCreateCardOrder,
   useUpdateCardOrder,
 } from '../hooks/useOrderNewCard'
+import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/orderNewCard.schema'
+import type { OrderNewCardFormData } from '../schemas/orderNewCard.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,72 +35,17 @@ interface CardOrderFormProps {
   onCancel?: () => void
 }
 
-interface FormState {
-  isPaid: boolean
-  status: CardOrderStatus | ''
-  note: string
-  issuanceReasonId: string
-  cardTypeId: string
-  provinceId: string
-  branchId: string
-  firstName: string
-  lastName: string
-  middleName: string
-  formerLastName: string
-  birthDate: string
-  phone: string
-  phoneExtra: string
-  citizenship: string
-  registeredAddress: string
-  currentAddress: string
-  workplace: string
-  passportSeriesId: string
-  passportNumber: string
-  passportIssueDate: string
-  passportIssuedBy: string
-  passportBirthPlace: string
-  passportPage1: File | null
-  passportPage23: File | null
-  passportPage89: File | null
-  passportPage32: File | null
-  termsAccepted: boolean
-}
+// ─── Form errors helper ──────────────────────────────────────────────────────
 
-type FormErrors = Partial<Record<keyof FormState, string>>
+type FlatErrors = Partial<Record<keyof OrderNewCardFormData, string>>
 
-// ─── Initial state ────────────────────────────────────────────────────────────
-
-function getInitialState(data?: CardOrder): FormState {
-  return {
-    isPaid:             data?.isPaid             ?? false,
-    status:             data?.status             ?? '',
-    note:               data?.note               ?? '',
-    issuanceReasonId:   data?.issuanceReasonId   ? String(data.issuanceReasonId) : '',
-    cardTypeId:         data?.cardTypeId         ? String(data.cardTypeId)        : '',
-    provinceId:         data?.provinceId         ? String(data.provinceId)        : '',
-    branchId:           data?.branchId           ? String(data.branchId)          : '',
-    firstName:          data?.firstName          ?? '',
-    lastName:           data?.lastName           ?? '',
-    middleName:         data?.middleName         ?? '',
-    formerLastName:     data?.formerLastName      ?? '',
-    birthDate:          data?.birthDate          ?? '',
-    phone:              data?.phone              ?? '',
-    phoneExtra:         data?.phoneExtra         ?? '',
-    citizenship:        data?.citizenship        ?? 'Turkmenistan',
-    registeredAddress:  data?.registeredAddress  ?? '',
-    currentAddress:     data?.currentAddress     ?? '',
-    workplace:          data?.workplace          ?? '',
-    passportSeriesId:   data?.passportSeriesId   ? String(data.passportSeriesId) : '',
-    passportNumber:     data?.passportNumber     ?? '',
-    passportIssueDate:  data?.passportIssueDate  ?? '',
-    passportIssuedBy:   data?.passportIssuedBy   ?? '',
-    passportBirthPlace: data?.passportBirthPlace ?? '',
-    passportPage1:  null,
-    passportPage23: null,
-    passportPage89: null,
-    passportPage32: null,
-    termsAccepted: false,
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof OrderNewCardFormData] = msg
   }
+  return result
 }
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -108,7 +56,7 @@ interface StepDef {
   titleFallback: string
   subtitle: string
   icon: LucideIcon
-  validate: (form: FormState, mode: 'create' | 'edit') => FormErrors
+  validate: (form: OrderNewCardFormData, mode: 'create' | 'edit') => FlatErrors
 }
 
 const STEPS: StepDef[] = [
@@ -118,15 +66,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Kart',
     subtitle: 'Görnüş & lokasiýa',
     icon: CreditCard,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.status)           e.status           = 'Status — hökmany'
-      if (!form.issuanceReasonId) e.issuanceReasonId = 'Kartyň çykarylmagynyň sebäbi — hökmany'
-      if (!form.cardTypeId)       e.cardTypeId       = 'Kart görnüşi — hökmany'
-      if (!form.provinceId)       e.provinceId       = 'Welaýat — hökmany'
-      if (!form.branchId)         e.branchId         = 'Şahamça — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(0, form, mode),
   },
   {
     id: 'personal',
@@ -134,18 +74,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Şahsy',
     subtitle: 'Maglumatlar',
     icon: User,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.firstName)         e.firstName         = 'Ady — hökmany'
-      if (!form.lastName)          e.lastName          = 'Familiýasy — hökmany'
-      if (!form.birthDate)         e.birthDate         = 'Doglan güni — hökmany'
-      if (!form.phone)             e.phone             = 'Telefon — hökmany'
-      if (!form.citizenship)       e.citizenship       = 'Raýatlyk — hökmany'
-      if (!form.registeredAddress) e.registeredAddress = 'Ýazgy edilen salgy — hökmany'
-      if (!form.currentAddress)    e.currentAddress    = 'Häzirki ýaşaýyş ýeri — hökmany'
-      if (!form.workplace)         e.workplace         = 'Işleýän ýeri — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(1, form, mode),
   },
   {
     id: 'passport',
@@ -153,15 +82,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Pasport',
     subtitle: 'Resmi maglumat',
     icon: FileText,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.passportSeriesId)   e.passportSeriesId   = 'Pasport seriýasy — hökmany'
-      if (!form.passportNumber)     e.passportNumber     = 'Pasport belgisi — hökmany'
-      if (!form.passportIssueDate)  e.passportIssueDate  = 'Pasport berlen senesi — hökmany'
-      if (!form.passportIssuedBy)   e.passportIssuedBy   = 'Kim tarapyndan berildi — hökmany'
-      if (!form.passportBirthPlace) e.passportBirthPlace = 'Doglan ýeri — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(2, form, mode),
   },
   {
     id: 'files',
@@ -169,17 +90,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Faýllar',
     subtitle: 'Ýüklemek & Tassyklamak',
     icon: Upload,
-    validate: (form, mode) => {
-      const e: FormErrors = {}
-      if (mode === 'create') {
-        if (!form.passportPage1)  e.passportPage1  = 'Pasport (sahypa 1) — hökmany'
-        if (!form.passportPage23) e.passportPage23 = 'Pasport (2-3-nji sahypa) — hökmany'
-        if (!form.passportPage89) e.passportPage89 = 'Pasport (8-9 sahypa) — hökmany'
-        if (!form.passportPage32) e.passportPage32 = 'Pasport (32-nji sahypa) — hökmany'
-        if (!form.termsAccepted)  e.termsAccepted  = 'Şertnama bilen razylaşmaly'
-      }
-      return e
-    },
+    validate: (form, mode) => validateStep(3, form, mode),
   },
 ]
 
@@ -230,9 +141,9 @@ function BentoCard({
 // ─── Shared step content props ────────────────────────────────────────────────
 
 interface StepContentProps {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: OrderNewCardFormData
+  errors: FlatErrors
+  set: <K extends keyof OrderNewCardFormData>(k: K, v: OrderNewCardFormData[K]) => void
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
@@ -642,16 +553,19 @@ export function CardOrderForm({
   const updateMutation = useUpdateCardOrder(cardOrderId ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const [form, setForm]   = useState<FormState>(() => getInitialState(initialData))
-  const [errors, setErrors] = useState<FormErrors>({})
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<OrderNewCardFormData>({
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
-
-  useEffect(() => {
-    if (initialData) setForm(getInitialState(initialData))
-  }, [initialData])
 
   // ── Lookup data ────────────────────────────────────────────────────────────
 
@@ -695,10 +609,10 @@ export function CardOrderForm({
 
   // ── set helper ─────────────────────────────────────────────────────────────
 
-  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-  }, [])
+  const set = useCallback(<K extends keyof OrderNewCardFormData>(key: K, value: OrderNewCardFormData[K]) => {
+    (setValue as (name: K, val: OrderNewCardFormData[K]) => void)(key, value)
+    clearErrors(key)
+  }, [setValue, clearErrors])
 
   const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
 
@@ -711,39 +625,38 @@ export function CardOrderForm({
     markVisited(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs)
       toast.error(t('validation.fixErrors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
-    setErrors({})
-    setCurrentStep(currentStep + 1)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(currentStep + 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const handleBack = () => {
-    markVisited(currentStep)
-    setErrors({})
-    setCurrentStep(currentStep - 1)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (currentStep > 0) {
+      markVisited(currentStep)
+      setCurrentStep(currentStep - 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
 
   const handleGoTo = (i: number) => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(i)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
 
-  const handleSubmit = async () => {
+  const doSubmit = async () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
 
-    const allErrors: FormErrors = {}
+    const allErrors: FlatErrors = {}
     for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
       toast.error(t('validation.fixErrors', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
@@ -754,35 +667,7 @@ export function CardOrderForm({
       return
     }
 
-    const payload = {
-      isPaid:             form.isPaid,
-      status:             form.status as CardOrderStatus,
-      note:               form.note               || null,
-      issuanceReasonId:   Number(form.issuanceReasonId),
-      cardTypeId:         Number(form.cardTypeId),
-      provinceId:         Number(form.provinceId),
-      branchId:           Number(form.branchId),
-      firstName:          form.firstName,
-      lastName:           form.lastName,
-      middleName:         form.middleName         || null,
-      formerLastName:     form.formerLastName      || null,
-      birthDate:          form.birthDate,
-      phone:              form.phone,
-      phoneExtra:         form.phoneExtra          || null,
-      citizenship:        form.citizenship,
-      registeredAddress:  form.registeredAddress,
-      currentAddress:     form.currentAddress,
-      workplace:          form.workplace,
-      passportSeriesId:   Number(form.passportSeriesId),
-      passportNumber:     form.passportNumber,
-      passportIssueDate:  form.passportIssueDate,
-      passportIssuedBy:   form.passportIssuedBy,
-      passportBirthPlace: form.passportBirthPlace,
-      ...(form.passportPage1  && { passportPage1:  form.passportPage1  }),
-      ...(form.passportPage23 && { passportPage23: form.passportPage23 }),
-      ...(form.passportPage89 && { passportPage89: form.passportPage89 }),
-      ...(form.passportPage32 && { passportPage32: form.passportPage32 }),
-    }
+    const payload = buildPayload(getValues())
 
     try {
       if (mode === 'edit') {
@@ -852,7 +737,7 @@ export function CardOrderForm({
         onPrev={currentStep > 0 ? handleBack : undefined}
         onNext={!isLastStep ? handleNext : undefined}
         showSubmit={isLastStep}
-        onSubmit={isLastStep ? handleSubmit : undefined}
+        onSubmit={isLastStep ? doSubmit : undefined}
         submitLabel={
           mode === 'create'
             ? (t('cardOrder.submit') || 'Kart sargyt dörediň')
@@ -865,4 +750,32 @@ export function CardOrderForm({
       />
     </div>
   )
+}
+
+function mapInitial(data: CardOrder): Partial<OrderNewCardFormData> {
+  return {
+    isPaid: data.isPaid,
+    status: data.status,
+    note: data.note ?? '',
+    issuanceReasonId: String(data.issuanceReasonId),
+    cardTypeId: String(data.cardTypeId),
+    provinceId: String(data.provinceId),
+    branchId: String(data.branchId),
+    firstName: data.firstName,
+    lastName: data.lastName,
+    middleName: data.middleName ?? '',
+    formerLastName: data.formerLastName ?? '',
+    birthDate: data.birthDate,
+    phone: data.phone,
+    phoneExtra: data.phoneExtra ?? '',
+    citizenship: data.citizenship,
+    registeredAddress: data.registeredAddress,
+    currentAddress: data.currentAddress,
+    workplace: data.workplace,
+    passportSeriesId: String(data.passportSeriesId),
+    passportNumber: data.passportNumber,
+    passportIssueDate: data.passportIssueDate,
+    passportIssuedBy: data.passportIssuedBy,
+    passportBirthPlace: data.passportBirthPlace,
+  }
 }

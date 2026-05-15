@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -23,7 +25,9 @@ import { cn } from '@/lib/utils'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { useCreateRequiredDocument, useUpdateRequiredDocument } from '../hooks/useRequiredDocuments'
-import type { LoanDocument, LoanDocumentPayload, LoanDocumentTranslation } from '../api/requiredDocumentsApi'
+import { requiredDocumentFormSchema, DEFAULT_FORM_VALUES, buildPayload, mapInitial } from '../schemas/requiredDocument.schema'
+import type { RequiredDocumentFormData } from '../schemas/requiredDocument.schema'
+import type { LoanDocument, LoanDocumentTranslation } from '../api/requiredDocumentsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -166,9 +170,31 @@ function LangTabs({ active, onChange }: LangTabsProps) {
   )
 }
 
-// ─── Empty translation ────────────────────────────────────────────────────────
+// ─── Error helpers ──────────────────────────────────────────────────────────
 
-const emptyTranslation = (): LoanDocumentTranslation => ({ tk: '', ru: '', en: '' })
+type LegacyErrorKey = `name_${Locale}` | `desc_${Locale}`
+
+const RHF_TO_LEGACY_KEY: Record<string, LegacyErrorKey> = {
+  nameTk: 'name_tk',
+  nameRu: 'name_ru',
+  nameEn: 'name_en',
+  descTk: 'desc_tk',
+  descRu: 'desc_ru',
+  descEn: 'desc_en',
+}
+
+function flattenErrors(
+  errors: Record<string, { message?: string } | undefined>,
+): Partial<Record<LegacyErrorKey, string>> {
+  const result: Partial<Record<LegacyErrorKey, string>> = {}
+  for (const [key, err] of Object.entries(errors)) {
+    const legacyKey = RHF_TO_LEGACY_KEY[key]
+    if (legacyKey && err?.message) {
+      result[legacyKey] = err.message
+    }
+  }
+  return result
+}
 
 // ─── RequiredDocumentForm ─────────────────────────────────────────────────────────
 
@@ -176,57 +202,78 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  // Per-field locale tabs
+  // Per-field locale tabs (UI only, not form state)
   const [nameLang, setNameLang] = useState<Locale>('tk')
   const [descLang, setDescLang] = useState<Locale>('tk')
-
-  // Form state
-  const [name, setName] = useState<LoanDocumentTranslation>(
-    initialData?.name ?? emptyTranslation()
-  )
-  const [description, setDescription] = useState<LoanDocumentTranslation>(
-    initialData?.description ?? emptyTranslation()
-  )
-
-  // Errors
-  const [errors, setErrors] = useState<Partial<Record<`name_${Locale}` | `desc_${Locale}`, string>>>({})
-
-  // Sync initial data on edit mode load
-  useEffect(() => {
-    if (initialData) {
-      setName(initialData.name)
-      setDescription(initialData.description)
-    }
-  }, [initialData])
 
   const createMutation = useCreateRequiredDocument()
   const updateMutation = useUpdateRequiredDocument(requiredDocumentId ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // ── Validation ──────────────────────────────────────────────────────────────
+  const {
+    watch,
+    setValue,
+    getValues,
+    formState: { errors: rhfErrors },
+    trigger,
+  } = useForm<RequiredDocumentFormData>({
+    resolver: zodResolver(requiredDocumentFormSchema),
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
 
-  const validate = (): boolean => {
-    const errs: typeof errors = {}
-    LOCALES.forEach(({ code }) => {
-      if (!name[code].trim()) {
-        errs[`name_${code}`] = t('validation.required', 'Bu meýdan hökmany')
-      }
-      if (!description[code].replace(/<[^>]*>/g, '').trim()) {
-        errs[`desc_${code}`] = t('validation.required', 'Bu meýdan hökmany')
-      }
-    })
-    setErrors(errs)
-    return Object.keys(errs).length === 0
-  }
+  const form = watch()
+  const errors = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
+
+  // Derive LoanDocumentTranslation objects so the JSX stays unchanged
+  const name: LoanDocumentTranslation = useMemo(
+    () => ({ tk: form.nameTk, ru: form.nameRu, en: form.nameEn }),
+    [form.nameTk, form.nameRu, form.nameEn],
+  )
+
+  const description: LoanDocumentTranslation = useMemo(
+    () => ({ tk: form.descTk, ru: form.descRu, en: form.descEn }),
+    [form.descTk, form.descRu, form.descEn],
+  )
+
+  // Functional setter that matches React's useState(prev => …) signature
+  const setName = useCallback(
+    (updater: (prev: LoanDocumentTranslation) => LoanDocumentTranslation) => {
+      const current = getValues()
+      const prev: LoanDocumentTranslation = { tk: current.nameTk, ru: current.nameRu, en: current.nameEn }
+      const next = updater(prev)
+      setValue('nameTk', next.tk)
+      setValue('nameRu', next.ru)
+      setValue('nameEn', next.en)
+    },
+    [setValue, getValues],
+  )
+
+  const setDescription = useCallback(
+    (updater: (prev: LoanDocumentTranslation) => LoanDocumentTranslation) => {
+      const current = getValues()
+      const prev: LoanDocumentTranslation = { tk: current.descTk, ru: current.descRu, en: current.descEn }
+      const next = updater(prev)
+      setValue('descTk', next.tk)
+      setValue('descRu', next.ru)
+      setValue('descEn', next.en)
+    },
+    [setValue, getValues],
+  )
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    if (!validate()) return
+    const isValid = await trigger()
+    if (!isValid) return
 
-    const payload: LoanDocumentPayload = { name, description }
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       await createMutation.mutateAsync(payload)

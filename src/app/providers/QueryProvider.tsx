@@ -2,23 +2,28 @@ import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@ta
 import type { ReactNode } from 'react'
 import { toast } from 'sonner'
 import i18next from 'i18next'
+import { isAxiosError } from 'axios'
+
+function getErrorMessage(error: Error): string | undefined {
+  if (isAxiosError(error)) return error.response?.data?.message
+  return error.message
+}
 
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error: any, query) => {
-      // Eğer sorguya özel gizlilik istenmediyse tekilleştirilmiş toast göster
+    onError: (error, query) => {
       if (query.meta?.silent !== true) {
-        const serverMessage = error?.response?.data?.message
+        const serverMessage = getErrorMessage(error)
         toast.error(serverMessage || i18next.t('errors.fetchFailed'), {
-          id: 'global-query-error', // Aynı ID'li toast'lar üst üste binmez
+          id: 'global-query-error',
         })
       }
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error: any, _variables, _context, mutation) => {
+    onError: (error, _variables, _context, mutation) => {
       if (mutation.meta?.silent !== true) {
-        const serverMessage = error?.response?.data?.message
+        const serverMessage = getErrorMessage(error)
         toast.error(serverMessage || i18next.t('errors.actionFailed'), {
           id: 'global-mutation-error',
         })
@@ -27,11 +32,10 @@ const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5,      // 5 min
-      gcTime: 1000 * 60 * 10,        // 10 min
-      retry: (failureCount, error: any) => {
-        // Kritik auth veya bulunamadı hatalarında boşa retry atıp ağı yorma
-        if ([401, 403, 404].includes(error.response?.status)) return false
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+      retry: (failureCount, error) => {
+        if (isAxiosError(error) && [401, 403, 404].includes(error.response?.status ?? 0)) return false
         return failureCount < 1
       },
       refetchOnWindowFocus: false,

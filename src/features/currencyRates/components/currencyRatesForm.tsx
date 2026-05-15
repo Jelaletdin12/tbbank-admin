@@ -1,26 +1,22 @@
 // features/currencyRates/components/CurrencyRateForm.tsx
 
-import { useEffect, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
-import { CURRENCY_OPTIONS, type CurrencyCode, type CurrencyRate } from '../api/currencyRatesApi'
+import { CURRENCY_OPTIONS, type CurrencyRate } from '../api/currencyRatesApi'
 import { useCreateCurrencyRate, useUpdateCurrencyRate } from '../hooks/useCurrencyRates'
+import {
+  currencyRateFormSchema,
+  DEFAULT_FORM_VALUES,
+  buildPayload,
+  type CurrencyRateFormData,
+} from '../schemas/currencyRate.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FormState {
-  currencyFrom: string
-  currencyTo:   string
-  value:        string
-}
-
-interface FormErrors {
-  currencyFrom?: string
-  currencyTo?:   string
-  value?:        string
-}
 
 export interface CurrencyRateFormProps {
   mode:          'create' | 'edit'
@@ -28,24 +24,15 @@ export interface CurrencyRateFormProps {
   rateId?:       number
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+type FlatErrors = Partial<Record<keyof CurrencyRateFormData, string>>
 
-function validate(form: FormState, t: (key: string, fallback: string) => string): FormErrors {
-  const errors: FormErrors = {}
-
-  if (!form.currencyFrom) {
-    errors.currencyFrom = t('currencyRates.errors.currencyFromRequired', 'Walýuta saýlaň')
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CurrencyRateFormData] = msg
   }
-  if (!form.currencyTo) {
-    errors.currencyTo = t('currencyRates.errors.currencyToRequired', 'Walýuta saýlaň')
-  }
-  if (!form.value.trim()) {
-    errors.value = t('currencyRates.errors.valueRequired', 'Bahany giriziň')
-  } else if (isNaN(Number(form.value)) || Number(form.value) <= 0) {
-    errors.value = t('currencyRates.errors.valueInvalid', 'Baha 0-dan uly bolmaly')
-  }
-
-  return errors
+  return result
 }
 
 // ─── CurrencyRateForm ─────────────────────────────────────────────────────────
@@ -54,47 +41,48 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState<FormState>({
-    currencyFrom: initialData?.currencyFrom ?? '',
-    currencyTo:   initialData?.currencyTo   ?? '',
-    value:        initialData?.value != null ? String(initialData.value) : '',
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
-
   const createMutation = useCreateCurrencyRate()
   const updateMutation = useUpdateCurrencyRate(rateId ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // Sync form when initialData loads (edit mode)
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        currencyFrom: initialData.currencyFrom,
-        currencyTo:   initialData.currencyTo,
-        value:        String(initialData.value),
-      })
-    }
-  }, [mode, initialData])
+  const {
+    watch,
+    setValue,
+    formState: { errors: rhfErrors },
+    clearErrors,
+    trigger,
+    getValues,
+  } = useForm<CurrencyRateFormData>({
+    resolver: zodResolver(currencyRateFormSchema),
+    defaultValues: initialData
+      ? {
+          currencyFrom: initialData.currencyFrom,
+          currencyTo:   initialData.currencyTo,
+          value:        String(initialData.value),
+        }
+      : DEFAULT_FORM_VALUES,
+  })
 
-  const setField = (field: keyof FormState) => (val: string) => {
-    setForm((prev) => ({ ...prev, [field]: val }))
-    // Clear error on change
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const form = watch()
+  const errors = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
+
+  const setField = useCallback(
+    (key: keyof CurrencyRateFormData) => (value: string) => {
+      setValue(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
   const handleSubmit = async () => {
-    const validationErrors = validate(form, t)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
+    const isValid = await trigger()
+    if (!isValid) return
 
-    const payload = {
-      currencyFrom: form.currencyFrom as CurrencyCode,
-      currencyTo:   form.currencyTo   as CurrencyCode,
-      value:        Number(form.value),
-    }
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       await createMutation.mutateAsync(payload)

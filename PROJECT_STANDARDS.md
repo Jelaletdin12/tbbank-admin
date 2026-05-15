@@ -107,3 +107,13 @@ src/
         2. **Çakışma Önleme:** Aynı anda birden fazla 401 gelirse, `isRefreshing` bayrağı ile diğer istekler beklemede tutulur.
     - **Başarısız Refresh:** Yeni token alınamazsa (`refreshToken` hata dönerse), sistem kullanıcıyı otomatik olarak çıkışa zorlar (`logout()`) ve kullanıcıyı Login sayfasına yönlendirir.
     - **403 Forbidden:** Kullanıcının o sayfaya erişim izni yoksa (Rol yetkisi eksik), toast ile uyarı verilir ancak kullanıcı aynı sayfada kalır (Kritik sayfadan atılmaz).
+10. **Error Boundary Kuralları:**
+    - Her sayfa route'u `PageErrorBoundary` ile sarılır.
+    - App kökü `GlobalErrorBoundary` ile sarılır.
+    - Boş ekran göstermek **yasaktır**; her boundary anlamlı fallback UI döner.
+11. **Zod + RHF Kuralları:**
+    - Her form için `src/features/[feature]/schemas/[feature].schema.ts` oluşturulur.
+    - Manuel `if/else` validation **kesinlikle yasaktır**.
+    - `zodResolver` dışında resolver kullanılamaz.
+    - Server hataları `setError()` ile ilgili field'a atanır.
+    - `z.infer<typeof schema>` ile tip üretilir; ayrıca tip yazmak **yasaktır**.

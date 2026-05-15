@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
@@ -10,29 +12,18 @@ import {
   useCreateLoanRemaining,
   useUpdateLoanRemaining,
 } from '../hooks/useLoanRemaining'
-import type {
-  LoanRemaining,
-  LoanRemainingPayload,
-} from '../api/loanRemainingApi'
+import type { LoanRemaining } from '../api/loanRemainingApi'
+import {
+  loanRemainingFormSchema,
+  type LoanRemainingFormData,
+  DEFAULT_FORM_VALUES,
+  buildPayload,
+} from '../schemas/loanRemaining.schema'
 
 interface LoanRemainingFormProps {
   mode: 'create' | 'edit'
   initialData?: LoanRemaining
   loanRemainingId?: string
-}
-
-interface FormState {
-  passportSeries: string
-  passportNumber: string
-  loanAccount: string
-}
-
-type FormErrors = Partial<Record<keyof FormState, string>>
-
-const INITIAL_STATE: FormState = {
-  passportSeries: '',
-  passportNumber: '',
-  loanAccount: '',
 }
 
 export function LoanRemainingForm({
@@ -48,66 +39,30 @@ export function LoanRemainingForm({
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const [form, setForm] = useState<FormState>(() =>
-    mode === 'edit' && initialData
-      ? {
-          passportSeries: initialData.passportSeries,
-          passportNumber: initialData.passportNumber,
-          loanAccount: initialData.loanAccount,
-        }
-      : INITIAL_STATE
-  )
-
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [submitted, setSubmitted] = useState(false)
+  const {
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<LoanRemainingFormData>({
+    resolver: zodResolver(loanRemainingFormSchema),
+    defaultValues: DEFAULT_FORM_VALUES,
+    mode: 'onSubmit',
+  })
 
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      setForm({
+      reset({
         passportSeries: initialData.passportSeries,
         passportNumber: initialData.passportNumber,
         loanAccount: initialData.loanAccount,
       })
     }
-  }, [mode, initialData])
+  }, [mode, initialData, reset])
 
-  const set = useCallback(
-    <K extends keyof FormState>(key: K, value: FormState[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }))
-      if (submitted) {
-        setErrors((prev) => ({ ...prev, [key]: undefined }))
-      }
-    },
-    [submitted]
-  )
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!form.passportSeries.trim()) {
-      newErrors.passportSeries = t('common.required', 'Hökman doldurylmaly')
-    }
-    if (!form.passportNumber.trim()) {
-      newErrors.passportNumber = t('common.required', 'Hökman doldurylmaly')
-    }
-    if (!form.loanAccount.trim()) {
-      newErrors.loanAccount = t('common.required', 'Hökman doldurylmaly')
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e?: React.FormEvent) => {
-    e?.preventDefault()
-    setSubmitted(true)
-
-    if (!validate()) {
-      toast.error(t('common.errors.fillRequired', 'Hökman doldurylmaly öýjükleri dolduryň'))
-      return
-    }
-
-    const payload: LoanRemainingPayload = form
+  const onSubmit = (data: LoanRemainingFormData) => {
+    const payload = buildPayload(data)
 
     if (mode === 'create') {
       createMutation.mutate(payload, {
@@ -132,36 +87,40 @@ export function LoanRemainingForm({
     }
   }
 
+  const onError = () => {
+    toast.error(t('common.errors.fillRequired', 'Hökman doldurylmaly öýjükleri dolduryň'))
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput
             label={t('loanRemaining.columns.passportSeries', 'Pasport seriýasy')}
             required
-            value={form.passportSeries}
-            onChange={(v) => set('passportSeries', v)}
+            value={watch('passportSeries')}
+            onChange={(v) => setValue('passportSeries', v)}
             placeholder={t('loanRemaining.placeholders.passportSeries', 'TM')}
-            error={errors.passportSeries}
+            error={errors.passportSeries?.message}
           />
 
           <FormInput
             label={t('loanRemaining.columns.passportNumber', 'Pasport belgisi')}
             required
-            value={form.passportNumber}
-            onChange={(v) => set('passportNumber', v)}
+            value={watch('passportNumber')}
+            onChange={(v) => setValue('passportNumber', v)}
             placeholder="A123456"
-            error={errors.passportNumber}
+            error={errors.passportNumber?.message}
           />
 
           <div className="md:col-span-2">
             <FormInput
               label={t('loanRemaining.columns.loanAccount', 'Karz hasaby')}
               required
-              value={form.loanAccount}
-              onChange={(v) => set('loanAccount', v)}
+              value={watch('loanAccount')}
+              onChange={(v) => setValue('loanAccount', v)}
               placeholder="NOVA-..."
-              error={errors.loanAccount}
+              error={errors.loanAccount?.message}
             />
           </div>
         </div>
@@ -169,7 +128,7 @@ export function LoanRemainingForm({
 
       <FormActions
         isPending={isPending}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit, onError)}
         onCancel={() => navigate('/loan-remaining')}
         submitLabel={mode === 'create'
           ? t('common.create', 'Döret')

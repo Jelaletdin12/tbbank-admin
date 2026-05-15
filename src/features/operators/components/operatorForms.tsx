@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import { useCreateOperator, useUpdateOperator } from '../hooks/useOperators'
-import type { Operator, CreateOperatorPayload, UpdateOperatorPayload } from '../api/operatorsApi'
+import { operatorFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/operator.schema'
+import type { OperatorFormData } from '../schemas/operator.schema'
+import type { Operator } from '../api/operatorsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,19 +19,17 @@ interface OperatorFormProps {
   operatorId?: number
 }
 
-interface FormState {
-  username: string
-  name: string
-  phone: string
-  email: string
-  password: string
-  isActive: boolean
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface FormErrors {
-  username?: string
-  name?: string
-  password?: string
+type FlatErrors = Partial<Record<keyof OperatorFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof OperatorFormData] = msg
+  }
+  return result
 }
 
 // ─── OperatorForm ─────────────────────────────────────────────────────────────
@@ -41,76 +43,54 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // ── Form state ──────────────────────────────────────────────────────────────
-  const [form, setForm] = useState<FormState>({
-    username: '',
-    name: '',
-    phone: '',
-    email: '',
-    password: '',
-    isActive: true,
+  const schema = useMemo(() => operatorFormSchema(mode), [mode])
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<OperatorFormData>({
+    resolver: zodResolver(schema as any),
+    defaultValues: initialData
+      ? {
+          ...DEFAULT_FORM_VALUES,
+          username: initialData.username,
+          name: initialData.name,
+          phone: initialData.phone ?? '',
+          email: initialData.email ?? '',
+          password: '',
+          isActive: initialData.isActive,
+        }
+      : DEFAULT_FORM_VALUES,
   })
 
-  const [errors, setErrors] = useState<FormErrors>({})
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  // Populate form in edit mode
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        username: initialData.username ?? '',
-        name: initialData.name ?? '',
-        phone: initialData.phone ?? '',
-        email: initialData.email ?? '',
-        password: '',
-        isActive: initialData.isActive ?? true,
-      })
-    }
-  }, [mode, initialData])
-
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  const set = (field: keyof FormState) => (value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }))
-
-  const validate = (): boolean => {
-    const next: FormErrors = {}
-    if (!form.username.trim())
-      next.username = t('operators.errors.usernameRequired', 'Ulanyjy ady hökmany')
-    if (!form.name.trim())
-      next.name = t('operators.errors.nameRequired', 'Ady hökmany')
-    if (mode === 'create' && !form.password.trim())
-      next.password = t('operators.errors.passwordRequired', 'Açar sözi hökmany')
-    setErrors(next)
-    return Object.keys(next).length === 0
+  const setField = <K extends keyof OperatorFormData>(key: K, value: OperatorFormData[K]) => {
+    ;(setValue as (name: K, val: OperatorFormData[K]) => void)(key, value)
+    clearErrors(key)
   }
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  const handleSubmit = () => {
-    if (!validate()) return
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const data = getValues()
 
     if (mode === 'create') {
-      const payload: CreateOperatorPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim() || undefined,
-        email: form.email.trim() || undefined,
-        password: form.password,
-        isActive: form.isActive,
-      }
+      const payload = buildPayload(data)
       createMutation.mutate(payload, {
         onSuccess: () => navigate('/operators'),
       })
     } else {
-      const payload: UpdateOperatorPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim() || undefined,
-        email: form.email.trim() || undefined,
-        isActive: form.isActive,
-      }
-      if (form.password.trim()) {
-        payload.password = form.password
-      }
-      updateMutation.mutate(payload, {
+      updateMutation.mutate({
+        username: data.username.trim(),
+        name: data.name.trim(),
+        phone: data.phone.trim() || undefined,
+        email: data.email.trim() || undefined,
+        isActive: data.isActive,
+        ...(data.password.trim() ? { password: data.password } : {}),
+      }, {
         onSuccess: () => navigate(`/operators/${operatorId}`),
       })
     }
@@ -128,7 +108,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         <FormInput
           type="text"
           value={form.username}
-          onChange={set('username')}
+          onChange={(v) => setField('username', v)}
           placeholder={t('operators.fields.username', 'Ulanyjy ady')}
           error={errors.username}
           disabled={isPending}
@@ -145,7 +125,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         <FormInput
           type="text"
           value={form.name}
-          onChange={set('name')}
+          onChange={(v) => setField('name', v)}
           placeholder={t('operators.fields.name', 'Ady')}
           error={errors.name}
           disabled={isPending}
@@ -161,7 +141,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         <FormInput
           type="phone"
           value={form.phone}
-          onChange={set('phone')}
+          onChange={(v) => setField('phone', v)}
           disabled={isPending}
           className="max-w-lg"
         />
@@ -175,7 +155,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         <FormInput
           type="email"
           value={form.email}
-          onChange={set('email')}
+          onChange={(v) => setField('email', v)}
           placeholder={t('operators.fields.email', 'E-poçta')}
           disabled={isPending}
           className="max-w-lg"
@@ -192,7 +172,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
           <FormInput
             type="password"
             value={form.password}
-            onChange={set('password')}
+            onChange={(v) => setField('password', v)}
             placeholder={
               mode === 'edit'
                 ? t('operators.fields.passwordEditHint', 'Üýtgetmek üçin täze açar söz giriziň')
@@ -219,7 +199,7 @@ export function OperatorForm({ mode, initialData, operatorId }: OperatorFormProp
         </span>
         <Checkbox
           checked={form.isActive}
-          onCheckedChange={(v) => setForm((prev) => ({ ...prev, isActive: !!v }))}
+          onCheckedChange={(v) => setField('isActive', !!v)}
           disabled={isPending}
           className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />

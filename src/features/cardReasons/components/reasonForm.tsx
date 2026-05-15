@@ -1,64 +1,30 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
-import type { CardReason, CreateCardReasonPayload } from '../api/cardReasonsApi'
+import type { CardReason } from '../api/cardReasonsApi'
 import { useCreateCardReason, useUpdateCardReason } from '../hooks/useCardReasons'
+import { cardReasonFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardReason.schema'
+import type { CardReasonFormData } from '../schemas/cardReason.schema'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Form errors helper ──────────────────────────────────────────────────────
 
-interface FormErrors {
-  nameTk?: string
-  nameRu?: string
-  nameEn?: string
-  value?: string
-}
+type FlatErrors = Partial<Record<keyof CardReasonFormData, string>>
 
-interface FormState {
-  nameTk: string
-  nameRu: string
-  nameEn: string
-  value: string
-  description: string
-  isActive: boolean
-}
-
-interface CardReasonFormProps {
-  mode: 'create' | 'edit'
-  initialData?: CardReason
-  CardReasonId?: number
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function buildInitialState(data?: CardReason): FormState {
-  if (!data) {
-    return { nameTk: '', nameRu: '', nameEn: '', value: '', description: '', isActive: true }
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardReasonFormData] = msg
   }
-  return {
-    nameTk: data.name.tk,
-    nameRu: data.name.ru,
-    nameEn: data.name.en,
-    value: String(data.value),
-    description: data.description ?? '',
-    isActive: data.isActive,
-  }
+  return result
 }
 
-function validate(form: FormState, t: (k: string, fb: string) => string): FormErrors {
-  const errors: FormErrors = {}
-  if (!form.nameTk.trim())
-    errors.nameTk = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameRu.trim())
-    errors.nameRu = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameEn.trim())
-    errors.nameEn = t('validation.required', 'Hökmany meýdan')
-  if (!form.value.trim() || isNaN(Number(form.value)) || Number(form.value) < 0)
-    errors.value = t('validation.invalidNumber', 'Dogry san giriziň')
-  return errors
-}
+type FormErrors = FlatErrors
 
 // ─── Lang Tab ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +38,23 @@ const LANG_TABS: { key: LangKey; label: string }[] = [
 
 // ─── CardReasonForm ─────────────────────────────────────────────────────────────
 
+interface CardReasonFormProps {
+  mode: 'create' | 'edit'
+  initialData?: CardReason
+  CardReasonId?: number
+}
+
+function mapInitial(data: CardReason): CardReasonFormData {
+  return {
+    nameTk: data.name.tk,
+    nameRu: data.name.ru,
+    nameEn: data.name.en,
+    value: String(data.value),
+    description: data.description ?? '',
+    isActive: data.isActive,
+  }
+}
+
 export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -81,32 +64,29 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<CardReasonFormData>({
+    resolver: zodResolver(cardReasonFormSchema),
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [form, setForm] = useState<FormState>(() => buildInitialState(initialData))
-  const [errors, setErrors] = useState<FormErrors>({})
 
-  // Sync form when initialData arrives (edit mode data fetch)
-  useEffect(() => {
-    if (initialData) setForm(buildInitialState(initialData))
-  }, [initialData])
-
-  const set = (key: keyof FormState) => (value: string | boolean) =>
-    setForm((prev) => ({ ...prev, [key]: value }))
+  const set = useCallback(<K extends keyof CardReasonFormData>(key: K, value: CardReasonFormData[K]) => {
+    (setValue as (name: K, val: CardReasonFormData[K]) => void)(key, value)
+    clearErrors(key)
+  }, [setValue, clearErrors])
 
   const handleSubmit = () => {
-    const errs = validate(form, t)
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
-      return
-    }
-    setErrors({})
+    const values = getValues()
+    const result = cardReasonFormSchema.safeParse(values)
+    if (!result.success) return
 
-    const payload: CreateCardReasonPayload = {
-      name: { tk: form.nameTk, ru: form.nameRu, en: form.nameEn },
-      value: Number(form.value),
-      description: form.description.trim() || null,
-      isActive: form.isActive,
-    }
+    const payload = buildPayload(values)
 
     if (mode === 'create') {
       createMutation.mutate(payload, {
@@ -157,7 +137,7 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
           <FormInput
             type="text"
             value={form[nameFieldKey]}
-            onChange={set(nameFieldKey)}
+            onChange={(v) => set(nameFieldKey, v)}
             placeholder={t('CardReasons.fields.name', 'Ady')}
             error={errors[nameErrorKey]}
           />
@@ -172,7 +152,7 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
           <FormInput
             type="number"
             value={form.value}
-            onChange={set('value')}
+            onChange={(v) => set('value', v)}
             placeholder={t('CardReasons.fields.value', 'Baha')}
             error={errors.value}
           />
@@ -186,7 +166,7 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
           <FormInput
             type="text"
             value={form.description}
-            onChange={set('description')}
+            onChange={(v) => set('description', v)}
             placeholder={t('CardReasons.fields.description', 'Bellikler')}
           />
         </div>
@@ -198,7 +178,7 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
           </span>
           <Checkbox
             checked={form.isActive}
-            onCheckedChange={(checked) => set('isActive')(!!checked)}
+            onCheckedChange={(checked) => set('isActive', !!checked)}
           />
         </div>
       </div>

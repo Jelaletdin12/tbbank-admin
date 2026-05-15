@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { FormActions } from '@/components/formActions'
 import { useCreateUser, useUpdateUser } from '../hooks/useAllUsers'
-import type { User, CreateUserPayload, UpdateUserPayload } from '../api/allUsersApi'
+import type { User } from '../api/allUsersApi'
+import { allUserFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/allUser.schema'
+import type { AllUserFormData } from '../schemas/allUser.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,47 +20,17 @@ interface UserFormProps {
   userId?: number
 }
 
-interface FormState {
-  username: string
-  name: string
-  phone: string
-  email: string
-  password: string
-  phoneVerified: boolean
-  isActive: boolean
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface FormErrors {
-  username?: string
-  name?: string
-  phone?: string
-  email?: string
-  password?: string
-}
+type FlatErrors = Partial<Record<keyof AllUserFormData, string>>
 
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-function validateForm(state: FormState, mode: 'create' | 'edit'): FormErrors {
-  const errors: FormErrors = {}
-
-  if (!state.username.trim()) errors.username = 'Ulanyjy ady hökmany'
-  else if (state.username.length < 3) errors.username = 'Ulanyjy ady iň az 3 harp bolmaly'
-
-  if (!state.name.trim()) errors.name = 'Ady hökmany'
-
-  if (!state.phone.trim()) errors.phone = 'Telefon hökmany'
-  else if (!/^\d[\d\s-]{6,}$/.test(state.phone)) errors.phone = 'Nädogry telefon formaty'
-
-  if (state.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.email)) {
-    errors.email = 'Nädogry e-poçta formaty'
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof AllUserFormData] = msg
   }
-
-  if (mode === 'create') {
-    if (!state.password) errors.password = 'Açar sözi hökmany'
-    else if (state.password.length < 6) errors.password = 'Açar sözi iň az 6 harp bolmaly'
-  }
-
-  return errors
+  return result
 }
 
 // ─── UserForm ─────────────────────────────────────────────────────────────────
@@ -70,69 +44,53 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
 
   const isPending = createUser.isPending || updateUser.isPending
 
-  const [form, setForm] = useState<FormState>({
-    username: '',
-    name: '',
-    phone: '',
-    email: '',
-    password: '',
-    phoneVerified: false,
-    isActive: true,
+  const schema = useMemo(() => allUserFormSchema(mode), [mode])
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<AllUserFormData>({
+    resolver: zodResolver(schema as any),
+    defaultValues: initialData
+      ? {
+          ...DEFAULT_FORM_VALUES,
+          username: initialData.username,
+          name: initialData.name,
+          phone: initialData.phone.replace(/^\+993[-\s]?/, ''),
+          email: initialData.email ?? '',
+          password: '',
+          phoneVerified: initialData.phoneVerified,
+          isActive: initialData.isActive,
+        }
+      : DEFAULT_FORM_VALUES,
   })
 
-  const [errors, setErrors] = useState<FormErrors>({})
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  // Populate form when initialData is available (edit mode)
-  useEffect(() => {
-    if (initialData) {
-      setForm({
-        username: initialData.username,
-        name: initialData.name,
-        phone: initialData.phone.replace(/^\+993[-\s]?/, ''),
-        email: initialData.email ?? '',
-        password: '',
-        phoneVerified: initialData.phoneVerified,
-        isActive: initialData.isActive,
-      })
-    }
-  }, [initialData])
-
-  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [key]: undefined }))
-    }
+  const setField = <K extends keyof AllUserFormData>(key: K, value: AllUserFormData[K]) => {
+    (setValue as (name: K, val: AllUserFormData[K]) => void)(key, value)
+    clearErrors(key)
   }
 
   const handleSubmit = async () => {
-    const validationErrors = validateForm(form, mode)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const data = getValues()
 
     if (mode === 'create') {
-      const payload: CreateUserPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
-        password: form.password,
-        phoneVerified: form.phoneVerified,
-        isActive: form.isActive,
-      }
+      const payload = buildPayload(data)
       await createUser.mutateAsync(payload)
       navigate('/users')
     } else {
-      const payload: UpdateUserPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
-        phoneVerified: form.phoneVerified,
-        isActive: form.isActive,
-      }
-      await updateUser.mutateAsync(payload)
+      await updateUser.mutateAsync({
+        username: data.username.trim(),
+        name: data.name.trim(),
+        phone: data.phone.trim(),
+        email: data.email.trim() || undefined,
+        phoneVerified: data.phoneVerified,
+        isActive: data.isActive,
+      })
       navigate(`/users/${userId}`)
     }
   }

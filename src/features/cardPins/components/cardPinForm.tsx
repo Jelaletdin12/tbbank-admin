@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -9,6 +10,8 @@ import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import type { CardPinItem, CardPinCreatePayload } from '@/features/cardPins/api/cardPinApi'
+import { validateStep, DEFAULT_FORM_VALUES } from '@/features/cardPins/schemas/cardPin.schema'
+import type { CardPinFormData } from '@/features/cardPins/schemas/cardPin.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,28 +21,6 @@ interface CardPinFormProps {
   onSubmit: (payload: CardPinCreatePayload) => void
   isSubmitting: boolean
 }
-
-interface FormState {
-  status: string
-  note: string
-  card_type: string
-  card_number: string
-  province: string
-  branch: string
-  first_name: string
-  last_name: string
-  father_name: string
-  birth_date: string
-  phone: string
-  passport_series: string
-  passport_number: string
-  passport_file_1: File | null
-  passport_file_2: File | null
-  passport_file_3: File | null
-  passport_file_4: File | null
-}
-
-type FormErrors = Partial<Record<keyof FormState, string>>
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -71,32 +52,17 @@ const PROVINCE_OPTIONS = [
   { value: 'ahal',     label: 'Ahal'    },
 ]
 
-const INITIAL_STATE: FormState = {
-  status: 'pending', note: '', card_type: '', card_number: '',
-  province: '', branch: '', first_name: '', last_name: '', father_name: '',
-  birth_date: '', phone: '', passport_series: '', passport_number: '',
-  passport_file_1: null, passport_file_2: null,
-  passport_file_3: null, passport_file_4: null,
-}
+// ─── Form errors helper ──────────────────────────────────────────────────────
 
-function mapToFormState(data: CardPinItem): FormState {
-  return {
-    status:          data.status          ?? 'pending',
-    note:            data.note            ?? '',
-    card_type:       data.card_type       ?? '',
-    card_number:     data.card_number     ?? '',
-    province:        data.province        ?? '',
-    branch:          data.branch          ?? '',
-    first_name:      data.first_name      ?? '',
-    last_name:       data.last_name       ?? '',
-    father_name:     data.father_name     ?? '',
-    birth_date:      data.birth_date      ?? '',
-    phone:           data.phone           ?? '',
-    passport_series: data.passport_series ?? '',
-    passport_number: data.passport_number ?? '',
-    passport_file_1: null, passport_file_2: null,
-    passport_file_3: null, passport_file_4: null,
+type FlatErrors = Partial<Record<keyof CardPinFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardPinFormData] = msg
   }
+  return result
 }
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -107,7 +73,7 @@ interface StepDef {
   titleFallback: string
   subtitle: string
   icon: LucideIcon
-  validate: (form: FormState, mode: 'create' | 'edit') => FormErrors
+  validate: (form: CardPinFormData, mode: 'create' | 'edit') => FlatErrors
 }
 
 const STEPS: StepDef[] = [
@@ -117,15 +83,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Kart',
     subtitle: 'Görnüş & lokasiýa',
     icon: CreditCard,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.status)      e.status      = 'Status hökmany'
-      if (!form.card_type)   e.card_type   = 'Kart görnüşi hökmany'
-      if (!form.card_number) e.card_number = 'Kart belgisi hökmany'
-      if (!form.province)    e.province    = 'Welaýat hökmany'
-      if (!form.branch)      e.branch      = 'Şahamça hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(0, form, mode),
   },
   {
     id: 'personal',
@@ -133,14 +91,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Şahsy',
     subtitle: 'Maglumatlar',
     icon: User,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.first_name) e.first_name = 'Ady hökmany'
-      if (!form.last_name)  e.last_name  = 'Familiýasy hökmany'
-      if (!form.birth_date) e.birth_date = 'Doglan güni hökmany'
-      if (!form.phone)      e.phone      = 'Telefon hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(1, form, mode),
   },
   {
     id: 'passport',
@@ -148,18 +99,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Pasport',
     subtitle: 'Resminamalar',
     icon: FileText,
-    validate: (form, mode) => {
-      const e: FormErrors = {}
-      if (!form.passport_series) e.passport_series = 'Pasport seriýasy hökmany'
-      if (!form.passport_number) e.passport_number = 'Pasport belgisi hökmany'
-      if (mode === 'create') {
-        if (!form.passport_file_1) e.passport_file_1 = 'Pasport (sahypa 1) hökmany'
-        if (!form.passport_file_2) e.passport_file_2 = 'Pasport (2-3-nji sahypa) hökmany'
-        if (!form.passport_file_3) e.passport_file_3 = 'Pasport (8-9 sahypa) hökmany'
-        if (!form.passport_file_4) e.passport_file_4 = 'Pasport (32-nji sahypa) hökmany'
-      }
-      return e
-    },
+    validate: (form, mode) => validateStep(2, form, mode),
   },
 ]
 
@@ -210,9 +150,9 @@ function BentoCard({
 // ─── Shared step content props ────────────────────────────────────────────────
 
 interface StepContentProps {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: CardPinFormData
+  errors: FlatErrors
+  set: <K extends keyof CardPinFormData>(k: K, v: CardPinFormData[K]) => void
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
@@ -457,16 +397,21 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
   const { t }    = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm]   = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<CardPinFormData>({
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
-
-  useEffect(() => {
-    if (initialData) setForm(mapToFormState(initialData))
-  }, [initialData])
 
   // ── Computed step errors ───────────────────────────────────────────────────
 
@@ -480,10 +425,10 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
 
   // ── set helper ─────────────────────────────────────────────────────────────
 
-  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-  }, [])
+  const set = useCallback(<K extends keyof CardPinFormData>(key: K, value: CardPinFormData[K]) => {
+    (setValue as (name: K, val: CardPinFormData[K]) => void)(key, value)
+    clearErrors(key)
+  }, [setValue, clearErrors])
 
   const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
 
@@ -496,25 +441,21 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     markVisited(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs)
       toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
       return
     }
-    setErrors({})
     setCurrentStep(currentStep + 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleBack = () => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(currentStep - 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleGoTo = (i: number) => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(i)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -524,14 +465,14 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
   const handleSubmit = () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
 
-    const allErrors: FormErrors = {}
-    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
+    const values = getValues()
+    const allErrors: FlatErrors = {}
+    for (const step of STEPS) Object.assign(allErrors, step.validate(values, mode))
 
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
       toast.error('Käbir hökmany meýdanlar doldurylan däldir.')
       for (let i = 0; i < STEPS.length; i++) {
-        if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
+        if (Object.keys(STEPS[i].validate(values, mode)).length > 0) {
           setCurrentStep(i)
           break
         }
@@ -540,23 +481,23 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
     }
 
     onSubmit({
-      status:          form.status as CardPinCreatePayload['status'],
-      note:            form.note,
-      card_type:       form.card_type,
-      card_number:     form.card_number,
-      province:        form.province,
-      branch:          form.branch,
-      first_name:      form.first_name,
-      last_name:       form.last_name,
-      father_name:     form.father_name,
-      birth_date:      form.birth_date,
-      phone:           form.phone,
-      passport_series: form.passport_series,
-      passport_number: form.passport_number,
-      passport_file_1: form.passport_file_1,
-      passport_file_2: form.passport_file_2,
-      passport_file_3: form.passport_file_3,
-      passport_file_4: form.passport_file_4,
+      status:          values.status as CardPinCreatePayload['status'],
+      note:            values.note ?? '',
+      card_type:       values.card_type,
+      card_number:     values.card_number,
+      province:        values.province,
+      branch:          values.branch,
+      first_name:      values.first_name,
+      last_name:       values.last_name,
+      father_name:     values.father_name ?? '',
+      birth_date:      values.birth_date,
+      phone:           values.phone,
+      passport_series: values.passport_series,
+      passport_number: values.passport_number,
+      passport_file_1: values.passport_file_1,
+      passport_file_2: values.passport_file_2,
+      passport_file_3: values.passport_file_3,
+      passport_file_4: values.passport_file_4,
     })
   }
 
@@ -613,4 +554,22 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
       />
     </div>
   )
+}
+
+function mapInitial(data: CardPinItem): Partial<CardPinFormData> {
+  return {
+    status:          data.status          ?? 'pending',
+    note:            data.note            ?? '',
+    card_type:       data.card_type       ?? '',
+    card_number:     data.card_number     ?? '',
+    province:        data.province        ?? '',
+    branch:          data.branch          ?? '',
+    first_name:      data.first_name      ?? '',
+    last_name:       data.last_name       ?? '',
+    father_name:     data.father_name     ?? '',
+    birth_date:      data.birth_date      ?? '',
+    phone:           data.phone           ?? '',
+    passport_series: data.passport_series ?? '',
+    passport_number: data.passport_number ?? '',
+  }
 }

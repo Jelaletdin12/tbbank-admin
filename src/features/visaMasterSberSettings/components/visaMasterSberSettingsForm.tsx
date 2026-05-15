@@ -1,29 +1,23 @@
-// features/visaMasterSettings/components/VisaMasterSettingForm.tsx
-
-import { useEffect, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
-import { type VisaMasterSetting } from '../api/visaMasterSberSettingsApi'
+import type { VisaMasterSetting } from '../api/visaMasterSberSettingsApi'
 import {
   useCreateVisaMasterSetting,
   useUpdateVisaMasterSetting,
 } from '../hooks/useVisaMasterSettings'
+import {
+  visaMasterSettingFormSchema,
+  DEFAULT_FORM_VALUES,
+  buildPayload,
+} from '../schemas/visaMasterSberSetting.schema'
+import type { VisaMasterSettingFormData } from '../schemas/visaMasterSberSetting.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FormState {
-  kod:   string
-  ady:   string
-  yazgy: string
-}
-
-interface FormErrors {
-  kod?:   string
-  ady?:   string
-  yazgy?: string
-}
 
 export interface VisaMasterSettingFormProps {
   mode:         'create' | 'edit'
@@ -31,24 +25,27 @@ export interface VisaMasterSettingFormProps {
   settingId?:   number
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function validate(
-  form: FormState,
-  t: (key: string, fallback: string) => string
-): FormErrors {
-  const errors: FormErrors = {}
+function mapInitial(data: VisaMasterSetting): VisaMasterSettingFormData {
+  return {
+    kod:   data.kod,
+    ady:   data.ady,
+    yazgy: data.yazgy,
+  }
+}
 
-  if (!form.kod.trim())
-    errors.kod = t('visaMasterSettings.errors.kodRequired', 'Kod giriziň')
+type FlatErrors = Partial<Record<keyof VisaMasterSettingFormData, string>>
 
-  if (!form.ady.trim())
-    errors.ady = t('visaMasterSettings.errors.adyRequired', 'Ady giriziň')
-
-  if (!form.yazgy.trim())
-    errors.yazgy = t('visaMasterSettings.errors.yazgyRequired', 'Yazgy giriziň')
-
-  return errors
+function flattenErrors(
+  errors: Record<string, { message?: string } | undefined>
+): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof VisaMasterSettingFormData] = msg
+  }
+  return result
 }
 
 // ─── VisaMasterSettingForm ────────────────────────────────────────────────────
@@ -61,42 +58,44 @@ export function VisaMasterSettingForm({
   const { t }    = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState<FormState>({
-    kod:   initialData?.kod   ?? '',
-    ady:   initialData?.ady   ?? '',
-    yazgy: initialData?.yazgy ?? '',
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
-
   const createMutation = useCreateVisaMasterSetting()
   const updateMutation = useUpdateVisaMasterSetting(settingId ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // Sync when initialData arrives (edit mode async fetch)
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        kod:   initialData.kod,
-        ady:   initialData.ady,
-        yazgy: initialData.yazgy,
-      })
-    }
-  }, [mode, initialData])
+  const {
+    watch,
+    setValue,
+    formState: { errors: rhfErrors },
+    clearErrors,
+    trigger,
+    getValues,
+  } = useForm<VisaMasterSettingFormData>({
+    resolver: zodResolver(visaMasterSettingFormSchema),
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
 
-  const setField = (field: keyof FormState) => (val: string) => {
-    setForm((prev) => ({ ...prev, [field]: val }))
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const form   = watch()
+  const errors = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
 
-  const handleSubmit = async () => {
-    const validationErrors = validate(form, t)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
+  const set = useCallback(
+    (key: keyof VisaMasterSettingFormData) => (value: string) => {
+      setValue(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
-    const payload = { kod: form.kod.trim(), ady: form.ady.trim(), yazgy: form.yazgy.trim() }
+  const handleSubmit = useCallback(async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       await createMutation.mutateAsync(payload)
@@ -105,7 +104,7 @@ export function VisaMasterSettingForm({
       await updateMutation.mutateAsync(payload)
       navigate('/resources/visa-master-settings')
     }
-  }
+  }, [mode, createMutation, updateMutation, navigate, trigger, getValues])
 
   const handleCancel = () => navigate('/resources/visa-master-settings')
 
@@ -122,7 +121,7 @@ export function VisaMasterSettingForm({
         <FormInput
           type="text"
           value={form.kod}
-          onChange={setField('kod')}
+          onChange={set('kod')}
           placeholder={t('visaMasterSettings.fields.kod', 'Kod')}
           error={errors.kod}
           disabled={isPending}
@@ -138,7 +137,7 @@ export function VisaMasterSettingForm({
         <FormInput
           type="text"
           value={form.ady}
-          onChange={setField('ady')}
+          onChange={set('ady')}
           placeholder={t('visaMasterSettings.fields.ady', 'Ady')}
           error={errors.ady}
           disabled={isPending}
@@ -154,7 +153,7 @@ export function VisaMasterSettingForm({
         <FormInput
           type="textarea"
           value={form.yazgy}
-          onChange={setField('yazgy')}
+          onChange={set('yazgy')}
           placeholder={t('visaMasterSettings.fields.yazgy', 'Yazgy')}
           error={errors.yazgy}
           disabled={isPending}

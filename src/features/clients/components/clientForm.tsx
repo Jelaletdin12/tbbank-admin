@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import { useCreateClient, useUpdateClient } from '../hooks/useClients'
-import type { Client, CreateClientPayload, UpdateClientPayload } from '../api/clientsApi'
+import { clientFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/client.schema'
+import type { ClientFormData } from '../schemas/client.schema'
+import type { Client } from '../api/clientsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,20 +19,17 @@ interface ClientFormProps {
   clientId?: number
 }
 
-interface FormState {
-  username: string
-  name: string
-  phone: string
-  email: string
-  password: string
-  isActive: boolean
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-interface FormErrors {
-  username?: string
-  name?: string
-  phone?: string
-  password?: string
+type FlatErrors = Partial<Record<keyof ClientFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof ClientFormData] = msg
+  }
+  return result
 }
 
 // ─── ClientForm ───────────────────────────────────────────────────────────────
@@ -42,78 +43,54 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // ── Form state ──────────────────────────────────────────────────────────────
-  const [form, setForm] = useState<FormState>({
-    username: '',
-    name: '',
-    phone: '',
-    email: '',
-    password: '',
-    isActive: true,
+  const schema = useMemo(() => clientFormSchema(mode), [mode])
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<ClientFormData>({
+    resolver: zodResolver(schema as any),
+    defaultValues: initialData
+      ? {
+          ...DEFAULT_FORM_VALUES,
+          username: initialData.username,
+          name: initialData.name,
+          phone: initialData.phone ?? '',
+          email: initialData.email ?? '',
+          password: '',
+          isActive: initialData.isActive,
+        }
+      : DEFAULT_FORM_VALUES,
   })
 
-  const [errors, setErrors] = useState<FormErrors>({})
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  // Populate form in edit mode
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        username: initialData.username ?? '',
-        name: initialData.name ?? '',
-        phone: initialData.phone ?? '',
-        email: initialData.email ?? '',
-        password: '',
-        isActive: initialData.isActive ?? true,
-      })
-    }
-  }, [mode, initialData])
-
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  const set = (field: keyof FormState) => (value: string) =>
-    setForm((prev) => ({ ...prev, [field]: value }))
-
-  const validate = (): boolean => {
-    const next: FormErrors = {}
-    if (!form.username.trim())
-      next.username = t('clients.errors.usernameRequired', 'Ulanyjy ady hökmany')
-    if (!form.name.trim())
-      next.name = t('clients.errors.nameRequired', 'Ady hökmany')
-    if (!form.phone.trim())
-      next.phone = t('clients.errors.phoneRequired', 'Telefon hökmany')
-    if (mode === 'create' && !form.password.trim())
-      next.password = t('clients.errors.passwordRequired', 'Açar sözi hökmany')
-    setErrors(next)
-    return Object.keys(next).length === 0
+  const setField = <K extends keyof ClientFormData>(key: K, value: ClientFormData[K]) => {
+    ;(setValue as (name: K, val: ClientFormData[K]) => void)(key, value)
+    clearErrors(key)
   }
 
   // ── Submit ──────────────────────────────────────────────────────────────────
-  const handleSubmit = () => {
-    if (!validate()) return
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const data = getValues()
 
     if (mode === 'create') {
-      const payload: CreateClientPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
-        password: form.password,
-        isActive: form.isActive,
-      }
+      const payload = buildPayload(data)
       createMutation.mutate(payload, {
         onSuccess: () => navigate('/clients'),
       })
     } else {
-      const payload: UpdateClientPayload = {
-        username: form.username.trim(),
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
-        isActive: form.isActive,
-      }
-      if (form.password.trim()) {
-        payload.password = form.password
-      }
-      updateMutation.mutate(payload, {
+      updateMutation.mutate({
+        username: data.username.trim(),
+        name: data.name.trim(),
+        phone: data.phone.trim(),
+        email: data.email.trim() || undefined,
+        isActive: data.isActive,
+        ...(data.password.trim() ? { password: data.password } : {}),
+      }, {
         onSuccess: () => navigate(`/clients/${clientId}`),
       })
     }
@@ -131,7 +108,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         <FormInput
           type="text"
           value={form.username}
-          onChange={set('username')}
+          onChange={(v) => setField('username', v)}
           placeholder={t('clients.fields.username', 'Ulanyjy ady')}
           error={errors.username}
           disabled={isPending}
@@ -148,7 +125,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         <FormInput
           type="text"
           value={form.name}
-          onChange={set('name')}
+          onChange={(v) => setField('name', v)}
           placeholder={t('clients.fields.name', 'Ady')}
           error={errors.name}
           disabled={isPending}
@@ -165,7 +142,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         <FormInput
           type="phone"
           value={form.phone}
-          onChange={set('phone')}
+          onChange={(v) => setField('phone', v)}
           error={errors.phone}
           disabled={isPending}
           className="max-w-lg"
@@ -180,7 +157,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         <FormInput
           type="email"
           value={form.email}
-          onChange={set('email')}
+          onChange={(v) => setField('email', v)}
           placeholder={t('clients.fields.email', 'E-poçta')}
           disabled={isPending}
           className="max-w-lg"
@@ -197,7 +174,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
           <FormInput
             type="password"
             value={form.password}
-            onChange={set('password')}
+            onChange={(v) => setField('password', v)}
             placeholder={
               mode === 'edit'
                 ? t('clients.fields.passwordEditHint', 'Üýtgetmek üçin täze açar söz giriziň')
@@ -221,7 +198,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         </span>
         <Checkbox
           checked={form.isActive}
-          onCheckedChange={(v) => setForm((prev) => ({ ...prev, isActive: !!v }))}
+          onCheckedChange={(v) => setField('isActive', !!v)}
           disabled={isPending}
           className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />

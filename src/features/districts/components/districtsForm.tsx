@@ -1,25 +1,27 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
-import type { District, CreateDistrictPayload } from '../api/districtsApi'
+import type { District } from '../api/districtsApi'
 import { useCreateDistrict, useUpdateDistrict } from '../hooks/useDistricts'
+import { districtFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/district.schema'
+import type { DistrictFormData } from '../schemas/district.schema'
 
-interface FormErrors {
-  nameTk?: string
-  nameRu?: string
-  nameEn?: string
+type FlatErrors = Partial<Record<keyof DistrictFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof DistrictFormData] = msg
+  }
+  return result
 }
 
-interface FormState {
-  nameTk: string
-  nameRu: string
-  nameEn: string
-  description: string
-  isActive: boolean
-}
+type FormErrors = FlatErrors
 
 export interface DistrictFormProps {
   mode: 'create' | 'edit'
@@ -35,10 +37,7 @@ const LANG_TABS: { key: LangKey; label: string }[] = [
   { key: 'en', label: 'English' },
 ]
 
-function buildInitialState(data?: District): FormState {
-  if (!data) {
-    return { nameTk: '', nameRu: '', nameEn: '', description: '', isActive: true }
-  }
+function mapInitial(data: District): DistrictFormData {
   return {
     nameTk: data.name.tk,
     nameRu: data.name.ru,
@@ -46,14 +45,6 @@ function buildInitialState(data?: District): FormState {
     description: data.description ?? '',
     isActive: data.isActive,
   }
-}
-
-function validate(form: FormState, t: (k: string, fb: string) => string): FormErrors {
-  const errors: FormErrors = {}
-  if (!form.nameTk.trim()) errors.nameTk = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameRu.trim()) errors.nameRu = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameEn.trim()) errors.nameEn = t('validation.required', 'Hökmany meýdan')
-  return errors
 }
 
 export function DistrictForm({ mode, initialData, districtId }: DistrictFormProps) {
@@ -65,30 +56,29 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<DistrictFormData>({
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [form, setForm] = useState<FormState>(() => buildInitialState(initialData))
-  const [errors, setErrors] = useState<FormErrors>({})
 
-  useEffect(() => {
-    if (initialData) setForm(buildInitialState(initialData))
-  }, [initialData])
-
-  const set = (key: keyof FormState) => (value: string | boolean) =>
-    setForm((prev) => ({ ...prev, [key]: value }))
+  const set = useCallback(<K extends keyof DistrictFormData>(key: K) =>
+    (value: DistrictFormData[K]) => {
+      (setValue as (name: K, val: DistrictFormData[K]) => void)(key, value)
+      clearErrors(key)
+    }, [setValue, clearErrors])
 
   const handleSubmit = () => {
-    const errs = validate(form, t)
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
-      return
-    }
-    setErrors({})
+    const values = getValues()
+    const result = districtFormSchema.safeParse(values)
+    if (!result.success) return
 
-    const payload: CreateDistrictPayload = {
-      name: { tk: form.nameTk, ru: form.nameRu, en: form.nameEn },
-      description: form.description.trim() || null,
-      isActive: form.isActive,
-    }
+    const payload = buildPayload(values)
 
     if (mode === 'create') {
       createMutation.mutate(payload, {

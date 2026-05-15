@@ -1,6 +1,7 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -8,8 +9,10 @@ import type { LucideIcon } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
-import type { CardRequisite, CardRequisiteStatus, CreateCardRequisitePayload } from '../api/cardRequisitesApi'
+import type { CardRequisite } from '../api/cardRequisitesApi'
 import { useCreateCardRequisite, useUpdateCardRequisite } from '../hooks/useCardRequisites'
+import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardRequisite.schema'
+import type { CardRequisiteFormData } from '../schemas/cardRequisite.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,29 +22,16 @@ interface CardRequisiteFormProps {
   cardRequisiteId?: string
 }
 
-interface FormState {
-  status: string
-  note: string
-  card_type: string
-  card_number: string
-  card_expiry_month: string
-  card_expiry_year: string
-  province_id: string
-  branch_id: string
-  first_name: string
-  last_name: string
-  middle_name: string
-  birth_date: string
-  phone: string
-  passport_series: string
-  passport_number: string
-  passport_page1: File | null
-  passport_page2_3: File | null
-  passport_page8_9: File | null
-  passport_page32: File | null
-}
+type FlatErrors = Partial<Record<keyof CardRequisiteFormData, string>>
 
-type FormErrors = Partial<Record<keyof FormState, string>>
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardRequisiteFormData] = msg
+  }
+  return result
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -95,16 +85,7 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
   return { value: year, label: year }
 })
 
-const INITIAL_STATE: FormState = {
-  status: 'pending', note: '', card_type: '', card_number: '',
-  card_expiry_month: '', card_expiry_year: '', province_id: '', branch_id: '',
-  first_name: '', last_name: '', middle_name: '', birth_date: '', phone: '',
-  passport_series: '', passport_number: '',
-  passport_page1: null, passport_page2_3: null,
-  passport_page8_9: null, passport_page32: null,
-}
-
-function mapToFormState(data: CardRequisite): FormState {
+function mapInitial(data: CardRequisite): CardRequisiteFormData {
   return {
     status:            data.status            ?? 'pending',
     note:              data.note              ?? '',
@@ -134,7 +115,7 @@ interface StepDef {
   titleFallback: string
   subtitle: string
   icon: LucideIcon
-  validate: (form: FormState, mode: 'create' | 'edit') => FormErrors
+  validate: (form: CardRequisiteFormData, mode: 'create' | 'edit') => FlatErrors
 }
 
 const STEPS: StepDef[] = [
@@ -144,17 +125,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Kart',
     subtitle: 'Görnüş & lokasiýa',
     icon: CreditCard,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.status)            e.status            = 'Status hökmanydyr'
-      if (!form.card_type)         e.card_type         = 'Görnüşi hökmanydyr'
-      if (!form.card_number)       e.card_number       = 'Kart belgisi hökmanydyr'
-      if (!form.card_expiry_month) e.card_expiry_month = 'Möhleti (aý) hökmanydyr'
-      if (!form.card_expiry_year)  e.card_expiry_year  = 'Möhleti (ýyl) hökmanydyr'
-      if (!form.province_id)       e.province_id       = 'Welaýat hökmanydyr'
-      if (!form.branch_id)         e.branch_id         = 'Şahamça hökmanydyr'
-      return e
-    },
+    validate: (form, mode) => validateStep(0, form, mode),
   },
   {
     id: 'personal',
@@ -162,14 +133,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Şahsy',
     subtitle: 'At & telefon',
     icon: User,
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.first_name) e.first_name = 'Ady hökmanydyr'
-      if (!form.last_name)  e.last_name  = 'Familiýasy hökmanydyr'
-      if (!form.birth_date) e.birth_date = 'Doglan güni hökmanydyr'
-      if (!form.phone)      e.phone      = 'Telefon hökmanydyr'
-      return e
-    },
+    validate: (form, mode) => validateStep(1, form, mode),
   },
   {
     id: 'passport',
@@ -177,18 +141,7 @@ const STEPS: StepDef[] = [
     titleFallback: 'Pasport',
     subtitle: 'Resminamalar',
     icon: FileText,
-    validate: (form, mode) => {
-      const e: FormErrors = {}
-      if (!form.passport_series) e.passport_series = 'Pasport seriýasy hökmanydyr'
-      if (!form.passport_number) e.passport_number = 'Pasport belgisi hökmanydyr'
-      if (mode === 'create') {
-        if (!form.passport_page1)   e.passport_page1   = 'Hökmanydyr'
-        if (!form.passport_page2_3) e.passport_page2_3 = 'Hökmanydyr'
-        if (!form.passport_page8_9) e.passport_page8_9 = 'Hökmanydyr'
-        if (!form.passport_page32)  e.passport_page32  = 'Hökmanydyr'
-      }
-      return e
-    },
+    validate: (form, mode) => validateStep(2, form, mode),
   },
 ]
 
@@ -239,9 +192,9 @@ function BentoCard({
 // ─── Shared step content props ────────────────────────────────────────────────
 
 interface StepContentProps {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: CardRequisiteFormData
+  errors: FlatErrors
+  set: <K extends keyof CardRequisiteFormData>(k: K, v: CardRequisiteFormData[K]) => void
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
@@ -524,16 +477,19 @@ export function CardRequisiteForm({
   const updateMutation = useUpdateCardRequisite(cardRequisiteId ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const [form, setForm]   = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<CardRequisiteFormData>({
+    defaultValues: initialData ? mapInitial(initialData) : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
-
-  useEffect(() => {
-    if (initialData) setForm(mapToFormState(initialData))
-  }, [initialData])
 
   // ── Computed step errors ───────────────────────────────────────────────────
 
@@ -547,10 +503,10 @@ export function CardRequisiteForm({
 
   // ── set helper ─────────────────────────────────────────────────────────────
 
-  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-  }, [])
+  const set = useCallback(<K extends keyof CardRequisiteFormData>(key: K, value: CardRequisiteFormData[K]) => {
+    (setValue as (name: K, val: CardRequisiteFormData[K]) => void)(key, value)
+    clearErrors(key)
+  }, [setValue, clearErrors])
 
   const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
 
@@ -563,25 +519,21 @@ export function CardRequisiteForm({
     markVisited(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs)
       toast.error(t('Fix errors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
-    setErrors({})
     setCurrentStep(currentStep + 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleBack = () => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(currentStep - 1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleGoTo = (i: number) => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(i)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -596,11 +548,10 @@ export function CardRequisiteForm({
   const handleSubmit = async () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
 
-    const allErrors: FormErrors = {}
+    const allErrors: FlatErrors = {}
     for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
       toast.error(t('Fix errors', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
@@ -611,27 +562,7 @@ export function CardRequisiteForm({
       return
     }
 
-    const payload: CreateCardRequisitePayload = {
-      status:            form.status as CardRequisiteStatus,
-      note:              form.note              || undefined,
-      card_type:         form.card_type,
-      card_number:       form.card_number,
-      card_expiry_month: form.card_expiry_month,
-      card_expiry_year:  form.card_expiry_year,
-      province_id:       form.province_id,
-      branch_id:         form.branch_id,
-      first_name:        form.first_name,
-      last_name:         form.last_name,
-      middle_name:       form.middle_name       || undefined,
-      birth_date:        form.birth_date,
-      phone:             form.phone,
-      passport_series:   form.passport_series,
-      passport_number:   form.passport_number,
-      ...(form.passport_page1   && { passport_page1:   form.passport_page1   }),
-      ...(form.passport_page2_3 && { passport_page2_3: form.passport_page2_3 }),
-      ...(form.passport_page8_9 && { passport_page8_9: form.passport_page8_9 }),
-      ...(form.passport_page32  && { passport_page32:  form.passport_page32  }),
-    }
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       await createMutation.mutateAsync(payload)

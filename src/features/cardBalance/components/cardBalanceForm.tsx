@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { type CardBalance } from '@/features/cardBalance/api/cardBalanceApi'
 import { useCreateCardBalance, useUpdateCardBalance } from '@/features/cardBalance/hooks/useCardBalance'
+import { DEFAULT_FORM_VALUES, buildPayload } from '@/features/cardBalance/schemas/cardBalance.schema'
+import type { CardBalanceFormData } from '@/features/cardBalance/schemas/cardBalance.schema'
 
 interface CardBalanceFormProps {
   mode: 'create' | 'edit'
@@ -12,20 +15,15 @@ interface CardBalanceFormProps {
   cardBalanceId?: number
 }
 
-interface FormState {
-  passport_series: string
-  passport_number: string
-  card_number: string
-  card_expiry_month: string
-  card_expiry_year: string
-}
+type FlatErrors = Partial<Record<keyof CardBalanceFormData, string>>
 
-interface FormErrors {
-  passport_series?: string
-  passport_number?: string
-  card_number?: string
-  card_expiry_month?: string
-  card_expiry_year?: string
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardBalanceFormData] = msg
+  }
+  return result
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -56,68 +54,37 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
   return { value: year, label: year }
 })
 
-const EMPTY_FORM: FormState = {
-  passport_series: '',
-  passport_number: '',
-  card_number: '',
-  card_expiry_month: '',
-  card_expiry_year: '',
-}
-
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-function validate(form: FormState, t: (k: string, fallback: string) => string): FormErrors {
-  const errors: FormErrors = {}
-  if (!form.passport_series)   errors.passport_series   = t('Required', 'Pasport seriýasy hökmanydyr')
-  if (!form.passport_number)   errors.passport_number   = t('Required', 'Pasport belgisi hökmanydyr')
-  if (!form.card_number)       errors.card_number       = t('Required', 'Kart belgisi hökmanydyr')
-  if (!form.card_expiry_month) errors.card_expiry_month = t('Required', 'Möhleti (aý) hökmanydyr')
-  if (!form.card_expiry_year)  errors.card_expiry_year  = t('Required', 'Möhleti (ýyl) hökmanydyr')
-  return errors
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanceFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm]     = useState<FormState>(EMPTY_FORM)
-  const [errors, setErrors] = useState<FormErrors>({})
-
   const createMutation = useCreateCardBalance()
   const updateMutation = useUpdateCardBalance(cardBalanceId ?? 0)
   const isPending      = createMutation.isPending || updateMutation.isPending
 
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        passport_series:   initialData.passport_series,
-        passport_number:   initialData.passport_number,
-        card_number:       initialData.card_number,
-        card_expiry_month: initialData.card_expiry_month,
-        card_expiry_year:  initialData.card_expiry_year,
-      })
-    }
-  }, [mode, initialData])
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<CardBalanceFormData>({
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...initialData } : DEFAULT_FORM_VALUES,
+  })
 
-  const setField = (field: keyof FormState) => (value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
+  const setField = useCallback((field: keyof CardBalanceFormData) => (value: string) => {
+    (setValue as (name: keyof CardBalanceFormData, val: string) => void)(field, value)
+    clearErrors(field)
+  }, [setValue, clearErrors])
 
   const handleSubmit = async () => {
-    const validationErrors = validate(form, t)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
-
+    const payload = buildPayload(getValues())
     if (mode === 'create') {
-      await createMutation.mutateAsync(form)
+      await createMutation.mutateAsync(payload)
       navigate('/card-balances')
     } else {
-      await updateMutation.mutateAsync(form)
+      await updateMutation.mutateAsync(payload)
       navigate(`/card-balances/${cardBalanceId}`)
     }
   }

@@ -1,14 +1,16 @@
-// features/loanTypes/components/LoanTypeForm.tsx
-
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { Label } from '@/components/ui/label'
 import { FormActions } from '@/components/formActions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCreateLoanType, useUpdateLoanType } from '../hooks/useLoanTypes'
-import type { LoanType, CreateLoanTypePayload } from '../api/loanTypesApi'
+import type { LoanType } from '../api/loanTypesApi'
+import { loanTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/loanType.schema'
+import type { LoanTypeFormData } from '../schemas/loanType.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,12 +22,29 @@ interface LoanTypeFormProps {
   loanTypeId?: number
 }
 
-interface FormErrors {
-  nameTk?: string
-  nameRu?: string
-  nameEn?: string
-  tax?: string
-  loanTerm?: string
+type FlatErrors = Partial<Record<keyof LoanTypeFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof LoanTypeFormData] = msg
+  }
+  return result
+}
+
+function mapInitial(data: LoanType): LoanTypeFormData {
+  return {
+    nameTk: data.name.tk,
+    nameRu: data.name.ru,
+    nameEn: data.name.en,
+    notesTk: data.notes?.tk ?? '',
+    notesRu: data.notes?.ru ?? '',
+    notesEn: data.notes?.en ?? '',
+    tax: String(data.tax),
+    loanTerm: String(data.loanTerm),
+    isActive: data.isActive,
+  }
 }
 
 // ─── Language Tab ─────────────────────────────────────────────────────────────
@@ -38,25 +57,6 @@ const LANG_TABS: { key: Lang; label: string }[] = [
   { key: 'en', label: 'English' },
 ]
 
-// ─── Validation ───────────────────────────────────────────────────────────────
-
-function validate(
-  nameTk: string,
-  nameRu: string,
-  nameEn: string,
-  tax: string,
-  loanTerm: string,
-  t: (key: string, fallback: string) => string
-): FormErrors {
-  const errors: FormErrors = {}
-  if (!nameTk.trim()) errors.nameTk = t('validation.required', 'Hökmany meýdan')
-  if (!nameRu.trim()) errors.nameRu = t('validation.required', 'Hökmany meýdan')
-  if (!nameEn.trim()) errors.nameEn = t('validation.required', 'Hökmany meýdan')
-  if (!tax || Number(tax) <= 0) errors.tax = t('validation.positiveNumber', 'Oňyn san gerek')
-  if (!loanTerm || Number(loanTerm) <= 0) errors.loanTerm = t('validation.positiveNumber', 'Oňyn san gerek')
-  return errors
-}
-
 // ─── LoanTypeForm ─────────────────────────────────────────────────────────────
 
 export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProps) {
@@ -68,53 +68,42 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // ── State ──────────────────────────────────────────────────────────────────
   const [activeLang, setActiveLang] = useState<Lang>('tk')
-  const [nameTk, setNameTk]         = useState('')
-  const [nameRu, setNameRu]         = useState('')
-  const [nameEn, setNameEn]         = useState('')
-  const [notesTk, setNotesTk]       = useState('')
-  const [notesRu, setNotesRu]       = useState('')
-  const [notesEn, setNotesEn]       = useState('')
-  const [tax, setTax]               = useState('')
-  const [loanTerm, setLoanTerm]     = useState('')
-  const [isActive, setIsActive]     = useState(true)
-  const [errors, setErrors]         = useState<FormErrors>({})
 
-  // ── Populate on edit ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setNameTk(initialData.name.tk)
-      setNameRu(initialData.name.ru)
-      setNameEn(initialData.name.en)
-      setNotesTk(initialData.notes?.tk ?? '')
-      setNotesRu(initialData.notes?.ru ?? '')
-      setNotesEn(initialData.notes?.en ?? '')
-      setTax(String(initialData.tax))
-      setLoanTerm(String(initialData.loanTerm))
-      setIsActive(initialData.isActive)
-    }
-  }, [mode, initialData])
+  const {
+    watch,
+    setValue,
+    formState: { errors: rhfErrors },
+    clearErrors,
+    trigger,
+    getValues,
+  } = useForm<LoanTypeFormData>({
+    resolver: zodResolver(loanTypeFormSchema),
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
+
+  const set = useCallback(
+    (key: keyof LoanTypeFormData) => (value: string | boolean) => {
+      (setValue as (k: keyof LoanTypeFormData, v: string | boolean) => void)(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    const validationErrors = validate(nameTk, nameRu, nameEn, tax, loanTerm, t)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
-      return
-    }
-    setErrors({})
+    const isValid = await trigger()
+    if (!isValid) return
 
-    const payload: CreateLoanTypePayload = {
-      name:     { tk: nameTk.trim(), ru: nameRu.trim(), en: nameEn.trim() },
-      tax:      Number(tax),
-      loanTerm: Number(loanTerm),
-      notes:
-        notesTk.trim() || notesRu.trim() || notesEn.trim()
-          ? { tk: notesTk.trim(), ru: notesRu.trim(), en: notesEn.trim() }
-          : null,
-      isActive,
-    }
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       const result = await createMutation.mutateAsync(payload)
@@ -129,15 +118,15 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
 
   // ── Name fields per lang ───────────────────────────────────────────────────
   const nameFields: Record<Lang, { value: string; onChange: (v: string) => void; error?: string }> = {
-    tk: { value: nameTk, onChange: setNameTk, error: errors.nameTk },
-    ru: { value: nameRu, onChange: setNameRu, error: errors.nameRu },
-    en: { value: nameEn, onChange: setNameEn, error: errors.nameEn },
+    tk: { value: form.nameTk, onChange: set('nameTk'), error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: set('nameRu'), error: errors.nameRu },
+    en: { value: form.nameEn, onChange: set('nameEn'), error: errors.nameEn },
   }
 
   const notesFields: Record<Lang, { value: string; onChange: (v: string) => void }> = {
-    tk: { value: notesTk, onChange: setNotesTk },
-    ru: { value: notesRu, onChange: setNotesRu },
-    en: { value: notesEn, onChange: setNotesEn },
+    tk: { value: form.notesTk ?? '', onChange: set('notesTk') },
+    ru: { value: form.notesRu ?? '', onChange: set('notesRu') },
+    en: { value: form.notesEn ?? '', onChange: set('notesEn') },
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -187,8 +176,8 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
           </span>
           <FormInput
             type="number"
-            value={tax}
-            onChange={setTax}
+            value={form.tax}
+            onChange={set('tax')}
             placeholder={t('loanTypes.fields.tax', 'Salgyt')}
             error={errors.tax}
           />
@@ -202,8 +191,8 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
           </span>
           <FormInput
             type="number"
-            value={loanTerm}
-            onChange={setLoanTerm}
+            value={form.loanTerm}
+            onChange={set('loanTerm')}
             placeholder={t('loanTypes.fields.loanTerm', 'Karz möhleti')}
             error={errors.loanTerm}
           />
@@ -230,10 +219,11 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
           <div className="flex items-center gap-2">
             <Checkbox
               id="isActive"
-              checked={isActive}
+              checked={form.isActive}
+              onCheckedChange={(checked) => set('isActive')(!!checked)}
             />
             <Label htmlFor="isActive" className="text-sm text-foreground cursor-pointer">
-              {isActive
+              {form.isActive
                 ? t('common.active', 'Işjeň')
                 : t('common.inactive', 'Işjeň däl')}
             </Label>

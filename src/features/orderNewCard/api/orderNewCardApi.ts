@@ -158,7 +158,7 @@ export interface CreateCardOrderPayload {
 
 export interface UpdateCardOrderPayload extends Partial<CreateCardOrderPayload> {}
 
-import {apiClient} from '@/lib/api/client'
+import apiClient from '@/lib/api/client'
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 const USE_MOCK = true

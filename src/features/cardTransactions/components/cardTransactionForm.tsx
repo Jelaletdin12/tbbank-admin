@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
+import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import type { CardTransaction } from '../api/cardTransactionsApi'
 import { useCreateCardTransaction, useUpdateCardTransaction } from '../hooks/useCardTransactions'
+import { cardTransactionFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardTransaction.schema'
+import type { CardTransactionFormData } from '../schemas/cardTransaction.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,22 +15,6 @@ interface CardTransactionFormProps {
   mode: 'create' | 'edit'
   initialData?: CardTransaction
   cardTransactionId?: number
-}
-
-interface FormState {
-  passport_series: string
-  passport_number: string
-  card_number: string
-  card_expiry_month: string
-  card_expiry_year: string
-}
-
-interface FormErrors {
-  passport_series?: string
-  passport_number?: string
-  card_number?: string
-  card_expiry_month?: string
-  card_expiry_year?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -50,31 +37,17 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
   return { value: year, label: year }
 })
 
-const EMPTY_FORM: FormState = {
-  passport_series: '',
-  passport_number: '',
-  card_number: '',
-  card_expiry_month: '',
-  card_expiry_year: '',
-}
+// ─── Form errors helper ───────────────────────────────────────────────────────
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+type FlatErrors = Partial<Record<keyof CardTransactionFormData, string>>
 
-function validate(form: FormState, t: (k: string, fallback: string) => string): FormErrors {
-  const errors: FormErrors = {}
-
-  if (!form.passport_series)
-    errors.passport_series = t('Passport series is required', 'Pasport seriýasy hökmanydyr')
-  if (!form.passport_number)
-    errors.passport_number = t('Passport number is required', 'Pasport belgisi hökmanydyr')
-  if (!form.card_number)
-    errors.card_number = t('Card number is required', 'Kart belgisi hökmanydyr')
-  if (!form.card_expiry_month)
-    errors.card_expiry_month = t('Expiry month is required', 'Möhleti (aý) hökmanydyr')
-  if (!form.card_expiry_year)
-    errors.card_expiry_year = t('Expiry year is required', 'Möhleti (ýyl) hökmanydyr')
-
-  return errors
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardTransactionFormData] = msg
+  }
+  return result
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -87,44 +60,42 @@ export function CardTransactionForm({
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [form, setForm] = useState<FormState>(EMPTY_FORM)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
+  } = useForm<CardTransactionFormData>({
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...initialData }
+      : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
   const createMutation = useCreateCardTransaction()
   const updateMutation = useUpdateCardTransaction(cardTransactionId ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // Populate form when editing
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm({
-        passport_series: initialData.passport_series,
-        passport_number: initialData.passport_number,
-        card_number: initialData.card_number,
-        card_expiry_month: initialData.card_expiry_month,
-        card_expiry_year: initialData.card_expiry_year,
-      })
-    }
-  }, [mode, initialData])
-
-  const setField = (field: keyof FormState) => (value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }))
+  const setField = (field: keyof CardTransactionFormData) => (value: string) => {
+    setValue(field, value)
+    clearErrors(field)
   }
 
   const handleSubmit = async () => {
-    const validationErrors = validate(form, t)
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors)
+    const result = cardTransactionFormSchema.safeParse(getValues())
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof CardTransactionFormData
+        setError(key, { message: issue.message })
+      }
       return
     }
 
     if (mode === 'create') {
-      await createMutation.mutateAsync(form)
+      await createMutation.mutateAsync(buildPayload(result.data))
       navigate('/card-transactions')
     } else {
-      await updateMutation.mutateAsync(form)
+      await updateMutation.mutateAsync(buildPayload(result.data))
       navigate(`/card-transactions/${cardTransactionId}`)
     }
   }

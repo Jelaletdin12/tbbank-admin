@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
   FileText,
@@ -19,9 +20,10 @@ import {
 } from "@/features/loanOrderMobiles/hooks/useLoanOrderMobiles";
 import type {
   LoanOrderMobile,
-  LoanOrderMobilePayload,
 } from "@/features/loanOrderMobiles/api/loanOrderMobilesApi";
 import { BRANCHES_BY_REGION_MOBILE } from "@/features/loanOrderMobiles/api/loanOrderMobilesApi";
+import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from "@/features/loanOrderMobiles/schemas/loanOrderMobile.schema";
+import type { LoanOrderMobileFormData } from "@/features/loanOrderMobiles/schemas/loanOrderMobile.schema";
 
 // ─── Static options ───────────────────────────────────────────────────────────
 
@@ -127,129 +129,17 @@ function BentoCard({
   );
 }
 
-// ─── FormState ────────────────────────────────────────────────────────────────
+// ─── Form errors helper ──────────────────────────────────────────────────────
 
-interface FormState {
-  status: string;
-  loanType: string;
-  region: string;
-  branch: string;
-  firstName: string;
-  lastName: string;
-  patronicName: string;
-  education: string;
-  marriageStatus: string;
-  dateOfBirth: string;
-  residence: string;
-  currentResidence: string;
-  passportSerie: string;
-  passportNumber: string;
-  passportDateOfIssue: string;
-  passportGivenBy: string;
-  bornPlace: string;
-  email: string;
-  phone: string;
-  phoneAdditional: string;
-  homePhone: string;
-  workCompany: string;
-  workHrPhone: string;
-  workRegion: string;
-  workProvince: string;
-  position: string;
-  salary: string;
-  workStartedAt: string;
-  passportPage1: File | null;
-  passportPage23: File | null;
-  passportPage89: File | null;
-  passportPage32: File | null;
-  note: string;
-  loanAmount: string;
-  loanHistory: string;
-  cardNumber: string;
-  cardName: string;
-  cardExpMonth: string;
-  cardExpYear: string;
-  guarantor1Name: string;
-  guarantor1Surname: string;
-  guarantor1Patronic: string;
-  guarantor1PassportSerie: string;
-  guarantor1PassportNumber: string;
-  guarantor1CardNumber: string;
-  guarantor1CardName: string;
-  guarantor1CardExpMonth: string;
-  guarantor1CardExpYear: string;
-  guarantor1Salary: string;
-}
+type FlatErrors = Partial<Record<keyof LoanOrderMobileFormData, string>>
 
-type FormErrors = Partial<Record<keyof FormState, string>>;
-
-const INITIAL_STATE: FormState = {
-  status: "GARAŞYLÝAR", loanType: "", region: "Aşgabat", branch: "",
-  firstName: "", lastName: "", patronicName: "", education: "",
-  marriageStatus: "", dateOfBirth: "", residence: "", currentResidence: "",
-  passportSerie: "", passportNumber: "", passportDateOfIssue: "",
-  passportGivenBy: "", bornPlace: "", email: "", phone: "",
-  phoneAdditional: "", homePhone: "", workCompany: "", workHrPhone: "",
-  workRegion: "Aşgabat", workProvince: "", position: "", salary: "",
-  workStartedAt: "", passportPage1: null, passportPage23: null,
-  passportPage89: null, passportPage32: null, note: "", loanAmount: "",
-  loanHistory: "", cardNumber: "", cardName: "", cardExpMonth: "", cardExpYear: "",
-  guarantor1Name: "", guarantor1Surname: "", guarantor1Patronic: "",
-  guarantor1PassportSerie: "", guarantor1PassportNumber: "",
-  guarantor1CardNumber: "", guarantor1CardName: "",
-  guarantor1CardExpMonth: "", guarantor1CardExpYear: "", guarantor1Salary: "",
-};
-
-function mapToFormState(order: LoanOrderMobile): FormState {
-  return {
-    status:              order.status              ?? "GARAŞYLÝAR",
-    loanType:            order.loanType            ?? "",
-    region:              order.region              ?? "Aşgabat",
-    branch:              order.branch              ?? "",
-    firstName:           order.firstName           ?? "",
-    lastName:            order.lastName            ?? "",
-    patronicName:        order.patronicName        ?? "",
-    education:           order.education           ?? "",
-    marriageStatus:      order.marriageStatus      ?? "",
-    dateOfBirth:         order.dateOfBirth         ?? "",
-    residence:           order.residence           ?? "",
-    currentResidence:    order.currentResidence    ?? "",
-    passportSerie:       order.passportSerie       ?? "",
-    passportNumber:      order.passportNumber      ?? "",
-    passportDateOfIssue: order.passportDateOfIssue ?? "",
-    passportGivenBy:     order.passportGivenBy     ?? "",
-    bornPlace:           order.bornPlace           ?? "",
-    email:               order.email               ?? "",
-    phone:               order.phone               ?? "",
-    phoneAdditional:     order.phoneAdditional     ?? "",
-    homePhone:           order.homePhone           ?? "",
-    workCompany:         order.workCompany         ?? "",
-    workHrPhone:         order.workHrPhone         ?? "",
-    workRegion:          order.workRegion          ?? "Aşgabat",
-    workProvince:        order.workProvince        ?? "",
-    position:            order.position            ?? "",
-    salary:              order.salary != null ? String(order.salary) : "",
-    workStartedAt:       order.workStartedAt       ?? "",
-    passportPage1: null, passportPage23: null,
-    passportPage89: null, passportPage32: null,
-    note:         order.note        ?? "",
-    loanAmount:   order.loanAmount != null ? String(order.loanAmount) : "",
-    loanHistory:  order.loanHistory ?? "",
-    cardNumber:   order.cardNumber  ?? "",
-    cardName:     order.cardName    ?? "",
-    cardExpMonth: order.cardExpMonth ?? "",
-    cardExpYear:  order.cardExpYear  ?? "",
-    guarantor1Name:           order.guarantor1Name           ?? "",
-    guarantor1Surname:        order.guarantor1Surname        ?? "",
-    guarantor1Patronic:       order.guarantor1Patronic       ?? "",
-    guarantor1PassportSerie:  order.guarantor1PassportSerie  ?? "",
-    guarantor1PassportNumber: order.guarantor1PassportNumber ?? "",
-    guarantor1CardNumber:     order.guarantor1CardNumber     ?? "",
-    guarantor1CardName:       order.guarantor1CardName       ?? "",
-    guarantor1CardExpMonth:   order.guarantor1CardExpMonth   ?? "",
-    guarantor1CardExpYear:    order.guarantor1CardExpYear    ?? "",
-    guarantor1Salary: order.guarantor1Salary != null ? String(order.guarantor1Salary) : "",
-  };
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof LoanOrderMobileFormData] = msg
+  }
+  return result
 }
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
@@ -259,8 +149,7 @@ interface StepDef {
   title: string;
   subtitle: string;
   icon: LucideIcon;
-  fields: Array<keyof FormState>;
-  validate: (form: FormState, mode: "create" | "edit") => FormErrors;
+  validate: (form: LoanOrderMobileFormData, mode: "create" | "edit") => FlatErrors;
 }
 
 const STEPS: StepDef[] = [
@@ -269,113 +158,44 @@ const STEPS: StepDef[] = [
     title: "Karz",
     subtitle: "Görnüş, möçber & lokasiýa",
     icon: FileText,
-    fields: ["loanType", "loanAmount", "region", "branch"],
-    validate: (form) => {
-      const e: FormErrors = {};
-      if (!form.loanType)   e.loanType   = "Karz görnüşi — hökmany";
-      if (!form.loanAmount) e.loanAmount = "Karz möçberi — hökmany";
-      if (!form.region)     e.region     = "Welaýat — hökmany";
-      if (!form.branch)     e.branch     = "Şahamça — hökmany";
-      return e;
-    },
+    validate: (form, mode) => validateStep(0, form, mode),
   },
   {
     id: "personal",
     title: "Şahsy & Pasport",
     subtitle: "Şahsyýet & pasport",
     icon: User,
-    fields: [
-      "firstName", "lastName", "education", "marriageStatus",
-      "dateOfBirth", "residence", "passportSerie", "passportNumber",
-      "passportDateOfIssue", "passportGivenBy",
-    ],
-    validate: (form) => {
-      const e: FormErrors = {};
-      if (!form.firstName)           e.firstName           = "Ady — hökmany";
-      if (!form.lastName)            e.lastName            = "Familiýasy — hökmany";
-      if (!form.education)           e.education           = "Bilimi — hökmany";
-      if (!form.marriageStatus)      e.marriageStatus      = "Maşgala ýagdaýy — hökmany";
-      if (!form.dateOfBirth)         e.dateOfBirth         = "Doglan güni — hökmany";
-      if (!form.residence)           e.residence           = "Ýazgy edilen salgy — hökmany";
-      if (!form.passportSerie)       e.passportSerie       = "Pasport seriýasy — hökmany";
-      if (!form.passportNumber)      e.passportNumber      = "Pasport belgisi — hökmany";
-      if (!form.passportDateOfIssue) e.passportDateOfIssue = "Pasport berlen senesi — hökmany";
-      if (!form.passportGivenBy)     e.passportGivenBy     = "Kim tarapyndan berildi — hökmany";
-      return e;
-    },
+    validate: (form, mode) => validateStep(1, form, mode),
   },
   {
     id: "contact",
     title: "Habarlaşmak & Iş",
     subtitle: "Telefon & iş",
     icon: Phone,
-    fields: ["phone", "workCompany", "position", "salary", "workStartedAt"],
-    validate: (form) => {
-      const e: FormErrors = {};
-      if (!form.phone) {
-        e.phone = "Telefon — hökmany";
-      } else if (form.phone.replace(/\D/g, "").length < 8) {
-        e.phone = "Telefon belgisi nädogry";
-      }
-      if (!form.workCompany)   e.workCompany   = "Kärhananyň ady — hökmany";
-      if (!form.position)      e.position      = "Wezipe — hökmany";
-      if (!form.salary)        e.salary        = "Zähmet haky — hökmany";
-      if (!form.workStartedAt) e.workStartedAt = "Işe başlan wagty — hökmany";
-      return e;
-    },
+    validate: (form, mode) => validateStep(2, form, mode),
   },
   {
     id: "card",
     title: "Kart & Zamun",
     subtitle: "Töleg & zamun",
     icon: CreditCard,
-    fields: [
-      "cardNumber", "cardName", "cardExpMonth", "cardExpYear",
-      "guarantor1Name", "guarantor1Surname", "guarantor1PassportSerie",
-      "guarantor1PassportNumber", "guarantor1CardNumber", "guarantor1CardName",
-      "guarantor1CardExpMonth", "guarantor1CardExpYear", "guarantor1Salary",
-    ],
-    validate: (form) => {
-      const e: FormErrors = {};
-      if (!form.cardNumber)               e.cardNumber               = "Kart belgisi — hökmany";
-      if (!form.cardName)                 e.cardName                 = "Kartdaky ady — hökmany";
-      if (!form.cardExpMonth)             e.cardExpMonth             = "Kart möhleti (aý) — hökmany";
-      if (!form.cardExpYear)              e.cardExpYear              = "Kart möhleti (ýyl) — hökmany";
-      if (!form.guarantor1Name)           e.guarantor1Name           = "Zamunyň ady — hökmany";
-      if (!form.guarantor1Surname)        e.guarantor1Surname        = "Zamunyň familiýasy — hökmany";
-      if (!form.guarantor1PassportSerie)  e.guarantor1PassportSerie  = "Pasport seriýasy — hökmany";
-      if (!form.guarantor1PassportNumber) e.guarantor1PassportNumber = "Pasport belgisi — hökmany";
-      if (!form.guarantor1CardNumber)     e.guarantor1CardNumber     = "Kart belgisi — hökmany";
-      if (!form.guarantor1CardName)       e.guarantor1CardName       = "Kartdaky ady — hökmany";
-      if (!form.guarantor1CardExpMonth)   e.guarantor1CardExpMonth   = "Möhleti (aý) — hökmany";
-      if (!form.guarantor1CardExpYear)    e.guarantor1CardExpYear    = "Möhleti (ýyl) — hökmany";
-      if (!form.guarantor1Salary)         e.guarantor1Salary         = "Ortaca zähmet haky — hökmany";
-      return e;
-    },
+    validate: (form, mode) => validateStep(3, form, mode),
   },
   {
     id: "files",
     title: "Faýllar & Status",
     subtitle: "Resminamalar",
     icon: Upload,
-    fields: ["passportPage1", "passportPage23"],
-    validate: (form, mode) => {
-      const e: FormErrors = {};
-      if (mode === "create") {
-        if (!form.passportPage1)  e.passportPage1  = "Pasport (sahypa 1) hökmany";
-        if (!form.passportPage23) e.passportPage23 = "Pasport (sahypa 2-3) hökmany";
-      }
-      return e;
-    },
+    validate: (form, mode) => validateStep(4, form, mode),
   },
 ];
 
 // ─── Shared step content props ────────────────────────────────────────────────
 
 interface StepContentProps {
-  form: FormState;
-  errors: FormErrors;
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void;
+  form: LoanOrderMobileFormData;
+  errors: FlatErrors;
+  set: <K extends keyof LoanOrderMobileFormData>(k: K, v: LoanOrderMobileFormData[K]) => void;
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
@@ -712,8 +532,13 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
   const updateMutation = useUpdateLoanOrderMobile();
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const [form, setForm]     = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<LoanOrderMobileFormData>({ defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES });
+
+  const form = watch();
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors]);
+
   const [currentStep, setCurrentStep] = useState(0);
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === "edit" ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
@@ -727,10 +552,10 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
     return out;
   }, [form, mode, visited]);
 
-  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  }, []);
+  const set = useCallback(<K extends keyof LoanOrderMobileFormData>(key: K, value: LoanOrderMobileFormData[K]) => {
+    (setValue as (name: K, val: LoanOrderMobileFormData[K]) => void)(key, value);
+    clearErrors(key);
+  }, [setValue, clearErrors]);
 
   const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set]);
 
@@ -743,11 +568,9 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
     markVisited(currentStep);
     const errs = STEPS[currentStep].validate(form, mode);
     if (Object.keys(errs).length > 0) {
-      setErrors(errs);
       toast.error("Dogry maglumat girizmegiňizi haýyş edýäris.");
       return;
     }
-    setErrors({});
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -757,7 +580,6 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
   const handleBack = () => {
     if (currentStep > 0) {
       markVisited(currentStep);
-      setErrors({});
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -765,21 +587,19 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
 
   const handleGoTo = (i: number) => {
     markVisited(currentStep);
-    setErrors({});
     setCurrentStep(i);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  const handleSubmit = () => {
+  const doSubmit = () => {
     setVisited(new Set(STEPS.map((_, i) => i)));
 
-    const allErrors: FormErrors = {};
+    const allErrors: FlatErrors = {};
     for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode));
 
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors);
       toast.error("Käbir hökmany meýdanlar doldurylan däldir.");
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
@@ -790,53 +610,7 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
       return;
     }
 
-    const payload: LoanOrderMobilePayload = {
-      status:              form.status,
-      loanType:            form.loanType,
-      region:              form.region,
-      branch:              form.branch,
-      firstName:           form.firstName,
-      lastName:            form.lastName,
-      patronicName:        form.patronicName        || undefined,
-      education:           form.education,
-      marriageStatus:      form.marriageStatus,
-      dateOfBirth:         form.dateOfBirth,
-      residence:           form.residence,
-      currentResidence:    form.currentResidence    || undefined,
-      passportSerie:       form.passportSerie,
-      passportNumber:      form.passportNumber,
-      passportDateOfIssue: form.passportDateOfIssue,
-      passportGivenBy:     form.passportGivenBy,
-      bornPlace:           form.bornPlace           || undefined,
-      email:               form.email               || undefined,
-      phone:               form.phone,
-      phoneAdditional:     form.phoneAdditional     || undefined,
-      homePhone:           form.homePhone           || undefined,
-      workCompany:         form.workCompany,
-      workHrPhone:         form.workHrPhone         || undefined,
-      workRegion:          form.workRegion          || undefined,
-      workProvince:        form.workProvince        || undefined,
-      position:            form.position,
-      salary:              Number(form.salary),
-      workStartedAt:       form.workStartedAt,
-      note:                form.note                || undefined,
-      loanAmount:          Number(form.loanAmount)  || undefined,
-      loanHistory:         form.loanHistory         || undefined,
-      cardNumber:          form.cardNumber          || undefined,
-      cardName:            form.cardName            || undefined,
-      cardExpMonth:        form.cardExpMonth        || undefined,
-      cardExpYear:         form.cardExpYear         || undefined,
-      guarantor1Name:           form.guarantor1Name           || undefined,
-      guarantor1Surname:        form.guarantor1Surname        || undefined,
-      guarantor1Patronic:       form.guarantor1Patronic       || undefined,
-      guarantor1PassportSerie:  form.guarantor1PassportSerie  || undefined,
-      guarantor1PassportNumber: form.guarantor1PassportNumber || undefined,
-      guarantor1CardNumber:     form.guarantor1CardNumber     || undefined,
-      guarantor1CardName:       form.guarantor1CardName       || undefined,
-      guarantor1CardExpMonth:   form.guarantor1CardExpMonth   || undefined,
-      guarantor1CardExpYear:    form.guarantor1CardExpYear    || undefined,
-      guarantor1Salary:         Number(form.guarantor1Salary) || undefined,
-    };
+    const payload = buildPayload(getValues());
 
     if (mode === "create") {
       createMutation.mutate(payload, { onSuccess: () => navigate("/loan-order-mobiles") });
@@ -900,7 +674,7 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
         onPrev={currentStep > 0 ? handleBack : undefined}
         onNext={!isLastStep ? handleNext : undefined}
         showSubmit={isLastStep}
-        onSubmit={isLastStep ? handleSubmit : undefined}
+        onSubmit={isLastStep ? doSubmit : undefined}
         submitLabel={
           mode === "create"
             ? (t("loanOrderMobiles.createButton") || "Karz sargyt döredüň")
@@ -913,4 +687,54 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
       />
     </div>
   );
+}
+
+function mapInitial(order: LoanOrderMobile): Partial<LoanOrderMobileFormData> {
+  return {
+    status:              order.status              ?? "GARAŞYLÝAR",
+    loanType:            order.loanType            ?? "",
+    region:              order.region              ?? "Aşgabat",
+    branch:              order.branch              ?? "",
+    firstName:           order.firstName           ?? "",
+    lastName:            order.lastName            ?? "",
+    patronicName:        order.patronicName        ?? "",
+    education:           order.education           ?? "",
+    marriageStatus:      order.marriageStatus      ?? "",
+    dateOfBirth:         order.dateOfBirth         ?? "",
+    residence:           order.residence           ?? "",
+    currentResidence:    order.currentResidence    ?? "",
+    passportSerie:       order.passportSerie       ?? "",
+    passportNumber:      order.passportNumber      ?? "",
+    passportDateOfIssue: order.passportDateOfIssue ?? "",
+    passportGivenBy:     order.passportGivenBy     ?? "",
+    bornPlace:           order.bornPlace           ?? "",
+    email:               order.email               ?? "",
+    phone:               order.phone               ?? "",
+    phoneAdditional:     order.phoneAdditional     ?? "",
+    homePhone:           order.homePhone           ?? "",
+    workCompany:         order.workCompany         ?? "",
+    workHrPhone:         order.workHrPhone         ?? "",
+    workRegion:          order.workRegion          ?? "Aşgabat",
+    workProvince:        order.workProvince        ?? "",
+    position:            order.position            ?? "",
+    salary:              order.salary != null ? String(order.salary) : "",
+    workStartedAt:       order.workStartedAt       ?? "",
+    note:                order.note                ?? "",
+    loanAmount:          order.loanAmount != null ? String(order.loanAmount) : "",
+    loanHistory:         order.loanHistory         ?? "",
+    cardNumber:          order.cardNumber          ?? "",
+    cardName:            order.cardName            ?? "",
+    cardExpMonth:        order.cardExpMonth        ?? "",
+    cardExpYear:         order.cardExpYear         ?? "",
+    guarantor1Name:           order.guarantor1Name           ?? "",
+    guarantor1Surname:        order.guarantor1Surname        ?? "",
+    guarantor1Patronic:       order.guarantor1Patronic       ?? "",
+    guarantor1PassportSerie:  order.guarantor1PassportSerie  ?? "",
+    guarantor1PassportNumber: order.guarantor1PassportNumber ?? "",
+    guarantor1CardNumber:     order.guarantor1CardNumber     ?? "",
+    guarantor1CardName:       order.guarantor1CardName       ?? "",
+    guarantor1CardExpMonth:   order.guarantor1CardExpMonth   ?? "",
+    guarantor1CardExpYear:    order.guarantor1CardExpYear    ?? "",
+    guarantor1Salary: order.guarantor1Salary != null ? String(order.guarantor1Salary) : "",
+  };
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { ChevronLeft, ChevronRight, Loader2, Building2, MapPin, Clock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -9,26 +10,23 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import { useCreateBranch, useUpdateBranch } from '@/features/branches/hooks/useBranches'
-import type { Branch, CreateBranchPayload } from '@/features/branches/api/branchesApi'
+import type { Branch } from '@/features/branches/api/branchesApi'
 import { getDistrictOptions } from '@/features/branches/api/branchesApi'
+import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from '@/features/branches/schemas/branch.schema'
+import type { BranchFormData } from '@/features/branches/schemas/branch.schema'
 
-interface FormState {
-  nameTk: string
-  nameRu: string
-  nameEn: string
-  code: string
-  districtId: string
-  addressTk: string
-  addressRu: string
-  addressEn: string
-  phone: string
-  email: string
-  workingHours: string
-  description: string
-  isActive: boolean
+type FlatErrors = Partial<Record<keyof BranchFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof BranchFormData] = msg
+  }
+  return result
 }
 
-type FormErrors = Partial<Record<keyof FormState, string>>
+type FormErrors = FlatErrors
 
 type LangKey = 'tk' | 'ru' | 'en'
 
@@ -45,36 +43,7 @@ interface StepDef {
   shortLabel: string
   icon: LucideIcon
   subtitle: string
-  validate: (form: FormState) => FormErrors
-}
-
-const INITIAL_STATE: FormState = {
-  nameTk: '', nameRu: '', nameEn: '',
-  code: '',
-  districtId: '',
-  addressTk: '', addressRu: '', addressEn: '',
-  phone: '', email: '',
-  workingHours: '',
-  description: '',
-  isActive: true,
-}
-
-function mapToFormState(data: Branch): FormState {
-  return {
-    nameTk: data.name.tk,
-    nameRu: data.name.ru,
-    nameEn: data.name.en,
-    code: data.code,
-    districtId: String(data.districtId),
-    addressTk: data.address.tk,
-    addressRu: data.address.ru,
-    addressEn: data.address.en,
-    phone: data.phone,
-    email: data.email,
-    workingHours: data.workingHours,
-    description: data.description ?? '',
-    isActive: data.isActive,
-  }
+  validate: (form: BranchFormData, mode: 'create' | 'edit') => FlatErrors
 }
 
 const STEPS: StepDef[] = [
@@ -85,15 +54,7 @@ const STEPS: StepDef[] = [
     shortLabel: 'Esasy',
     icon: Building2,
     subtitle: 'Ady, kody, etrapy',
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.nameTk.trim()) e.nameTk = 'Türkmen ady — hökmany'
-      if (!form.nameRu.trim()) e.nameRu = 'Rus ady — hökmany'
-      if (!form.nameEn.trim()) e.nameEn = 'Iňlis ady — hökmany'
-      if (!form.code.trim()) e.code = 'Kod — hökmany'
-      if (!form.districtId) e.districtId = 'Etrap — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(0, form, mode),
   },
   {
     id: 'address',
@@ -102,15 +63,7 @@ const STEPS: StepDef[] = [
     shortLabel: 'Salgy',
     icon: MapPin,
     subtitle: 'Salgy, telefon, e-poçta',
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.addressTk.trim()) e.addressTk = 'Türkmen salgysy — hökmany'
-      if (!form.addressRu.trim()) e.addressRu = 'Rus salgysy — hökmany'
-      if (!form.addressEn.trim()) e.addressEn = 'Iňlis salgysy — hökmany'
-      if (!form.phone.trim()) e.phone = 'Telefon — hökmany'
-      if (!form.email.trim()) e.email = 'E-poçta — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(1, form, mode),
   },
   {
     id: 'hours',
@@ -119,18 +72,14 @@ const STEPS: StepDef[] = [
     shortLabel: 'Wagt',
     icon: Clock,
     subtitle: 'Iş wagty we bellikler',
-    validate: (form) => {
-      const e: FormErrors = {}
-      if (!form.workingHours.trim()) e.workingHours = 'Iş wagty — hökmany'
-      return e
-    },
+    validate: (form, mode) => validateStep(2, form, mode),
   },
 ]
 
 interface StepContentProps {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: BranchFormData
+  errors: FlatErrors
+  set: <K extends keyof BranchFormData>(k: K, v: BranchFormData[K]) => void
   activeLang: LangKey
   setActiveLang: (l: LangKey) => void
 }
@@ -296,6 +245,24 @@ export interface BranchFormProps {
   branchId?: number
 }
 
+function mapInitial(data: Branch): Partial<BranchFormData> {
+  return {
+    nameTk: data.name.tk,
+    nameRu: data.name.ru,
+    nameEn: data.name.en,
+    code: data.code,
+    districtId: String(data.districtId),
+    addressTk: data.address.tk,
+    addressRu: data.address.ru,
+    addressEn: data.address.en,
+    phone: data.phone,
+    email: data.email,
+    workingHours: data.workingHours,
+    description: data.description ?? '',
+    isActive: data.isActive,
+  }
+}
+
 export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -305,25 +272,31 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [form, setForm] = useState<FormState>(() => initialData ? mapToFormState(initialData) : INITIAL_STATE)
-  const [errors, setErrors] = useState<FormErrors>({})
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<BranchFormData>({ defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
-    () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>()
+    () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
 
   const stepsWithErrors = useMemo(() => {
     const out = new Set<number>()
     visited.forEach((i) => {
-      if (Object.keys(STEPS[i].validate(form)).length > 0) out.add(i)
+      if (Object.keys(STEPS[i].validate(form, mode)).length > 0) out.add(i)
     })
     return out
-  }, [form, visited])
+  }, [form, mode, visited])
 
-  const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    setErrors((prev) => ({ ...prev, [key]: undefined }))
-  }, [])
+  const set = useCallback(<K extends keyof BranchFormData>(key: K, value: BranchFormData[K]) => {
+    (setValue as (name: K, val: BranchFormData[K]) => void)(key, value)
+    clearErrors(key)
+  }, [setValue, clearErrors])
 
   const stepProps = useMemo(() => ({ form, errors, set, activeLang, setActiveLang }), [form, errors, set, activeLang])
 
@@ -332,13 +305,11 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
 
   const handleNext = () => {
     markVisited(currentStep)
-    const errs = STEPS[currentStep].validate(form)
+    const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      setErrors(errs)
       toast.error('Dogry maglumat girizmegiňizi haýyş edýäris.')
       return
     }
-    setErrors({})
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -348,7 +319,6 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
   const handleBack = () => {
     if (currentStep > 0) {
       markVisited(currentStep)
-      setErrors({})
       setCurrentStep(currentStep - 1)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -356,40 +326,27 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
 
   const handleGoTo = (i: number) => {
     markVisited(currentStep)
-    setErrors({})
     setCurrentStep(i)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleSubmit = () => {
+  const doSubmit = () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
 
-    const allErrors: FormErrors = {}
-    for (const step of STEPS) Object.assign(allErrors, step.validate(form))
+    const allErrors: FlatErrors = {}
+    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
       toast.error('Käbir hökmany meýdanlar doldurylan däldir.')
       for (let i = 0; i < STEPS.length; i++) {
-        if (Object.keys(STEPS[i].validate(form)).length > 0) {
-          setCurrentStep(i)
-          break
+        if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
+          setCurrentStep(i); break
         }
       }
       return
     }
 
-    const payload: CreateBranchPayload = {
-      name: { tk: form.nameTk, ru: form.nameRu, en: form.nameEn },
-      code: form.code,
-      districtId: Number(form.districtId),
-      address: { tk: form.addressTk, ru: form.addressRu, en: form.addressEn },
-      phone: form.phone,
-      email: form.email,
-      workingHours: form.workingHours,
-      description: form.description.trim() || null,
-      isActive: form.isActive,
-    }
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       createMutation.mutate(payload, { onSuccess: () => navigate('/settings/location/branches') })
@@ -466,7 +423,7 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
           </Button>
 
           {isLastStep ? (
-            <Button type="button" size="sm" onClick={handleSubmit} disabled={isPending} className="min-w-[150px]">
+            <Button type="button" size="sm" onClick={doSubmit} disabled={isPending} className="min-w-[150px]">
               {isPending ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

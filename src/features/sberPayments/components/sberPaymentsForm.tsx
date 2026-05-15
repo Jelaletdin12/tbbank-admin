@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { User, MapPin, IdCard, CreditCard, Files } from 'lucide-react'
 
@@ -16,9 +17,14 @@ import {
   SAHAMCALAR,
   STATUSES,
   type SberPaymentOrder,
-  type SberPaymentFormData,
   type PaymentStatus,
 } from '@/features/sberPayments/api/sberPaymentsApi'
+import {
+  validateStep,
+  DEFAULT_FORM_VALUES,
+  buildPayload,
+  type SberPaymentFormData,
+} from '@/features/sberPayments/schemas/sberPayment.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +32,19 @@ interface SberPaymentFormProps {
   mode: 'create' | 'edit'
   initialData?: SberPaymentOrder | null
   orderId?: string
+}
+
+type FlatErrors = Partial<Record<keyof SberPaymentFormData, string>>
+
+// ─── Flatten RHF errors ──────────────────────────────────────────────────────
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof SberPaymentFormData] = msg
+  }
+  return result
 }
 
 // ─── Document lists ───────────────────────────────────────────────────────────
@@ -59,95 +78,6 @@ const SENT_DOCS: { key: SentDocKey; label: string }[] = [
   { key: 'snt_old_passport_series', label: 'Ugradyjy/kabul ediji köne pasport seriýasy baradaky güwänamasy' },
 ]
 
-
-// ─── FormState ────────────────────────────────────────────────────────────────
-
-interface FormState extends SberPaymentFormData {
-  client_id: string
-  // file fields
-  acc_sberbank_card: File | null
-  acc_enrollment: File | null
-  acc_summons: File | null
-  acc_passport_tm: File | null
-  acc_zagran_passport: File | null
-  acc_visa_page: File | null
-  acc_entry_stamp: File | null
-  acc_school_letter: File | null
-  snt_passport_tm: File | null
-  snt_zagran_passport: File | null
-  snt_entry_stamp: File | null
-  snt_relation_doc: File | null
-  snt_new_passport_series: File | null
-  snt_old_passport_series: File | null
-}
-
-type FormErrors = Partial<Record<keyof FormState, string>>
-
-// ─── Default state ────────────────────────────────────────────────────────────
-
-const defaultState: FormState = {
-  client_id: '',
-  welayat: '',
-  sahamca: '',
-  firstName: '',
-  lastName: '',
-  phone: '',
-  email: '',
-  address: '',
-  status: 'GARASYLYYAR',
-  bellik: '',
-  accountNumber: '',
-  passportSeries: '',
-  passportNumber: '',
-  fullName: '',
-  acc_sberbank_card: null,
-  acc_enrollment: null,
-  acc_summons: null,
-  acc_passport_tm: null,
-  acc_zagran_passport: null,
-  acc_visa_page: null,
-  acc_entry_stamp: null,
-  acc_school_letter: null,
-  snt_passport_tm: null,
-  snt_zagran_passport: null,
-  snt_entry_stamp: null,
-  snt_relation_doc: null,
-  snt_new_passport_series: null,
-  snt_old_passport_series: null,
-}
-
-// ─── Step definitions ─────────────────────────────────────────────────────────
-
-type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
-
-const STEPS: { id: StepId; title: string; subtitle: string }[] = [
-  { id: 'general',  title: 'Esasy',        subtitle: 'Status, müşderi'   },
-  { id: 'location', title: 'Lokasiýa',     subtitle: 'Welaýat, şahamça' },
-  { id: 'personal', title: 'Şahsy',        subtitle: 'Pasport, kontakt' },
-  { id: 'payment',  title: 'Töleg',        subtitle: 'Hasap, ugradyjy'  },
-  { id: 'docs',     title: 'Resminamalar', subtitle: '14 resminama'     },
-]
-
-const STEP_REQUIRED: Partial<Record<StepId, (keyof FormState)[]>> = {
-  general:  ['status'],
-  location: ['welayat', 'sahamca'],
-  personal: ['firstName', 'lastName', 'phone', 'address'],
-  payment:  ['passportSeries', 'passportNumber', 'fullName', 'accountNumber'],
-}
-
-const ERROR_LABELS: Partial<Record<keyof FormState, string>> = {
-  status:        'Status hökmany',
-  welayat:       'Welaýat hökmany',
-  sahamca:       'Şahamça hökmany',
-  firstName:     'Ady hökmany',
-  lastName:      'Familiýasy hökmany',
-  phone:         'Telefon hökmany',
-  address:       'Salgy hökmany',
-  passportSeries:'Pasport seriýasy hökmany',
-  passportNumber:'Pasport nomeri hökmany',
-  fullName:      'Doly ady hökmany',
-  accountNumber: 'Goýum hasaby hökmany',
-}
 
 // ─── Bento primitives ─────────────────────────────────────────────────────────
 
@@ -189,9 +119,9 @@ function BentoCard({
 function StepGeneral({
   form, errors, set,
 }: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: SberPaymentFormData
+  errors: FlatErrors
+  set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
 }) {
   return (
     <BentoGrid cols={2}>
@@ -236,9 +166,9 @@ function StepGeneral({
 function StepLocation({
   form, errors, set,
 }: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: SberPaymentFormData
+  errors: FlatErrors
+  set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
 }) {
   const branches = form.welayat ? (SAHAMCALAR[form.welayat] ?? []) : []
 
@@ -280,9 +210,9 @@ function StepLocation({
 function StepPersonal({
   form, errors, set,
 }: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: SberPaymentFormData
+  errors: FlatErrors
+  set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
 }) {
   return (
     <BentoGrid cols={2}>
@@ -343,9 +273,9 @@ function StepPersonal({
 function StepPayment({
   form, errors, set,
 }: {
-  form: FormState
-  errors: FormErrors
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: SberPaymentFormData
+  errors: FlatErrors
+  set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
 }) {
   return (
     <BentoGrid cols={2}>
@@ -403,8 +333,8 @@ function StepPayment({
 function StepDocs({
   form, set,
 }: {
-  form: FormState
-  set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  form: SberPaymentFormData
+  set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
 }) {
   return (
     <BentoGrid cols={2}>
@@ -441,6 +371,38 @@ function StepDocs({
   )
 }
 
+// ─── Step definitions ─────────────────────────────────────────────────────────
+
+type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
+
+const STEPS: { id: StepId; title: string; subtitle: string }[] = [
+  { id: 'general',  title: 'Esasy',        subtitle: 'Status, müşderi'   },
+  { id: 'location', title: 'Lokasiýa',     subtitle: 'Welaýat, şahamça' },
+  { id: 'personal', title: 'Şahsy',        subtitle: 'Pasport, kontakt' },
+  { id: 'payment',  title: 'Töleg',        subtitle: 'Hasap, ugradyjy'  },
+  { id: 'docs',     title: 'Resminamalar', subtitle: '14 resminama'     },
+]
+
+// ─── Initial data mapper ──────────────────────────────────────────────────────
+
+function mapInitialData(data: SberPaymentOrder): Partial<SberPaymentFormData> {
+  return {
+    welayat:        data.welayat,
+    sahamca:        data.sahamca,
+    firstName:      data.firstName,
+    lastName:       data.lastName,
+    phone:          data.phone,
+    email:          data.email,
+    address:        data.address,
+    status:         data.status,
+    bellik:         data.bellik,
+    accountNumber:  data.accountNumber,
+    passportSeries: data.passportSeries,
+    passportNumber: data.passportNumber,
+    fullName:       data.fullName,
+  }
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormProps) {
@@ -449,58 +411,36 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   const updateMutation = useUpdateSberPayment()
   const isLoading = createMutation.isPending || updateMutation.isPending
 
-  const [form, setForm] = useState<FormState>(defaultState)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+  } = useForm<SberPaymentFormData>({
+    defaultValues: mode === 'edit' && initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitialData(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
+
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+
   const [currentStep, setCurrentStep] = useState(0)
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
-    STEPS.map((_, i) => (i === 0 ? 'active' : 'idle')),
+    () => mode === 'edit'
+      ? STEPS.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle'))
+      : STEPS.map((_, i) => (i === 0 ? 'active' : 'idle')),
   )
 
-  // ── Populate in edit mode ──
-  useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      setForm((prev) => ({
-        ...prev,
-        welayat:        initialData.welayat,
-        sahamca:        initialData.sahamca,
-        firstName:      initialData.firstName,
-        lastName:       initialData.lastName,
-        phone:          initialData.phone,
-        email:          initialData.email,
-        address:        initialData.address,
-        status:         initialData.status,
-        bellik:         initialData.bellik,
-        accountNumber:  initialData.accountNumber,
-        passportSeries: initialData.passportSeries,
-        passportNumber: initialData.passportNumber,
-        fullName:       initialData.fullName,
-      }))
-      // Let user jump freely to any step in edit mode
-      setStepStatuses(STEPS.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle')))
-    }
-  }, [mode, initialData])
-
   // ── Field setter ──
-  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }))
+  const set = <K extends keyof SberPaymentFormData>(key: K, value: SberPaymentFormData[K]) => {
+    (setValue as (name: K, val: SberPaymentFormData[K]) => void)(key, value)
+    clearErrors(key)
   }
 
   // ── Step validation ──
-  const validateStep = (stepId: StepId): FormErrors => {
-    const fields = STEP_REQUIRED[stepId] ?? []
-    const errs: FormErrors = {}
-    fields.forEach((f) => {
-      if (!form[f]) errs[f] = ERROR_LABELS[f] ?? 'Hökmany'
-    })
-    return errs
-  }
-
-  const validateAll = (): FormErrors => {
-    const errs: FormErrors = {}
-    Object.entries(ERROR_LABELS).forEach(([k, msg]) => {
-      if (!form[k as keyof FormState]) errs[k as keyof FormState] = msg
-    })
+  const doValidateAll = (): FlatErrors => {
+    const errs: FlatErrors = {}
+    for (let i = 0; i <= 3; i++) {
+      Object.assign(errs, validateStep(i, form, mode))
+    }
     return errs
   }
 
@@ -518,15 +458,13 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
       }
       return next
     })
-    setErrors({})
+    clearErrors()
     setCurrentStep(idx)
   }
 
   const handleNext = () => {
-    const stepId = STEPS[currentStep].id
-    const stepErrors = validateStep(stepId)
+    const stepErrors = validateStep(currentStep, form, mode)
     if (Object.keys(stepErrors).length > 0) {
-      setErrors(stepErrors)
       setStepStatuses((prev) => {
         const next = [...prev]; next[currentStep] = 'error'; return next
       })
@@ -541,28 +479,13 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
 
   // ── Submit ──
   const handleSubmit = async () => {
-    const allErrors = validateAll()
+    const allErrors = doValidateAll()
     if (Object.keys(allErrors).length > 0) {
-      setErrors(allErrors)
       toast.error('Meýdanlary dolduryň')
       return
     }
     try {
-      const payload: SberPaymentFormData = {
-        welayat:        form.welayat,
-        sahamca:        form.sahamca,
-        firstName:      form.firstName,
-        lastName:       form.lastName,
-        phone:          form.phone,
-        email:          form.email,
-        address:        form.address,
-        status:         form.status,
-        bellik:         form.bellik,
-        accountNumber:  form.accountNumber,
-        passportSeries: form.passportSeries,
-        passportNumber: form.passportNumber,
-        fullName:       form.fullName,
-      }
+      const payload = buildPayload(getValues())
       if (mode === 'create') {
         await createMutation.mutateAsync(payload)
         toast.success('Töleg üstünlikli döredildi')

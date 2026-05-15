@@ -1,29 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
-import type { CardType, CreateCardTypePayload } from '../api/cardTypesApi'
+import type { CardType } from '../api/cardTypesApi'
 import { useCreateCardType, useUpdateCardType } from '../hooks/useCardTypes'
+import { cardTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardType.schema'
+import type { CardTypeFormData } from '../schemas/cardType.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface FormErrors {
-  nameTk?: string
-  nameRu?: string
-  nameEn?: string
-  value?: string
-}
-
-interface FormState {
-  nameTk: string
-  nameRu: string
-  nameEn: string
-  value: string
-  description: string
-  isActive: boolean
-}
 
 export interface CardTypeFormProps {
   mode: 'create' | 'edit'
@@ -41,10 +29,7 @@ const LANG_TABS: { key: LangKey; label: string }[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildInitialState(data?: CardType): FormState {
-  if (!data) {
-    return { nameTk: '', nameRu: '', nameEn: '', value: '', description: '', isActive: true }
-  }
+function mapInitial(data: CardType): CardTypeFormData {
   return {
     nameTk: data.name.tk,
     nameRu: data.name.ru,
@@ -55,14 +40,15 @@ function buildInitialState(data?: CardType): FormState {
   }
 }
 
-function validate(form: FormState, t: (k: string, fb: string) => string): FormErrors {
-  const errors: FormErrors = {}
-  if (!form.nameTk.trim()) errors.nameTk = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameRu.trim()) errors.nameRu = t('validation.required', 'Hökmany meýdan')
-  if (!form.nameEn.trim()) errors.nameEn = t('validation.required', 'Hökmany meýdan')
-  if (!form.value.trim() || isNaN(Number(form.value)) || Number(form.value) < 0)
-    errors.value = t('validation.invalidNumber', 'Dogry san giriziň')
-  return errors
+type FlatErrors = Partial<Record<keyof CardTypeFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof CardTypeFormData] = msg
+  }
+  return result
 }
 
 // ─── CardTypeForm ─────────────────────────────────────────────────────────────
@@ -77,30 +63,40 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [form, setForm] = useState<FormState>(() => buildInitialState(initialData))
-  const [errors, setErrors] = useState<FormErrors>({})
 
-  useEffect(() => {
-    if (initialData) setForm(buildInitialState(initialData))
-  }, [initialData])
+  const {
+    watch,
+    setValue,
+    formState: { errors: rhfErrors },
+    clearErrors,
+    trigger,
+    getValues,
+  } = useForm<CardTypeFormData>({
+    resolver: zodResolver(cardTypeFormSchema),
+    defaultValues: initialData
+      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
+      : DEFAULT_FORM_VALUES,
+  })
 
-  const set = (key: keyof FormState) => (value: string | boolean) =>
-    setForm((prev) => ({ ...prev, [key]: value }))
+  const form = watch()
+  const errors = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
 
-  const handleSubmit = () => {
-    const errs = validate(form, t)
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs)
-      return
-    }
-    setErrors({})
+  const set = useCallback(
+    (key: keyof CardTypeFormData) => (value: string | boolean) => {
+      (setValue as (k: keyof CardTypeFormData, v: string | boolean) => void)(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
-    const payload: CreateCardTypePayload = {
-      name: { tk: form.nameTk, ru: form.nameRu, en: form.nameEn },
-      value: Number(form.value),
-      description: form.description.trim() || null,
-      isActive: form.isActive,
-    }
+  const handleSubmit = useCallback(async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       createMutation.mutate(payload, {
@@ -109,16 +105,16 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
     } else if (cardTypeId !== undefined) {
       updateMutation.mutate(
         { id: cardTypeId, ...payload },
-        { onSuccess: () => navigate('/settings/card/card-types') }
+        { onSuccess: () => navigate('/settings/card/card-types') },
       )
     }
-  }
+  }, [mode, cardTypeId, createMutation, updateMutation, navigate, trigger, getValues])
 
   const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as
     | 'nameTk'
     | 'nameRu'
     | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FormErrors
+  const nameErrorKey = nameFieldKey as keyof FlatErrors
 
   return (
     <div>
