@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { toast } from 'sonner'
 import {
   User, MapPin, IdCard, CreditCard, Files,
 } from 'lucide-react'
@@ -123,16 +125,18 @@ type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
 
 interface Step {
   id: StepId
-  title: string
-  subtitle: string
+  titleKey: string
+  titleFallback: string
+  subtitleKey: string
+  subtitleFallback: string
 }
 
 const STEPS: Step[] = [
-  { id: 'general',  title: 'Esasy',      subtitle: 'Status, müşderi'      },
-  { id: 'location', title: 'Lokasiýa',   subtitle: 'Welaýat, şahamça'     },
-  { id: 'personal', title: 'Şahsy',      subtitle: 'Pasport, kontakt'     },
-  { id: 'payment',  title: 'Töleg',      subtitle: 'Töleýji, kabul ediji' },
-  { id: 'docs',     title: 'Resminamalar', subtitle: '15 resminama'       },
+  { id: 'general',  titleKey: 'intlPaymentForm.steps.general.title',  titleFallback: 'Esasy',      subtitleKey: 'intlPaymentForm.steps.general.subtitle',  subtitleFallback: 'Status, müşderi'      },
+  { id: 'location', titleKey: 'intlPaymentForm.steps.location.title',  titleFallback: 'Lokasiýa',   subtitleKey: 'intlPaymentForm.steps.location.subtitle', subtitleFallback: 'Welaýat, şahamça'     },
+  { id: 'personal', titleKey: 'intlPaymentForm.steps.personal.title', titleFallback: 'Şahsy',      subtitleKey: 'intlPaymentForm.steps.personal.subtitle', subtitleFallback: 'Pasport, kontakt'     },
+  { id: 'payment',  titleKey: 'intlPaymentForm.steps.payment.title',  titleFallback: 'Töleg',      subtitleKey: 'intlPaymentForm.steps.payment.subtitle',  subtitleFallback: 'Töleýji, kabul ediji' },
+  { id: 'docs',     titleKey: 'intlPaymentForm.steps.docs.title',     titleFallback: 'Resminamalar', subtitleKey: 'intlPaymentForm.steps.docs.subtitle',    subtitleFallback: '15 resminama'       },
 ]
 
 // Per-step required fields for incremental validation
@@ -144,19 +148,19 @@ const STEP_REQUIRED_FIELDS: Partial<Record<StepId, (keyof FormState)[]>> = {
 }
 
 const STEP_ERROR_LABELS: Partial<Record<keyof FormState, string>> = {
-  client_id:            'Ulanyjy hökmany',
-  status:               'Status hökmany',
-  currency_type:        'Ýüztumanyň görnüşi hökmany',
-  province:             'Welaýat hökmany',
-  branch:               'Şahamça hökmany',
-  passport_first_name:  'Ady hökmany',
-  passport_last_name:   'Familiýasy hökmany',
-  phone:                'Telefon hökmany',
-  passport_series:      'Pasport seriýasy hökmany',
-  passport_number:      'Pasport nomeri hökmany',
-  payer_full_name:      'Doly ady hökmany',
-  payer_account_number: 'Goşun hasaby hökmany',
-  receiver_info:        'Kabul edijiniň maglumatlary hökmany',
+  client_id:            'validation.required',
+  status:               'validation.required',
+  currency_type:        'validation.required',
+  province:             'validation.required',
+  branch:               'validation.required',
+  passport_first_name:  'validation.required',
+  passport_last_name:   'validation.required',
+  phone:                'validation.required',
+  passport_series:      'validation.required',
+  passport_number:      'validation.required',
+  payer_full_name:      'validation.required',
+  payer_account_number: 'validation.required',
+  receiver_info:        'validation.required',
 }
 
 // ─── Default state ────────────────────────────────────────────────────────────
@@ -241,58 +245,62 @@ function BentoCard({
 // ─── Step content panels ──────────────────────────────────────────────────────
 
 function StepGeneral({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: FormState
   errors: FormErrors
   set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  t: TFunction
 }) {
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Müşderi">
+      <BentoCard title={t('intlPaymentForm.titles.general.client') || 'Müşderi'}>
         <FormInput
           type="searchable-select"
-          label="Ulanyjy"
+          label={t('User') || 'Ulanyjy'}
           value={form.client_id}
           onChange={(v) => set('client_id', v)}
           options={[]}
-          placeholder="Saýlamak üçin basyň"
-          error={errors.client_id}
+          placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
+          error={errMsg(errors.client_id)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Status">
+      <BentoCard title={t('loanOrderForm.labels.status') || 'Status'}>
         <FormInput
           type="select"
-          label="Status"
+          label={t('loanOrderForm.labels.status') || 'Status'}
           value={form.status}
           onChange={(v) => set('status', v)}
           options={STATUS_OPTIONS}
-          error={errors.status}
+          error={errMsg(errors.status)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Kart görnüşi" span="full">
+      <BentoCard title={t('Card type') || 'Kart görnüşi'} span="full">
         <FormInput
           type="select"
-          label="Ýüztumanyň görnüşi"
+          label={t('Application type') || 'Ýüztumanyň görnüşi'}
           value={form.currency_type}
           onChange={(v) => set('currency_type', v)}
           options={CURRENCY_OPTIONS}
-          error={errors.currency_type}
+          error={errMsg(errors.currency_type)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Bellik" span="full">
+      <BentoCard title={t('Note') || 'Bellik'} span="full">
         <FormInput
           type="textarea"
-          label="Bellik"
+          label={t('Note') || 'Bellik'}
           value={form.note}
           onChange={(v) => set('note', v)}
-          placeholder="Bellik..."
+          placeholder={t('loanOrderForm.placeholders.note') || 'Bellik...'}
           rows={2}
         />
       </BentoCard>
@@ -301,38 +309,42 @@ function StepGeneral({
 }
 
 function StepLocation({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: FormState
   errors: FormErrors
   set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  t: TFunction
 }) {
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Welaýat">
+      <BentoCard title={t('Region') || 'Welaýat'}>
         <FormInput
           type="searchable-select"
-          label="Welaýat"
+          label={t('Region') || 'Welaýat'}
           value={form.province}
           onChange={(v) => { set('province', v); set('branch', '') }}
           options={PROVINCE_OPTIONS}
-          error={errors.province}
+          error={errMsg(errors.province)}
           required
         />
         <p className="text-xs text-muted-foreground">
-          Welaýaty saýlasaňyz şahamçalar güncellenar.
+          {t('intlPaymentForm.hints.selectRegion') || 'Welaýaty saýlasaňyz şahamçalar güncellenar.'}
         </p>
       </BentoCard>
 
-      <BentoCard title="Şahamça">
+      <BentoCard title={t('Branch') || 'Şahamça'}>
         <FormInput
           type="searchable-select"
-          label="Şahamça"
+          label={t('Branch') || 'Şahamça'}
           value={form.branch}
           onChange={(v) => set('branch', v)}
-          options={[]} // filtered by province
-          placeholder="Saýlamak üçin basyň"
-          error={errors.branch}
+          options={[]}
+          placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
+          error={errMsg(errors.branch)}
           required
         />
       </BentoCard>
@@ -341,60 +353,64 @@ function StepLocation({
 }
 
 function StepPersonal({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: FormState
   errors: FormErrors
   set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  t: TFunction
 }) {
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="At-familýa">
+      <BentoCard title={t('intlPaymentForm.titles.personal.name') || 'At-familýa'}>
         <FormInput
           type="text"
-          label="Pasportdaky familýa"
+          label={t('Passport surname') || 'Pasportdaky familiýa'}
           value={form.passport_last_name}
           onChange={(v) => set('passport_last_name', v)}
           placeholder="NURYYEW"
-          error={errors.passport_last_name}
+          error={errMsg(errors.passport_last_name)}
           required
         />
         <FormInput
           type="text"
-          label="Pasportdaky ady"
+          label={t('Passport name') || 'Pasportdaky ady'}
           value={form.passport_first_name}
           onChange={(v) => set('passport_first_name', v)}
           placeholder="HAÝDAR"
-          error={errors.passport_first_name}
+          error={errMsg(errors.passport_first_name)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Kontakt">
+      <BentoCard title={t('Contact data') || 'Kontakt'}>
         <FormInput
           type="phone"
-          label="Telefon"
+          label={t('Phone') || 'Telefon'}
           value={form.phone}
           onChange={(v) => set('phone', v)}
-          error={errors.phone}
+          error={errMsg(errors.phone)}
           required
         />
         <FormInput
           type="email"
-          label="E-poçta"
+          label={t('Email') || 'E-poçta'}
           value={form.email}
           onChange={(v) => set('email', v)}
           placeholder="email@example.com"
         />
       </BentoCard>
 
-      <BentoCard title="Häzirki ýaşyş ýeri" span="full">
+      <BentoCard title={t('Current Residence') || 'Häzirki ýaşaýyş ýeri'} span="full">
         <FormInput
           type="text"
-          label="Häzirki ýaşyş ýeri"
+          label={t('Current Residence') || 'Häzirki ýaşaýyş ýeri'}
           value={form.home_address}
           onChange={(v) => set('home_address', v)}
-          placeholder="Köçe, jaý belgisi..."
+          placeholder={t('intlPaymentForm.placeholders.address') || 'Köçe, jaý belgisi...'}
         />
       </BentoCard>
     </BentoGrid>
@@ -402,65 +418,69 @@ function StepPersonal({
 }
 
 function StepPayment({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: FormState
   errors: FormErrors
   set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  t: TFunction
 }) {
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Pasport maglumatlary">
+      <BentoCard title={t('Passport') || 'Pasport maglumatlary'}>
         <FormInput
           type="select"
-          label="Pasport seriýasy"
+          label={t('Passport serie') || 'Pasport seriýasy'}
           value={form.passport_series}
           onChange={(v) => set('passport_series', v)}
           options={PASSPORT_SERIES_OPTIONS}
-          error={errors.passport_series}
+          error={errMsg(errors.passport_series)}
           required
         />
         <FormInput
           type="text"
-          label="Pasport nomeri"
+          label={t('Passport id') || 'Pasport belgisi'}
           value={form.passport_number}
           onChange={(v) => set('passport_number', v)}
           placeholder="A123456"
-          error={errors.passport_number}
+          error={errMsg(errors.passport_number)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Töleýji">
+      <BentoCard title={t('intlPaymentForm.titles.payment.payer') || 'Töleýji'}>
         <FormInput
           type="text"
-          label="Ady Familiýasy Atasynyň ady"
+          label={t('intlPaymentForm.labels.payerFullName') || 'Ady Familiýasy Atasynyň ady'}
           value={form.payer_full_name}
           onChange={(v) => set('payer_full_name', v)}
-          placeholder="Doly ady..."
-          error={errors.payer_full_name}
+          placeholder={t('intlPaymentForm.placeholders.payerFullName') || 'Doly ady...'}
+          error={errMsg(errors.payer_full_name)}
           required
         />
         <FormInput
           type="text"
-          label="Goşun hasaby"
+          label={t('intlPaymentForm.labels.payerAccount') || 'Goşun hasaby'}
           value={form.payer_account_number}
           onChange={(v) => set('payer_account_number', v)}
-          placeholder="1234 5678 ..."
-          error={errors.payer_account_number}
+          placeholder={t('intlPaymentForm.placeholders.payerAccount') || '1234 5678 ...'}
+          error={errMsg(errors.payer_account_number)}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Kabul edijiniň maglumatlary" span="full">
+      <BentoCard title={t('Payee information') || 'Kabul edijiniň maglumatlary'} span="full">
         <FormInput
           type="textarea"
-          label="Töleg kabul edijiniň maglumatlary"
+          label={t('intlPaymentForm.labels.receiverInfo') || 'Töleg kabul edijiniň maglumatlary'}
           value={form.receiver_info}
           onChange={(v) => set('receiver_info', v)}
-          placeholder="Kabul ediji bank, hasap, Swift..."
+          placeholder={t('intlPaymentForm.placeholders.receiverInfo') || 'Kabul ediji bank, hasap, Swift...'}
           rows={3}
-          error={errors.receiver_info}
+          error={errMsg(errors.receiver_info)}
           required
         />
       </BentoCard>
@@ -469,14 +489,15 @@ function StepPayment({
 }
 
 function StepDocs({
-  form, set,
+  form, set, t,
 }: {
   form: FormState
   set: <K extends keyof FormState>(k: K, v: FormState[K]) => void
+  t: TFunction
 }) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Kabul ediji talyp — 9 resminama">
+      <BentoCard title={t('intlPaymentForm.titles.docs.kabul') || 'Kabul ediji talyp — 9 resminama'}>
         <div className="space-y-3">
           {KABUL_DOCS.map(({ key, label }) => (
             <FormInput
@@ -491,7 +512,7 @@ function StepDocs({
         </div>
       </BentoCard>
 
-      <BentoCard title="Upgradyý — 6 resminama">
+      <BentoCard title={t('intlPaymentForm.titles.docs.upgrad') || 'Upgradyý — 6 resminama'}>
         <div className="space-y-3">
           {UPGRAD_DOCS.map(({ key, label }) => (
             <FormInput
@@ -592,6 +613,7 @@ export function IntlPaymentForm({
     const stepErrors = validateStep(form, stepId)
     if (Object.keys(stepErrors).length > 0) {
       setErrors(stepErrors)
+      toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       setStepStatuses((prev) => {
         const next = [...prev]
         next[currentStep] = 'error'
@@ -610,6 +632,7 @@ export function IntlPaymentForm({
     const allErrors = validateAll(form)
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors)
+      toast.error(t('common.errors.requiredFieldsMissing', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       return
     }
     onSubmit({
@@ -622,8 +645,8 @@ export function IntlPaymentForm({
   // ── StepBarCards data ──
   const stepCardItems: StepCardItem[] = STEPS.map((s, i) => ({
     id:       s.id,
-    title:    s.title,
-    subtitle: s.subtitle,
+    title:    t(s.titleKey) || s.titleFallback,
+    subtitle: t(s.subtitleKey) || s.subtitleFallback,
     status:   stepStatuses[i],
     icon:     [User, MapPin, IdCard, CreditCard, Files][i],
   }))
@@ -656,11 +679,11 @@ export function IntlPaymentForm({
       </div>
 
       {/* ── Step content ─────────────────────────────────────────────────── */}
-      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} />}
+      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} t={t} />}
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}
       <FormActions

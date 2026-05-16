@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
@@ -55,7 +56,10 @@ export function VisaMasterSettingForm({
   initialData,
   settingId,
 }: VisaMasterSettingFormProps) {
-  const { t }    = useTranslation()
+  const { t } = useTranslation()
+
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
   const navigate = useNavigate()
 
   const createMutation = useCreateVisaMasterSetting()
@@ -93,7 +97,10 @@ export function VisaMasterSettingForm({
 
   const handleSubmit = useCallback(async () => {
     const isValid = await trigger()
-    if (!isValid) return
+    if (!isValid) {
+      toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
+      return
+    }
 
     const payload = buildPayload(getValues())
 
@@ -123,7 +130,7 @@ export function VisaMasterSettingForm({
           value={form.kod}
           onChange={set('kod')}
           placeholder={t('visaMasterSettings.fields.kod', 'Kod')}
-          error={errors.kod}
+          error={errMsg(errors.kod)}
           disabled={isPending}
         />
       </div>
@@ -139,7 +146,7 @@ export function VisaMasterSettingForm({
           value={form.ady}
           onChange={set('ady')}
           placeholder={t('visaMasterSettings.fields.ady', 'Ady')}
-          error={errors.ady}
+          error={errMsg(errors.ady)}
           disabled={isPending}
         />
       </div>
@@ -155,7 +162,7 @@ export function VisaMasterSettingForm({
           value={form.yazgy}
           onChange={set('yazgy')}
           placeholder={t('visaMasterSettings.fields.yazgy', 'Yazgy')}
-          error={errors.yazgy}
+          error={errMsg(errors.yazgy)}
           disabled={isPending}
           rows={3}
         />

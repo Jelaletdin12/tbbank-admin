@@ -1,62 +1,60 @@
 import { z } from 'zod'
 import i18next from 'i18next'
 
-const t = i18next.t.bind(i18next)
-
-const fileRequired = z.custom<File>((val) => val instanceof File, t('validation.requiredFile', ''))
+const fileRequired = z.custom<File>((val) => val instanceof File, 'validation.requiredFile')
 
 export const loanOrderFormSchema = z.object({
-  status: z.string().min(1, t('validation.required', '')),
-  loanType: z.string().min(1, t('validation.required', '')),
-  region: z.string().min(1, t('validation.required', '')),
-  branch: z.string().min(1, t('validation.required', '')),
-  firstName: z.string().min(1, t('validation.required', '')),
-  lastName: z.string().min(1, t('validation.required', '')),
+  status: z.string().min(1, 'validation.required'),
+  loanType: z.string().min(1, 'validation.required'),
+  region: z.string().min(1, 'validation.required'),
+  branch: z.string().min(1, 'validation.required'),
+  firstName: z.string().min(1, 'validation.required'),
+  lastName: z.string().min(1, 'validation.required'),
   patronicName: z.string().optional(),
-  education: z.string().min(1, t('validation.required', '')),
-  marriageStatus: z.string().min(1, t('validation.required', '')),
-  dateOfBirth: z.string().min(1, t('validation.required', '')),
-  residence: z.string().min(1, t('validation.required', '')),
+  education: z.string().min(1, 'validation.required'),
+  marriageStatus: z.string().min(1, 'validation.required'),
+  dateOfBirth: z.string().min(1, 'validation.required'),
+  residence: z.string().min(1, 'validation.required'),
   currentResidence: z.string().optional(),
-  passportSerie: z.string().min(1, t('validation.required', '')),
-  passportNumber: z.string().min(1, t('validation.required', '')),
-  passportDateOfIssue: z.string().min(1, t('validation.required', '')),
-  passportGivenBy: z.string().min(1, t('validation.required', '')),
+  passportSerie: z.string().min(1, 'validation.required'),
+  passportNumber: z.string().min(1, 'validation.required'),
+  passportDateOfIssue: z.string().min(1, 'validation.required'),
+  passportGivenBy: z.string().min(1, 'validation.required'),
   bornPlace: z.string().optional(),
   email: z.string().optional(),
   phone: z.string()
-    .min(1, t('validation.required', ''))
-    .refine((val) => val.replace(/\D/g, '').length >= 8, { message: t('validation.invalidPhone', 'Telefon belgisi nädogry') }),
+    .min(1, 'validation.required')
+    .refine((val) => val.replace(/\D/g, '').length >= 8, { message: 'validation.invalidPhone' }),
   phoneAdditional: z.string().optional(),
   homePhone: z.string().optional(),
-  workCompany: z.string().min(1, t('validation.required', '')),
+  workCompany: z.string().min(1, 'validation.required'),
   workHrPhone: z.string().optional(),
   workRegion: z.string().optional(),
   workProvince: z.string().optional(),
-  position: z.string().min(1, t('validation.required', '')),
-  salary: z.string().min(1, t('validation.required', '')),
-  workStartedAt: z.string().min(1, t('validation.required', '')),
+  position: z.string().min(1, 'validation.required'),
+  salary: z.string().min(1, 'validation.required'),
+  workStartedAt: z.string().min(1, 'validation.required'),
   passportPage1: z.custom<File | null>().nullable(),
   passportPage23: z.custom<File | null>().nullable(),
   passportPage89: z.custom<File | null>().nullable(),
   passportPage32: z.custom<File | null>().nullable(),
   note: z.string().optional(),
-  loanAmount: z.string().min(1, t('validation.required', '')),
+  loanAmount: z.string().min(1, 'validation.required'),
   loanHistory: z.string().optional(),
-  cardNumber: z.string().min(1, t('validation.required', '')),
-  cardName: z.string().min(1, t('validation.required', '')),
-  cardExpMonth: z.string().min(1, t('validation.required', '')),
-  cardExpYear: z.string().min(1, t('validation.required', '')),
-  guarantor1Name: z.string().min(1, t('validation.required', '')),
-  guarantor1Surname: z.string().min(1, t('validation.required', '')),
+  cardNumber: z.string().min(1, 'validation.required'),
+  cardName: z.string().min(1, 'validation.required'),
+  cardExpMonth: z.string().min(1, 'validation.required'),
+  cardExpYear: z.string().min(1, 'validation.required'),
+  guarantor1Name: z.string().min(1, 'validation.required'),
+  guarantor1Surname: z.string().min(1, 'validation.required'),
   guarantor1Patronic: z.string().optional(),
-  guarantor1PassportSerie: z.string().min(1, t('validation.required', '')),
-  guarantor1PassportNumber: z.string().min(1, t('validation.required', '')),
-  guarantor1CardNumber: z.string().min(1, t('validation.required', '')),
-  guarantor1CardName: z.string().min(1, t('validation.required', '')),
-  guarantor1CardExpMonth: z.string().min(1, t('validation.required', '')),
-  guarantor1CardExpYear: z.string().min(1, t('validation.required', '')),
-  guarantor1Salary: z.string().min(1, t('validation.required', '')),
+  guarantor1PassportSerie: z.string().min(1, 'validation.required'),
+  guarantor1PassportNumber: z.string().min(1, 'validation.required'),
+  guarantor1CardNumber: z.string().min(1, 'validation.required'),
+  guarantor1CardName: z.string().min(1, 'validation.required'),
+  guarantor1CardExpMonth: z.string().min(1, 'validation.required'),
+  guarantor1CardExpYear: z.string().min(1, 'validation.required'),
+  guarantor1Salary: z.string().min(1, 'validation.required'),
 })
 
 export type LoanOrderFormData = z.infer<typeof loanOrderFormSchema>
@@ -101,7 +99,10 @@ export function validateStep(stepIndex: number, form: LoanOrderFormData, mode: '
   const errors: Partial<Record<keyof LoanOrderFormData, string>> = {}
   for (const issue of result.error.issues) {
     const key = issue.path[0] as keyof LoanOrderFormData
-    if (!errors[key]) errors[key] = issue.message
+    if (!errors[key]) {
+      const msg = issue.message
+      errors[key] = msg.startsWith('validation.') ? i18next.t(msg, msg) : msg
+    }
   }
   return errors
 }

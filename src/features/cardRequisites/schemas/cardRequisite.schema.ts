@@ -2,26 +2,24 @@ import { z } from 'zod'
 import i18next from 'i18next'
 import type { CardRequisiteStatus, CreateCardRequisitePayload } from '../api/cardRequisitesApi'
 
-const t = i18next.t.bind(i18next)
-
-const fileRequired = z.custom<File>((val) => val instanceof File, t('validation.requiredFile', ''))
+const fileRequired = z.custom<File>((val) => val instanceof File, 'validation.requiredFile')
 
 export const cardRequisiteFormSchema = z.object({
-  status: z.string().min(1, t('validation.required', '')),
+  status: z.string().min(1, 'validation.required'),
   note: z.string().optional(),
-  card_type: z.string().min(1, t('validation.required', '')),
-  card_number: z.string().min(1, t('validation.required', '')),
-  card_expiry_month: z.string().min(1, t('validation.required', '')),
-  card_expiry_year: z.string().min(1, t('validation.required', '')),
-  province_id: z.string().min(1, t('validation.required', '')),
-  branch_id: z.string().min(1, t('validation.required', '')),
-  first_name: z.string().min(1, t('validation.required', '')),
-  last_name: z.string().min(1, t('validation.required', '')),
+  card_type: z.string().min(1, 'validation.required'),
+  card_number: z.string().min(1, 'validation.required'),
+  card_expiry_month: z.string().min(1, 'validation.required'),
+  card_expiry_year: z.string().min(1, 'validation.required'),
+  province_id: z.string().min(1, 'validation.required'),
+  branch_id: z.string().min(1, 'validation.required'),
+  first_name: z.string().min(1, 'validation.required'),
+  last_name: z.string().min(1, 'validation.required'),
   middle_name: z.string().optional(),
-  birth_date: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
-  passport_series: z.string().min(1, t('validation.required', '')),
-  passport_number: z.string().min(1, t('validation.required', '')),
+  birth_date: z.string().min(1, 'validation.required'),
+  phone: z.string().min(1, 'validation.required'),
+  passport_series: z.string().min(1, 'validation.required'),
+  passport_number: z.string().min(1, 'validation.required'),
   passport_page1: z.custom<File | null>().nullable(),
   passport_page2_3: z.custom<File | null>().nullable(),
   passport_page8_9: z.custom<File | null>().nullable(),
@@ -40,13 +38,17 @@ export const stepSchemas: Record<number, z.ZodType<Partial<CardRequisiteFormData
     first_name: true, last_name: true, birth_date: true, phone: true,
   }),
   2: z.object({
-    passport_series: z.string().min(1, t('validation.required', '')),
-    passport_number: z.string().min(1, t('validation.required', '')),
+    passport_series: z.string().min(1, 'validation.required'),
+    passport_number: z.string().min(1, 'validation.required'),
     passport_page1: fileRequired,
     passport_page2_3: fileRequired,
     passport_page8_9: fileRequired,
     passport_page32: fileRequired,
   }),
+}
+
+function translateMsg(msg: string): string {
+  return msg.startsWith('validation.') ? i18next.t(msg, msg) : msg
 }
 
 export function validateStep(
@@ -56,15 +58,15 @@ export function validateStep(
 ): Partial<Record<keyof CardRequisiteFormData, string>> {
   if (stepIndex === 2 && mode === 'edit') {
     const schema = z.object({
-      passport_series: z.string().min(1, t('validation.required', '')),
-      passport_number: z.string().min(1, t('validation.required', '')),
+      passport_series: z.string().min(1, 'validation.required'),
+      passport_number: z.string().min(1, 'validation.required'),
     })
     const result = schema.safeParse(form)
     if (result.success) return {}
     const errors: Partial<Record<keyof CardRequisiteFormData, string>> = {}
     for (const issue of result.error.issues) {
       const key = issue.path[0] as keyof CardRequisiteFormData
-      if (!errors[key]) errors[key] = issue.message
+      if (!errors[key]) errors[key] = translateMsg(issue.message)
     }
     return errors
   }
@@ -76,7 +78,7 @@ export function validateStep(
   const errors: Partial<Record<keyof CardRequisiteFormData, string>> = {}
   for (const issue of result.error.issues) {
     const key = issue.path[0] as keyof CardRequisiteFormData
-    if (!errors[key]) errors[key] = issue.message
+    if (!errors[key]) errors[key] = translateMsg(issue.message)
   }
   return errors
 }

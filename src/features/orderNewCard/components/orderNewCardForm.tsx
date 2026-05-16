@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText, Upload } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -54,7 +55,8 @@ interface StepDef {
   id: string
   titleKey: string
   titleFallback: string
-  subtitle: string
+  subtitleKey: string
+  subtitleFallback: string
   icon: LucideIcon
   validate: (form: OrderNewCardFormData, mode: 'create' | 'edit') => FlatErrors
 }
@@ -64,7 +66,8 @@ const STEPS: StepDef[] = [
     id: 'card',
     titleKey: 'cardOrder.step.card',
     titleFallback: 'Kart',
-    subtitle: 'Görnüş & lokasiýa',
+    subtitleKey: 'orderNewCardForm.steps.card.subtitle',
+    subtitleFallback: 'Görnüş & lokasiýa',
     icon: CreditCard,
     validate: (form, mode) => validateStep(0, form, mode),
   },
@@ -72,7 +75,8 @@ const STEPS: StepDef[] = [
     id: 'personal',
     titleKey: 'cardOrder.step.personal',
     titleFallback: 'Şahsy',
-    subtitle: 'Maglumatlar',
+    subtitleKey: 'orderNewCardForm.steps.personal.subtitle',
+    subtitleFallback: 'Maglumatlar',
     icon: User,
     validate: (form, mode) => validateStep(1, form, mode),
   },
@@ -80,7 +84,8 @@ const STEPS: StepDef[] = [
     id: 'passport',
     titleKey: 'cardOrder.step.passport',
     titleFallback: 'Pasport',
-    subtitle: 'Resmi maglumat',
+    subtitleKey: 'orderNewCardForm.steps.passport.subtitle',
+    subtitleFallback: 'Resmi maglumat',
     icon: FileText,
     validate: (form, mode) => validateStep(2, form, mode),
   },
@@ -88,7 +93,8 @@ const STEPS: StepDef[] = [
     id: 'files',
     titleKey: 'cardOrder.step.files',
     titleFallback: 'Faýllar',
-    subtitle: 'Ýüklemek & Tassyklamak',
+    subtitleKey: 'orderNewCardForm.steps.files.subtitle',
+    subtitleFallback: 'Ýüklemek & Tassyklamak',
     icon: Upload,
     validate: (form, mode) => validateStep(3, form, mode),
   },
@@ -144,12 +150,13 @@ interface StepContentProps {
   form: OrderNewCardFormData
   errors: FlatErrors
   set: <K extends keyof OrderNewCardFormData>(k: K, v: OrderNewCardFormData[K]) => void
+  t: TFunction
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
 
 function StepCard({
-  form, errors, set,
+  form, errors, set, t,
   statusOptions, issuanceReasonOptions, cardTypeOptions, provinceOptions, branchOptions,
 }: StepContentProps & {
   statusOptions: SelectOption[]
@@ -164,20 +171,20 @@ function StepCard({
         <BentoCard>
           <FormInput
             type="select"
-            label="Status"
+            label={t('loanOrderForm.labels.status') || 'Status'}
             required
             value={form.status}
             onChange={(v) => set('status', v as CardOrderStatus)}
             options={statusOptions}
-            placeholder="Saýlaň"
+            placeholder={t('loanOrderForm.placeholders.select') || 'Saýlaň'}
             error={errors.status}
           />
           <FormInput
             type="textarea"
-            label="Bellik"
+            label={t('Note') || 'Bellik'}
             value={form.note}
             onChange={(v) => set('note', v)}
-            placeholder="Bellik..."
+            placeholder={t('loanOrderForm.placeholders.note') || 'Bellik...'}
             rows={3}
           />
         </BentoCard>
@@ -195,7 +202,7 @@ function StepCard({
               htmlFor="isPaid"
               className="text-xs font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer select-none"
             >
-              Tölenen
+              {t('orderNewCardForm.isPaid') || 'Tölenen'}
             </label>
           </div>
         </BentoCard>
@@ -205,24 +212,24 @@ function StepCard({
         <BentoCard>
           <FormInput
             type="searchable-select"
-            label="Kartyň çykarylmagynyň sebäbi"
+            label={t('Reason for issuing the card') || 'Kartyň çykarylmagynyň sebäbi'}
             required
             value={form.issuanceReasonId}
             onChange={(v) => set('issuanceReasonId', v)}
             options={issuanceReasonOptions}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.issuanceReasonId}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
             type="searchable-select"
-            label="Kart görnüşi"
+            label={t('Card type') || 'Kart görnüşi'}
             required
             value={form.cardTypeId}
             onChange={(v) => set('cardTypeId', v)}
             options={cardTypeOptions}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.cardTypeId}
           />
         </BentoCard>
@@ -232,25 +239,25 @@ function StepCard({
         <BentoCard>
           <FormInput
             type="select"
-            label="Welaýat"
+            label={t('Region') || 'Welaýat'}
             required
             value={form.provinceId}
             onChange={(v) => { set('provinceId', v); set('branchId', '') }}
             options={provinceOptions}
-            placeholder="Saýlaň"
+            placeholder={t('loanOrderForm.placeholders.select') || 'Saýlaň'}
             error={errors.provinceId}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
             type="searchable-select"
-            label="Şahamça"
+            label={t('Branch') || 'Şahamça'}
             required
             value={form.branchId}
             onChange={(v) => set('branchId', v)}
             options={branchOptions}
             disabled={!form.provinceId}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.branchId}
           />
         </BentoCard>
@@ -259,7 +266,7 @@ function StepCard({
   )
 }
 
-function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProps & {
+function StepPersonal({ form, errors, set, t, citizenshipOptions }: StepContentProps & {
   citizenshipOptions: SelectOption[]
 }) {
   return (
@@ -267,23 +274,23 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
       <BentoGrid cols={3}>
         <BentoCard>
           <FormInput
-            type="text" label="Ady" required
+            type="text" label={t('Name') || 'Ady'} required
             value={form.firstName} onChange={(v) => set('firstName', v)}
-            placeholder="Ady" error={errors.firstName}
+            placeholder={t('Name') || 'Ady'} error={errors.firstName}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Familiýasy" required
+            type="text" label={t('Surname') || 'Familiýasy'} required
             value={form.lastName} onChange={(v) => set('lastName', v)}
-            placeholder="Familiýasy" error={errors.lastName}
+            placeholder={t('Surname') || 'Familiýasy'} error={errors.lastName}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Atasynyň ady"
+            type="text" label={t('Patronic name') || 'Atasynyň ady'}
             value={form.middleName} onChange={(v) => set('middleName', v)}
-            placeholder="Atasynyň ady"
+            placeholder={t('Patronic name') || 'Atasynyň ady'}
           />
         </BentoCard>
       </BentoGrid>
@@ -291,14 +298,14 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
       <BentoGrid cols={2}>
         <BentoCard>
           <FormInput
-            type="text" label="Köne familiýaňyz (eger üýtgän bolsa)"
+            type="text" label={t('Old surname (if changed)') || 'Köne familiýaňyz (eger üýtgän bolsa)'}
             value={form.formerLastName} onChange={(v) => set('formerLastName', v)}
-            placeholder="Köne familiýaňyz"
+            placeholder={t('orderNewCardForm.placeholders.formerLastName') || 'Köne familiýaňyz'}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="date" label="Doglan güni" required
+            type="date" label={t('Date of birth') || 'Doglan güni'} required
             value={form.birthDate} onChange={(v) => set('birthDate', v)}
             error={errors.birthDate}
           />
@@ -308,20 +315,20 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
       <BentoGrid cols={3}>
         <BentoCard>
           <FormInput
-            type="phone" label="Telefon" required
+            type="phone" label={t('Phone') || 'Telefon'} required
             value={form.phone} onChange={(v) => set('phone', v)}
             error={errors.phone}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="phone" label="Telefon goşmaça"
+            type="phone" label={t('Phone Additional') || 'Telefon goşmaça'}
             value={form.phoneExtra} onChange={(v) => set('phoneExtra', v)}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="select" label="Raýatlyk" required
+            type="select" label={t('Citizenship') || 'Raýatlyk'} required
             value={form.citizenship} onChange={(v) => set('citizenship', v)}
             options={citizenshipOptions}
             error={errors.citizenship}
@@ -332,17 +339,17 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
       <BentoGrid cols={2}>
         <BentoCard>
           <FormInput
-            type="text" label="Ýazgy edilen salgyňyz" required
+            type="text" label={t('orderNewCardForm.labels.registeredAddress') || 'Ýazgy edilen salgyňyz'} required
             value={form.registeredAddress} onChange={(v) => set('registeredAddress', v)}
-            placeholder="Ýazgy edilen salgyňyz"
+            placeholder={t('orderNewCardForm.labels.registeredAddress') || 'Ýazgy edilen salgyňyz'}
             error={errors.registeredAddress}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Häzirki ýaşaýyş ýeri" required
+            type="text" label={t('orderNewCardForm.labels.currentAddress') || 'Häzirki ýaşaýyş ýeri'} required
             value={form.currentAddress} onChange={(v) => set('currentAddress', v)}
-            placeholder="Häzirki ýaşaýyş ýeri"
+            placeholder={t('orderNewCardForm.labels.currentAddress') || 'Häzirki ýaşaýyş ýeri'}
             error={errors.currentAddress}
           />
         </BentoCard>
@@ -351,9 +358,9 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
       <BentoGrid cols={1}>
         <BentoCard>
           <FormInput
-            type="text" label="Işleýän ýeriňiz we wezipäňiz" required
+            type="text" label={t('orderNewCardForm.labels.workplace') || 'Işleýän ýeriňiz we wezipäňiz'} required
             value={form.workplace} onChange={(v) => set('workplace', v)}
-            placeholder="Işleýän ýeriňiz we wezipäňiz"
+            placeholder={t('orderNewCardForm.labels.workplace') || 'Işleýän ýeriňiz we wezipäňiz'}
             error={errors.workplace}
           />
         </BentoCard>
@@ -362,7 +369,7 @@ function StepPersonal({ form, errors, set, citizenshipOptions }: StepContentProp
   )
 }
 
-function StepPassport({ form, errors, set, passportSeriesOptions }: StepContentProps & {
+function StepPassport({ form, errors, set, t, passportSeriesOptions }: StepContentProps & {
   passportSeriesOptions: SelectOption[]
 }) {
   return (
@@ -370,24 +377,24 @@ function StepPassport({ form, errors, set, passportSeriesOptions }: StepContentP
       <BentoGrid cols={3}>
         <BentoCard>
           <FormInput
-            type="select" label="Pasport seriýasy" required
+            type="select" label={t('Passport serie') || 'Pasport seriýasy'} required
             value={form.passportSeriesId} onChange={(v) => set('passportSeriesId', v)}
             options={passportSeriesOptions}
-            placeholder="Saýlaň"
+            placeholder={t('loanOrderForm.placeholders.select') || 'Saýlaň'}
             error={errors.passportSeriesId}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Pasport belgisi" required
+            type="text" label={t('Passport id') || 'Pasport belgisi'} required
             value={form.passportNumber} onChange={(v) => set('passportNumber', v)}
-            placeholder="Pasport belgisi"
+            placeholder={t('Passport id') || 'Pasport belgisi'}
             error={errors.passportNumber}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="date" label="Pasport berlen senesi" required
+            type="date" label={t('Passport date of issue') || 'Pasport berlen senesi'} required
             value={form.passportIssueDate} onChange={(v) => set('passportIssueDate', v)}
             error={errors.passportIssueDate}
           />
@@ -397,17 +404,17 @@ function StepPassport({ form, errors, set, passportSeriesOptions }: StepContentP
       <BentoGrid cols={2}>
         <BentoCard>
           <FormInput
-            type="text" label="Kim tarapyndan berildi" required
+            type="text" label={t('Passport given by') || 'Kim tarapyndan berildi'} required
             value={form.passportIssuedBy} onChange={(v) => set('passportIssuedBy', v)}
-            placeholder="Kim tarapyndan berildi"
+            placeholder={t('Passport given by') || 'Kim tarapyndan berildi'}
             error={errors.passportIssuedBy}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Doglan ýeri (pasport)" required
+            type="text" label={t('Born place (passport)') || 'Doglan ýeri (pasport)'} required
             value={form.passportBirthPlace} onChange={(v) => set('passportBirthPlace', v)}
-            placeholder="Doglan ýeri (pasport)"
+            placeholder={t('Born place (passport)') || 'Doglan ýeri (pasport)'}
             error={errors.passportBirthPlace}
           />
         </BentoCard>
@@ -417,15 +424,15 @@ function StepPassport({ form, errors, set, passportSeriesOptions }: StepContentP
 }
 
 function StepFiles({
-  form, errors, set, mode, initialData,
+  form, errors, set, t, mode, initialData,
 }: StepContentProps & { mode: 'create' | 'edit'; initialData?: CardOrder }) {
   const existingFiles =
     mode === 'edit' && initialData
       ? [
-          { url: initialData.passportFiles.page1,  label: 'Pasport (sahypa 1)'       },
-          { url: initialData.passportFiles.page23, label: 'Pasport (2-3-nji sahypa)' },
-          { url: initialData.passportFiles.page89, label: 'Pasport (8-9 sahypa)'     },
-          { url: initialData.passportFiles.page32, label: 'Pasport (32-nji sahypa)'  },
+          { url: initialData.passportFiles.page1,  label: t('Passport (page 1)') || 'Pasport (sahypa 1)'       },
+          { url: initialData.passportFiles.page23, label: t('Passport (page 2-3)') || 'Pasport (2-3-nji sahypa)' },
+          { url: initialData.passportFiles.page89, label: t('Passport (page 8-9)') || 'Pasport (8-9 sahypa)'     },
+          { url: initialData.passportFiles.page32, label: t('Passport (page 32)') || 'Pasport (32-nji sahypa)'  },
         ].filter((f): f is { url: string; label: string } => !!f.url)
       : []
 
@@ -441,7 +448,7 @@ function StepFiles({
                 rel="noopener noreferrer"
                 className="text-xs text-primary underline truncate block"
               >
-                Faýly gör
+                {t('loanOrderForm.fileLabels.viewFile') || 'Faýly gör'}
               </a>
             </BentoCard>
           ))}
@@ -452,7 +459,7 @@ function StepFiles({
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'}
+            label={mode === 'edit' ? (t('loanOrderForm.fileLabels.replacePage1') || 'Pasport (sahypa 1) (çalyşmak)') : (t('Passport (page 1)') || 'Pasport (sahypa 1)')}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passportPage1}
@@ -463,7 +470,7 @@ function StepFiles({
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'}
+            label={mode === 'edit' ? (t('loanOrderForm.fileLabels.replacePage23') || 'Pasport (2-3-nji sahypa) (çalyşmak)') : (t('Passport (page 2-3)') || 'Pasport (2-3-nji sahypa)')}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passportPage23}
@@ -474,7 +481,7 @@ function StepFiles({
         <BentoCard>
           <FormInput
             type="file"
-            label="Pasport (8-9 sahypa)"
+            label={t('Passport (page 8-9)') || 'Pasport (8-9 sahypa)'}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passportPage89}
@@ -485,7 +492,7 @@ function StepFiles({
         <BentoCard>
           <FormInput
             type="file"
-            label="Pasport (32-nji sahypa)"
+            label={t('Passport (page 32)') || 'Pasport (32-nji sahypa)'}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passportPage32}
@@ -528,7 +535,7 @@ function StepFiles({
               <span
                 className={`text-sm font-medium ${errors.termsAccepted ? 'text-destructive' : 'text-primary'}`}
               >
-                Şertnama bilen razylaşýaryn (Okamak üçin bas)
+                {t('I accept terms of contract') || 'Şertnama bilen razylaşýaryn (Okamak üçin bas)'}
               </span>
             </div>
           </BentoCard>
@@ -554,18 +561,17 @@ export function CardOrderForm({
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
   } = useForm<OrderNewCardFormData>({
     defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
   })
 
   const form = watch()
-  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
-
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
+  const [submittedSteps, setSubmittedSteps] = useState<Set<number>>(new Set())
 
   // ── Lookup data ────────────────────────────────────────────────────────────
 
@@ -614,18 +620,34 @@ export function CardOrderForm({
     clearErrors(key)
   }, [setValue, clearErrors])
 
-  const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
+  const currentStepErrors = useMemo(
+    () => submittedSteps.has(currentStep) ? STEPS[currentStep].validate(form, mode) : {},
+    [currentStep, form, mode, submittedSteps],
+  )
+  const errors = useMemo(() => {
+    const fromRHF = flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>)
+    return { ...fromRHF, ...currentStepErrors }
+  }, [rhfErrors, currentStepErrors])
+
+  const stepProps = useMemo(() => ({ form, errors, set, t }), [form, errors, set, t])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
 
   const markVisited = (i: number) =>
     setVisited((prev) => new Set([...prev, i]))
 
+  const markSubmitted = (i: number) =>
+    setSubmittedSteps((prev) => new Set([...prev, i]))
+
   const handleNext = () => {
     markVisited(currentStep)
+    markSubmitted(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
-      toast.error(t('validation.fixErrors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
+      Object.entries(errs).forEach(([key, msg]) => {
+        setError(key as keyof OrderNewCardFormData, { type: 'manual', message: msg })
+      })
+      toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
     if (currentStep < STEPS.length - 1) {
@@ -652,11 +674,15 @@ export function CardOrderForm({
 
   const doSubmit = async () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
+    setSubmittedSteps(new Set(STEPS.map((_, i) => i)))
 
     const allErrors: FlatErrors = {}
     for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
+      Object.entries(allErrors).forEach(([key, msg]) => {
+        setError(key as keyof OrderNewCardFormData, { type: 'manual', message: msg })
+      })
       toast.error(t('validation.fixErrors', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
@@ -690,7 +716,7 @@ export function CardOrderForm({
     return {
       id:       s.id,
       title:    t(s.titleKey) || s.titleFallback,
-      subtitle: s.subtitle,
+      subtitle: t(s.subtitleKey) || s.subtitleFallback,
       icon:     s.icon,
       status: isActive ? 'active' : hasErrors ? 'error' : isDone ? 'done' : 'idle',
     }

@@ -1,24 +1,22 @@
 import { z } from 'zod'
 import i18next from 'i18next'
 
-const t = i18next.t.bind(i18next)
-
-const fileRequired = z.custom<File>((val) => val instanceof File, t('validation.requiredFile', ''))
+const fileRequired = z.custom<File>((val) => val instanceof File, 'validation.requiredFile')
 
 export const cardPinFormSchema = z.object({
-  status: z.string().min(1, t('validation.required', '')),
+  status: z.string().min(1, 'validation.required'),
   note: z.string().optional(),
-  card_type: z.string().min(1, t('validation.required', '')),
-  card_number: z.string().min(1, t('validation.required', '')),
-  province: z.string().min(1, t('validation.required', '')),
-  branch: z.string().min(1, t('validation.required', '')),
-  first_name: z.string().min(1, t('validation.required', '')),
-  last_name: z.string().min(1, t('validation.required', '')),
+  card_type: z.string().min(1, 'validation.required'),
+  card_number: z.string().min(1, 'validation.required'),
+  province: z.string().min(1, 'validation.required'),
+  branch: z.string().min(1, 'validation.required'),
+  first_name: z.string().min(1, 'validation.required'),
+  last_name: z.string().min(1, 'validation.required'),
   father_name: z.string().optional(),
-  birth_date: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
-  passport_series: z.string().min(1, t('validation.required', '')),
-  passport_number: z.string().min(1, t('validation.required', '')),
+  birth_date: z.string().min(1, 'validation.required'),
+  phone: z.string().min(1, 'validation.required'),
+  passport_series: z.string().min(1, 'validation.required'),
+  passport_number: z.string().min(1, 'validation.required'),
   passport_file_1: z.custom<File | null>().nullable(),
   passport_file_2: z.custom<File | null>().nullable(),
   passport_file_3: z.custom<File | null>().nullable(),
@@ -55,13 +53,17 @@ export const stepSchemas: Record<number, z.ZodType<Partial<CardPinFormData>>> = 
     first_name: true, last_name: true, birth_date: true, phone: true,
   }),
   2: z.object({
-    passport_series: z.string().min(1, t('validation.required', '')),
-    passport_number: z.string().min(1, t('validation.required', '')),
+    passport_series: z.string().min(1, 'validation.required'),
+    passport_number: z.string().min(1, 'validation.required'),
     passport_file_1: fileRequired,
     passport_file_2: fileRequired,
     passport_file_3: fileRequired,
     passport_file_4: fileRequired,
   }),
+}
+
+function translateMsg(msg: string): string {
+  return msg.startsWith('validation.') ? i18next.t(msg, msg) : msg
 }
 
 export function validateStep(
@@ -76,7 +78,7 @@ export function validateStep(
     const errors: Partial<Record<keyof CardPinFormData, string>> = {}
     for (const issue of result.error.issues) {
       const key = issue.path[0] as keyof CardPinFormData
-      if (!errors[key]) errors[key] = issue.message
+      if (!errors[key]) errors[key] = translateMsg(issue.message)
     }
     return errors
   }
@@ -88,7 +90,7 @@ export function validateStep(
   const errors: Partial<Record<keyof CardPinFormData, string>> = {}
   for (const issue of result.error.issues) {
     const key = issue.path[0] as keyof CardPinFormData
-    if (!errors[key]) errors[key] = issue.message
+    if (!errors[key]) errors[key] = translateMsg(issue.message)
   }
   return errors
 }

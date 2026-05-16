@@ -2,27 +2,25 @@ import { z } from 'zod'
 import i18next from 'i18next'
 import type { IntlPaymentCreatePayload, IntlPaymentStatus, CurrencyType } from '../api/visaMasterPaymentsApi'
 
-const t = i18next.t.bind(i18next)
-
 const fileField = z.custom<File | null>().nullable()
 
 export const visaMasterPaymentFormSchema = z.object({
-  client_id: z.string().min(1, t('validation.required', '')),
-  status: z.string().min(1, t('validation.required', '')),
+  client_id: z.string().min(1, 'validation.required'),
+  status: z.string().min(1, 'validation.required'),
   note: z.string().optional().default(''),
-  currency_type: z.string().min(1, t('validation.required', '')),
-  province: z.string().min(1, t('validation.required', '')),
-  branch: z.string().min(1, t('validation.required', '')),
-  passport_first_name: z.string().min(1, t('validation.required', '')),
-  passport_last_name: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
+  currency_type: z.string().min(1, 'validation.required'),
+  province: z.string().min(1, 'validation.required'),
+  branch: z.string().min(1, 'validation.required'),
+  passport_first_name: z.string().min(1, 'validation.required'),
+  passport_last_name: z.string().min(1, 'validation.required'),
+  phone: z.string().min(1, 'validation.required'),
   email: z.string().optional().default(''),
   home_address: z.string().optional().default(''),
-  passport_series: z.string().min(1, t('validation.required', '')),
-  passport_number: z.string().min(1, t('validation.required', '')),
-  payer_full_name: z.string().min(1, t('validation.required', '')),
-  payer_account_number: z.string().min(1, t('validation.required', '')),
-  receiver_info: z.string().min(1, t('validation.required', '')),
+  passport_series: z.string().min(1, 'validation.required'),
+  passport_number: z.string().min(1, 'validation.required'),
+  payer_full_name: z.string().min(1, 'validation.required'),
+  payer_account_number: z.string().min(1, 'validation.required'),
+  receiver_info: z.string().min(1, 'validation.required'),
   doc_sberbank_account: fileField,
   doc_school_enrollment: fileField,
   doc_summons: fileField,
@@ -65,7 +63,10 @@ export function validateStep(
   const errors: Partial<Record<keyof IntlPaymentFormData, string>> = {}
   for (const issue of result.error.issues) {
     const key = issue.path[0] as keyof IntlPaymentFormData
-    if (!errors[key]) errors[key] = issue.message
+    if (!errors[key]) {
+      const msg = issue.message
+      errors[key] = msg.startsWith('validation.') ? i18next.t(msg, msg) : msg
+    }
   }
   return errors
 }

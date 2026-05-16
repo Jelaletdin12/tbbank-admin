@@ -271,7 +271,7 @@ export default function LoanOrdersPage() {
         <DataTableToolbar
           searchValue={search}
           onSearchChange={(v) => { setSearch(v); setPage(1) }}
-          searchPlaceholder={t('loanOrders.searchPlaceholder', 'Gözlemek')}
+          searchPlaceholder={t('loanOrderMobiles.searchPlaceholder', 'Gözlemek')}
           columns={toggleableColumns}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

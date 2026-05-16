@@ -6,7 +6,7 @@ import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { type CardBalance } from '@/features/cardBalance/api/cardBalanceApi'
 import { useCreateCardBalance, useUpdateCardBalance } from '@/features/cardBalance/hooks/useCardBalance'
-import { DEFAULT_FORM_VALUES, buildPayload } from '@/features/cardBalance/schemas/cardBalance.schema'
+import { cardBalanceFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '@/features/cardBalance/schemas/cardBalance.schema'
 import type { CardBalanceFormData } from '@/features/cardBalance/schemas/cardBalance.schema'
 
 interface CardBalanceFormProps {
@@ -65,7 +65,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
   const isPending      = createMutation.isPending || updateMutation.isPending
 
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
   } = useForm<CardBalanceFormData>({
     defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...initialData } : DEFAULT_FORM_VALUES,
   })
@@ -78,8 +78,19 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
     clearErrors(field)
   }, [setValue, clearErrors])
 
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   const handleSubmit = async () => {
-    const payload = buildPayload(getValues())
+    const result = cardBalanceFormSchema.safeParse(getValues())
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const key = issue.path[0] as keyof CardBalanceFormData
+        setError(key, { message: issue.message })
+      }
+      return
+    }
+    const payload = buildPayload(result.data)
     if (mode === 'create') {
       await createMutation.mutateAsync(payload)
       navigate('/card-balances')
@@ -105,7 +116,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
           onChange={setField('passport_series')}
           options={PASSPORT_SERIES_OPTIONS}
           placeholder={t('Select to choose', 'Saýlamak üçin basyň')}
-          error={errors.passport_series}
+          error={errMsg(errors.passport_series)}
           required
         />
         <FormInput
@@ -114,7 +125,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
           value={form.passport_number}
           onChange={setField('passport_number')}
           placeholder={t('Passport number', 'Pasport belgisi')}
-          error={errors.passport_number}
+          error={errMsg(errors.passport_number)}
           required
         />
 
@@ -125,7 +136,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
           value={form.card_number}
           onChange={setField('card_number')}
           placeholder={t('Card number', 'Kart belgisi')}
-          error={errors.card_number}
+          error={errMsg(errors.card_number)}
           required
         />
 
@@ -137,7 +148,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
             onChange={setField('card_expiry_month')}
             options={MONTH_OPTIONS}
             placeholder={t('Select', 'Saýlamak üçin basyň')}
-            error={errors.card_expiry_month}
+            error={errMsg(errors.card_expiry_month)}
             required
           />
           <FormInput
@@ -147,7 +158,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
             onChange={setField('card_expiry_year')}
             options={YEAR_OPTIONS}
             placeholder={t('Select', 'Saýlamak üçin basyň')}
-            error={errors.card_expiry_year}
+            error={errMsg(errors.card_expiry_year)}
             required
           />
         </div>

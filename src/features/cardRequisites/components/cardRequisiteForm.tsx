@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { CreditCard, User, FileText } from 'lucide-react'
@@ -113,7 +114,8 @@ interface StepDef {
   id: string
   titleKey: string
   titleFallback: string
-  subtitle: string
+  subtitleKey: string
+  subtitleFallback: string
   icon: LucideIcon
   validate: (form: CardRequisiteFormData, mode: 'create' | 'edit') => FlatErrors
 }
@@ -123,7 +125,8 @@ const STEPS: StepDef[] = [
     id: 'card',
     titleKey: 'Card',
     titleFallback: 'Kart',
-    subtitle: 'Görnüş & lokasiýa',
+    subtitleKey: 'cardRequisiteForm.steps.card.subtitle',
+    subtitleFallback: 'Görnüş & lokasiýa',
     icon: CreditCard,
     validate: (form, mode) => validateStep(0, form, mode),
   },
@@ -131,7 +134,8 @@ const STEPS: StepDef[] = [
     id: 'personal',
     titleKey: 'Personal',
     titleFallback: 'Şahsy',
-    subtitle: 'At & telefon',
+    subtitleKey: 'cardRequisiteForm.steps.personal.subtitle',
+    subtitleFallback: 'At & telefon',
     icon: User,
     validate: (form, mode) => validateStep(1, form, mode),
   },
@@ -139,7 +143,8 @@ const STEPS: StepDef[] = [
     id: 'passport',
     titleKey: 'Passport',
     titleFallback: 'Pasport',
-    subtitle: 'Resminamalar',
+    subtitleKey: 'cardRequisiteForm.steps.passport.subtitle',
+    subtitleFallback: 'Resminamalar',
     icon: FileText,
     validate: (form, mode) => validateStep(2, form, mode),
   },
@@ -195,11 +200,12 @@ interface StepContentProps {
   form: CardRequisiteFormData
   errors: FlatErrors
   set: <K extends keyof CardRequisiteFormData>(k: K, v: CardRequisiteFormData[K]) => void
+  t: TFunction
 }
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
 
-function StepCard({ form, errors, set }: StepContentProps) {
+function StepCard({ form, errors, set, t }: StepContentProps) {
   const branchOptions = BRANCH_OPTIONS[form.province_id] ?? []
 
   return (
@@ -208,31 +214,31 @@ function StepCard({ form, errors, set }: StepContentProps) {
         <BentoCard>
           <FormInput
             type="select"
-            label="Status"
+            label={t('loanOrderForm.labels.status') || 'Status'}
             required
             value={form.status}
             onChange={(v) => set('status', v)}
             options={STATUS_OPTIONS}
             error={errors.status}
-            placeholder="Saýlaň"
+            placeholder={t('loanOrderForm.placeholders.select') || 'Saýlaň'}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
             type="text"
-            label="Bellik"
+            label={t('Note') || 'Bellik'}
             value={form.note}
             onChange={(v) => set('note', v)}
-            placeholder="Bellik..."
+            placeholder={t('loanOrderForm.placeholders.note') || 'Bellik...'}
           />
         </BentoCard>
       </BentoGrid>
 
       <BentoGrid cols={2}>
-        <BentoCard title="Kart maglumatlary">
+        <BentoCard title={t('loanOrderForm.titles.cardInfo') || 'Kart maglumatlary'}>
           <FormInput
             type="select"
-            label="Görnüşi"
+            label={t('cardRequisiteForm.labels.cardType') || 'Görnüşi'}
             required
             value={form.card_type}
             onChange={(v) => set('card_type', v)}
@@ -242,34 +248,34 @@ function StepCard({ form, errors, set }: StepContentProps) {
           />
           <FormInput
             type="text"
-            label="Kart belgisi"
+            label={t('Card number') || 'Kart belgisi'}
             required
             value={form.card_number}
             onChange={(v) => set('card_number', v)}
-            placeholder="Kart belgisi"
+            placeholder={t('Card number') || 'Kart belgisi'}
             error={errors.card_number}
           />
         </BentoCard>
 
-        <BentoCard title="Kart möhleti">
+        <BentoCard title={t('loanOrderForm.titles.cardExpiry') || 'Kart möhleti'}>
           <FormInput
             type="select"
-            label="Möhleti (aý)"
+            label={t('Expiration month') || 'Möhleti (aý)'}
             required
             value={form.card_expiry_month}
             onChange={(v) => set('card_expiry_month', v)}
             options={MONTH_OPTIONS}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.card_expiry_month}
           />
           <FormInput
             type="select"
-            label="Möhleti (ýyl)"
+            label={t('Expiration year') || 'Möhleti (ýyl)'}
             required
             value={form.card_expiry_year}
             onChange={(v) => set('card_expiry_year', v)}
             options={YEAR_OPTIONS}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.card_expiry_year}
           />
         </BentoCard>
@@ -279,24 +285,24 @@ function StepCard({ form, errors, set }: StepContentProps) {
         <BentoCard>
           <FormInput
             type="select"
-            label="Welaýat"
+            label={t('Region') || 'Welaýat'}
             required
             value={form.province_id}
             onChange={(v) => { set('province_id', v); set('branch_id', '') }}
             options={PROVINCE_OPTIONS}
-            placeholder="Aşgabat"
+            placeholder={t('Region') || 'Aşgabat'}
             error={errors.province_id}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
             type="searchable-select"
-            label="Şahamça"
+            label={t('Branch') || 'Şahamça'}
             required
             value={form.branch_id}
             onChange={(v) => set('branch_id', v)}
             options={branchOptions}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             disabled={!form.province_id}
             error={errors.branch_id}
           />
@@ -306,29 +312,29 @@ function StepCard({ form, errors, set }: StepContentProps) {
   )
 }
 
-function StepPersonal({ form, errors, set }: StepContentProps) {
+function StepPersonal({ form, errors, set, t }: StepContentProps) {
   return (
     <div className="space-y-4">
       <BentoGrid cols={3}>
         <BentoCard>
           <FormInput
-            type="text" label="Ady" required
+            type="text" label={t('Name') || 'Ady'} required
             value={form.first_name} onChange={(v) => set('first_name', v)}
-            placeholder="Ady" error={errors.first_name}
+            placeholder={t('Name') || 'Ady'} error={errors.first_name}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Familiýasy" required
+            type="text" label={t('Surname') || 'Familiýasy'} required
             value={form.last_name} onChange={(v) => set('last_name', v)}
-            placeholder="Familiýasy" error={errors.last_name}
+            placeholder={t('Surname') || 'Familiýasy'} error={errors.last_name}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="text" label="Atasynyň ady"
+            type="text" label={t('Patronic name') || 'Atasynyň ady'}
             value={form.middle_name} onChange={(v) => set('middle_name', v)}
-            placeholder="Atasynyň ady"
+            placeholder={t('Patronic name') || 'Atasynyň ady'}
           />
         </BentoCard>
       </BentoGrid>
@@ -336,14 +342,14 @@ function StepPersonal({ form, errors, set }: StepContentProps) {
       <BentoGrid cols={2}>
         <BentoCard>
           <FormInput
-            type="date" label="Doglan güni" required
+            type="date" label={t('Date of birth') || 'Doglan güni'} required
             value={form.birth_date} onChange={(v) => set('birth_date', v)}
             error={errors.birth_date}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
-            type="phone" label="Telefon" required
+            type="phone" label={t('Phone') || 'Telefon'} required
             value={form.phone} onChange={(v) => set('phone', v)}
             placeholder="63 21 87 04"
             error={errors.phone}
@@ -354,17 +360,17 @@ function StepPersonal({ form, errors, set }: StepContentProps) {
   )
 }
 
-function StepPassport({ form, errors, set, mode, initialData }: StepContentProps & {
+function StepPassport({ form, errors, set, t, mode, initialData }: StepContentProps & {
   mode: 'create' | 'edit'
   initialData?: CardRequisite
 }) {
   const existingFiles =
     mode === 'edit' && initialData
       ? [
-          { url: initialData.passport_page1_url,   label: 'Pasport (sahypa 1)'       },
-          { url: initialData.passport_page2_3_url,  label: 'Pasport (2-3-nji sahypa)' },
-          { url: initialData.passport_page8_9_url,  label: 'Pasport (8-9 sahypa)'     },
-          { url: initialData.passport_page32_url,   label: 'Pasport (32-nji sahypa)'  },
+          { url: initialData.passport_page1_url,   label: t('Passport (page 1)') || 'Pasport (sahypa 1)'       },
+          { url: initialData.passport_page2_3_url,  label: t('Passport (page 2-3)') || 'Pasport (2-3-nji sahypa)' },
+          { url: initialData.passport_page8_9_url,  label: t('Passport (page 8-9)') || 'Pasport (8-9 sahypa)'     },
+          { url: initialData.passport_page32_url,   label: t('Passport (page 32)') || 'Pasport (32-nji sahypa)'  },
         ].filter((f): f is { url: string; label: string } => !!f.url)
       : []
 
@@ -374,23 +380,23 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
         <BentoCard>
           <FormInput
             type="searchable-select"
-            label="Pasport seriýasy"
+            label={t('Passport serie') || 'Pasport seriýasy'}
             required
             value={form.passport_series}
             onChange={(v) => set('passport_series', v)}
             options={PASSPORT_SERIES_OPTIONS}
-            placeholder="Saýlamak üçin basyň"
+            placeholder={t('loanOrderForm.placeholders.searchableSelect') || 'Saýlamak üçin basyň'}
             error={errors.passport_series}
           />
         </BentoCard>
         <BentoCard>
           <FormInput
             type="text"
-            label="Pasport belgisi"
+            label={t('Passport id') || 'Pasport belgisi'}
             required
             value={form.passport_number}
             onChange={(v) => set('passport_number', v)}
-            placeholder="Pasport belgisi"
+            placeholder={t('Passport id') || 'Pasport belgisi'}
             error={errors.passport_number}
           />
         </BentoCard>
@@ -406,7 +412,7 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
                 rel="noopener noreferrer"
                 className="text-xs text-primary underline truncate block"
               >
-                Faýly gör
+                {t('loanOrderForm.fileLabels.viewFile') || 'Faýly gör'}
               </a>
             </BentoCard>
           ))}
@@ -417,7 +423,7 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (sahypa 1) (çalyşmak)' : 'Pasport (sahypa 1)'}
+            label={mode === 'edit' ? (t('loanOrderForm.fileLabels.replacePage1') || 'Pasport (sahypa 1) (çalyşmak)') : (t('Passport (page 1)') || 'Pasport (sahypa 1)')}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passport_page1}
@@ -428,7 +434,7 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (2-3-nji sahypa) (çalyşmak)' : 'Pasport (2-3-nji sahypa)'}
+            label={mode === 'edit' ? (t('loanOrderForm.fileLabels.replacePage23') || 'Pasport (2-3-nji sahypa) (çalyşmak)') : (t('Passport (page 2-3)') || 'Pasport (2-3-nji sahypa)')}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passport_page2_3}
@@ -439,7 +445,7 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (8-9 sahypa) (çalyşmak)' : 'Pasport (8-9 sahypa)'}
+            label={t('Passport (page 8-9)') || 'Pasport (8-9 sahypa)'}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passport_page8_9}
@@ -450,7 +456,7 @@ function StepPassport({ form, errors, set, mode, initialData }: StepContentProps
         <BentoCard>
           <FormInput
             type="file"
-            label={mode === 'edit' ? 'Pasport (32-nji sahypa) (çalyşmak)' : 'Pasport (32-nji sahypa)'}
+            label={t('Passport (page 32)') || 'Pasport (32-nji sahypa)'}
             required={mode === 'create'}
             accept="image/*,.pdf"
             fileValue={form.passport_page32}
@@ -470,7 +476,7 @@ export function CardRequisiteForm({
   initialData,
   cardRequisiteId,
 }: CardRequisiteFormProps) {
-  const { t }    = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
   const createMutation = useCreateCardRequisite()
@@ -478,18 +484,17 @@ export function CardRequisiteForm({
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
   } = useForm<CardRequisiteFormData>({
     defaultValues: initialData ? mapInitial(initialData) : DEFAULT_FORM_VALUES,
   })
 
   const form = watch()
-  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
-
   const [currentStep, setCurrentStep] = useState(0)
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
+  const [submittedSteps, setSubmittedSteps] = useState<Set<number>>(new Set())
 
   // ── Computed step errors ───────────────────────────────────────────────────
 
@@ -499,7 +504,7 @@ export function CardRequisiteForm({
       if (Object.keys(STEPS[i].validate(form, mode)).length > 0) out.add(i)
     })
     return out
-  }, [form, mode, visited])
+  }, [form, mode, visited, i18n.language])
 
   // ── set helper ─────────────────────────────────────────────────────────────
 
@@ -508,17 +513,36 @@ export function CardRequisiteForm({
     clearErrors(key)
   }, [setValue, clearErrors])
 
-  const stepProps = useMemo(() => ({ form, errors, set }), [form, errors, set])
+  const allSubmittedErrors = useMemo(() => {
+    const result: FlatErrors = {}
+    for (const stepIdx of submittedSteps) {
+      Object.assign(result, STEPS[stepIdx].validate(form, mode))
+    }
+    return result
+  }, [form, mode, submittedSteps, i18n.language])
+  const errors = useMemo(() => {
+    const fromRHF = flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>)
+    return { ...fromRHF, ...allSubmittedErrors }
+  }, [rhfErrors, allSubmittedErrors])
+
+  const stepProps = useMemo(() => ({ form, errors, set, t }), [form, errors, set, t])
 
   // ── Navigation ─────────────────────────────────────────────────────────────
 
   const markVisited = (i: number) =>
     setVisited((prev) => new Set([...prev, i]))
 
+  const markSubmitted = (i: number) =>
+    setSubmittedSteps((prev) => new Set([...prev, i]))
+
   const handleNext = () => {
     markVisited(currentStep)
+    markSubmitted(currentStep)
     const errs = STEPS[currentStep].validate(form, mode)
     if (Object.keys(errs).length > 0) {
+      Object.entries(errs).forEach(([key, msg]) => {
+        setError(key as keyof CardRequisiteFormData, { type: 'manual', message: msg })
+      })
       toast.error(t('Fix errors', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
@@ -547,11 +571,15 @@ export function CardRequisiteForm({
 
   const handleSubmit = async () => {
     setVisited(new Set(STEPS.map((_, i) => i)))
+    setSubmittedSteps(new Set(STEPS.map((_, i) => i)))
 
     const allErrors: FlatErrors = {}
     for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
 
     if (Object.keys(allErrors).length > 0) {
+      Object.entries(allErrors).forEach(([key, msg]) => {
+        setError(key as keyof CardRequisiteFormData, { type: 'manual', message: msg })
+      })
       toast.error(t('Fix errors', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
         if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
@@ -582,7 +610,7 @@ export function CardRequisiteForm({
     return {
       id:       s.id,
       title:    t(s.titleKey) || s.titleFallback,
-      subtitle: s.subtitle,
+      subtitle: t(s.subtitleKey) || s.subtitleFallback,
       icon:     s.icon,
       status: isActive ? 'active' : hasErrors ? 'error' : isDone ? 'done' : 'idle',
     }

@@ -1,12 +1,9 @@
 import { z } from 'zod'
-import i18next from 'i18next'
-
-const t = i18next.t.bind(i18next)
 
 export const loanRemainingFormSchema = z.object({
-  passportSeries: z.string().min(1, t('validation.required', '')),
-  passportNumber: z.string().min(1, t('validation.required', '')),
-  loanAccount: z.string().min(1, t('validation.required', '')),
+  passportSeries: z.string().min(1, 'validation.required'),
+  passportNumber: z.string().min(1, 'validation.required'),
+  loanAccount: z.string().min(1, 'validation.required'),
 })
 
 export type LoanRemainingFormData = z.infer<typeof loanRemainingFormSchema>

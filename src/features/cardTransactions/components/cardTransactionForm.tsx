@@ -81,6 +81,9 @@ export function CardTransactionForm({
     clearErrors(field)
   }
 
+  const errMsg = (msg: string | undefined) =>
+    !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
+
   const handleSubmit = async () => {
     const result = cardTransactionFormSchema.safeParse(getValues())
     if (!result.success) {
@@ -119,7 +122,7 @@ export function CardTransactionForm({
           onChange={setField('passport_series')}
           options={PASSPORT_SERIES_OPTIONS}
           placeholder={t('Select to choose', 'Saýlamak üçin basyň')}
-          error={errors.passport_series}
+          error={errMsg(errors.passport_series)}
           required
         />
 
@@ -130,7 +133,7 @@ export function CardTransactionForm({
           value={form.passport_number}
           onChange={setField('passport_number')}
           placeholder={t('Passport number', 'Pasport belgisi')}
-          error={errors.passport_number}
+          error={errMsg(errors.passport_number)}
           required
         />
 
@@ -141,7 +144,7 @@ export function CardTransactionForm({
           value={form.card_number}
           onChange={setField('card_number')}
           placeholder={t('Card number', 'Kart belgisi')}
-          error={errors.card_number}
+          error={errMsg(errors.card_number)}
           required
         />
 
@@ -154,7 +157,7 @@ export function CardTransactionForm({
             onChange={setField('card_expiry_month')}
             options={MONTH_OPTIONS}
             placeholder={t('Select to choose', 'Saýlamak üçin basyň')}
-            error={errors.card_expiry_month}
+            error={errMsg(errors.card_expiry_month)}
             required
           />
 
@@ -165,7 +168,7 @@ export function CardTransactionForm({
             onChange={setField('card_expiry_year')}
             options={YEAR_OPTIONS}
             placeholder={t('Select to choose', 'Saýlamak üçin basyň')}
-            error={errors.card_expiry_year}
+            error={errMsg(errors.card_expiry_year)}
             required
           />
         </div>

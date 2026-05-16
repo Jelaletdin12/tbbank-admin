@@ -81,6 +81,9 @@ export function LoanRemainingForm({
     }
   }
 
+  const errMsg = (msg: string | undefined) =>
+    msg?.startsWith('validation.') ? t(msg, msg) : msg
+
   const onError = () => {
     toast.error(t('common.errors.fillRequired', 'Hökman doldurylmaly öýjükleri dolduryň'))
   }
@@ -95,7 +98,7 @@ export function LoanRemainingForm({
             value={watch('passportSeries')}
             onChange={(v) => setValue('passportSeries', v)}
             placeholder={t('loanRemaining.placeholders.passportSeries', 'TM')}
-            error={errors.passportSeries?.message}
+            error={errMsg(errors.passportSeries?.message)}
           />
 
           <FormInput
@@ -104,7 +107,7 @@ export function LoanRemainingForm({
             value={watch('passportNumber')}
             onChange={(v) => setValue('passportNumber', v)}
             placeholder="A123456"
-            error={errors.passportNumber?.message}
+            error={errMsg(errors.passportNumber?.message)}
           />
 
           <div className="md:col-span-2">
@@ -114,7 +117,7 @@ export function LoanRemainingForm({
               value={watch('loanAccount')}
               onChange={(v) => setValue('loanAccount', v)}
               placeholder="NOVA-..."
-              error={errors.loanAccount?.message}
+              error={errMsg(errors.loanAccount?.message)}
             />
           </div>
         </div>
