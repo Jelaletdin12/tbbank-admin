@@ -1,22 +1,21 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateCardReasonPayload } from '../api/cardReasonsApi'
 
-const t = i18next.t.bind(i18next)
+export function createCardReasonFormSchema(t: (key: string, fallback?: string) => string) {
+  return z.object({
+    nameTk: z.string().min(1, t('validation.required', 'validation.required')),
+    nameRu: z.string().min(1, t('validation.required', 'validation.required')),
+    nameEn: z.string().min(1, t('validation.required', 'validation.required')),
+    value: z.string().min(1, t('validation.invalidNumber', 'validation.invalidNumber')).refine(
+      (v) => !isNaN(Number(v)) && Number(v) >= 0,
+      { message: t('validation.invalidNumber', 'Dogry san giriziň') },
+    ),
+    description: z.string().optional(),
+    isActive: z.boolean(),
+  })
+}
 
-export const cardReasonFormSchema = z.object({
-  nameTk: z.string().min(1, t('validation.required', '')),
-  nameRu: z.string().min(1, t('validation.required', '')),
-  nameEn: z.string().min(1, t('validation.required', '')),
-  value: z.string().min(1, t('validation.invalidNumber', '')).refine(
-    (v) => !isNaN(Number(v)) && Number(v) >= 0,
-    { message: t('validation.invalidNumber', 'Dogry san giriziň') },
-  ),
-  description: z.string().optional(),
-  isActive: z.boolean(),
-})
-
-export type CardReasonFormData = z.infer<typeof cardReasonFormSchema>
+export type CardReasonFormData = z.infer<ReturnType<typeof createCardReasonFormSchema>>
 
 export const DEFAULT_FORM_VALUES: CardReasonFormData = {
   nameTk: '',

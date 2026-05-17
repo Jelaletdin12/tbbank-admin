@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { useCreatePermission, useUpdatePermission } from '../hooks/usePermissions'
-import type { Permission, PermissionPayload } from '../api/permissionsApi'
+import { createPermissionFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/permission.schema'
+import type { PermissionFormData } from '../schemas/permission.schema'
+import type { Permission } from '../api/permissionsApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,14 +16,6 @@ interface PermissionFormProps {
   mode: 'create' | 'edit'
   initialData?: Permission
   permissionId?: number
-}
-
-interface FormErrors {
-  code?: string
-  name_tk?: string
-  name_ru?: string
-  name_en?: string
-  guard_name?: string
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -36,10 +32,25 @@ const GUARD_OPTIONS = [
   { value: 'sanctum', label: 'sanctum' },
 ]
 
+type FlatErrors = Partial<Record<keyof PermissionFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof PermissionFormData] = msg
+  }
+  return result
+}
+
 // ─── PermissionForm ───────────────────────────────────────────────────────────
 
 export function PermissionForm({ mode, initialData, permissionId }: PermissionFormProps) {
-  const { t }    = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createPermission = useCreatePermission()
@@ -48,63 +59,72 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
   const isPending = createPermission.isPending || updatePermission.isPending
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [errors, setErrors]         = useState<FormErrors>({})
 
-  const [form, setForm] = useState<PermissionPayload>({
-    code:       initialData?.code           ?? '',
-    guard_name: initialData?.guard_name     ?? 'web',
-    name: {
-      tk: initialData?.name?.tk ?? '',
-      ru: initialData?.name?.ru ?? '',
-      en: initialData?.name?.en ?? '',
-    },
+  const schema = useMemo(() => createPermissionFormSchema(t), [t, i18n.language])
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<PermissionFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: initialData
+      ? {
+          ...DEFAULT_FORM_VALUES,
+          code: initialData.code,
+          nameTk: initialData.name.tk,
+          nameRu: initialData.name.ru,
+          nameEn: initialData.name.en,
+          guard_name: initialData.guard_name,
+        }
+      : DEFAULT_FORM_VALUES,
   })
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  const setField = (field: keyof Omit<PermissionPayload, 'name'>, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const setField = useCallback(
+    (key: keyof PermissionFormData) => (value: string) => {
+      (setValue as (k: keyof PermissionFormData, v: string) => void)(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
   const setNameField = (lang: LangKey, value: string) => {
-    setForm((prev) => ({ ...prev, name: { ...prev.name, [lang]: value } }))
-    setErrors((prev) => ({ ...prev, [`name_${lang}`]: undefined }))
+    const key = `name${lang.charAt(0).toUpperCase() + lang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
+    setValue(key, value)
+    clearErrors(key)
   }
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!form.code.trim())
-      newErrors.code = t('permissions.validation.codeRequired', 'Kod hökman!')
-    if (!form.name.tk.trim())
-      newErrors.name_tk = t('permissions.validation.nameTkRequired', 'Türkmençe ady hökman!')
-    if (!form.guard_name.trim())
-      newErrors.guard_name = t('permissions.validation.guardRequired', 'Guard name hökman!')
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   // ── Submit ─────────────────────────────────────────────────────────────────
 
-  const handleSubmit = () => {
-    if (!validate()) return
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const values = getValues()
+    const payload = buildPayload(values)
 
     if (mode === 'create') {
-      createPermission.mutate(form, {
+      createPermission.mutate(payload, {
         onSuccess: () => navigate('/settings/users/permissions'),
       })
     } else {
-      updatePermission.mutate(form, {
+      updatePermission.mutate(payload, {
         onSuccess: () => navigate('/settings/users/permissions'),
       })
     }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const activeNameKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
+  const nameError = errors[activeNameKey]
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -118,7 +138,7 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
         <FormInput
           type="text"
           value={form.code}
-          onChange={(v) => setField('code', v)}
+          onChange={setField('code')}
           placeholder={t('permissions.fields.code', 'Kod')}
           error={errors.code}
           disabled={isPending}
@@ -150,10 +170,10 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
           </div>
           <FormInput
             type="text"
-            value={form.name[activeLang]}
+            value={form[activeNameKey]}
             onChange={(v) => setNameField(activeLang, v)}
             placeholder={t('permissions.fields.name', 'Ady')}
-            error={errors[`name_${activeLang}` as keyof FormErrors]}
+            error={nameError}
             disabled={isPending}
           />
         </div>
@@ -168,7 +188,7 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
         <FormInput
           type="select"
           value={form.guard_name}
-          onChange={(v) => setField('guard_name', v)}
+          onChange={setField('guard_name')}
           options={GUARD_OPTIONS}
           error={errors.guard_name}
           disabled={isPending}

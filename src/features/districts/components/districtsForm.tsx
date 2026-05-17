@@ -1,13 +1,14 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import type { District } from '../api/districtsApi'
 import { useCreateDistrict, useUpdateDistrict } from '../hooks/useDistricts'
-import { districtFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/district.schema'
+import { createDistrictFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/district.schema'
 import type { DistrictFormData } from '../schemas/district.schema'
 
 type FlatErrors = Partial<Record<keyof DistrictFormData, string>>
@@ -48,7 +49,11 @@ function mapInitial(data: District): DistrictFormData {
 }
 
 export function DistrictForm({ mode, initialData, districtId }: DistrictFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateDistrict()
@@ -56,9 +61,12 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const schema = useMemo(() => createDistrictFormSchema(t), [t, i18n.language])
+
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
   } = useForm<DistrictFormData>({
+    resolver: zodResolver(schema),
     defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
   })
 
@@ -73,12 +81,17 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
       clearErrors(key)
     }, [setValue, clearErrors])
 
-  const handleSubmit = () => {
-    const values = getValues()
-    const result = districtFormSchema.safeParse(values)
-    if (!result.success) return
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
-    const payload = buildPayload(values)
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const payload = buildPayload(getValues())
 
     if (mode === 'create') {
       createMutation.mutate(payload, {

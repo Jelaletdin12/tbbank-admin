@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -8,7 +8,7 @@ import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import type { CardType } from '../api/cardTypesApi'
 import { useCreateCardType, useUpdateCardType } from '../hooks/useCardTypes'
-import { cardTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardType.schema'
+import { createCardTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardType.schema'
 import type { CardTypeFormData } from '../schemas/cardType.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -54,7 +54,11 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 // ─── CardTypeForm ─────────────────────────────────────────────────────────────
 
 export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateCardType()
@@ -64,6 +68,8 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
 
+  const schema = useMemo(() => createCardTypeFormSchema(t), [t, i18n.language])
+
   const {
     watch,
     setValue,
@@ -72,7 +78,7 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
     trigger,
     getValues,
   } = useForm<CardTypeFormData>({
-    resolver: zodResolver(cardTypeFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
       : DEFAULT_FORM_VALUES,
@@ -91,6 +97,12 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
     },
     [setValue, clearErrors],
   )
+
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   const handleSubmit = useCallback(async () => {
     const isValid = await trigger()

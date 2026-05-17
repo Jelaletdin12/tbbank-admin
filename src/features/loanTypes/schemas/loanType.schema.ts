@@ -1,28 +1,27 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateLoanTypePayload } from '../api/loanTypesApi'
 
-const t = i18next.t.bind(i18next)
+export function createLoanTypeFormSchema(t: (key: string, fallback?: string) => string) {
+  return z.object({
+    nameTk: z.string().min(1, t('validation.required', 'validation.required')),
+    nameRu: z.string().min(1, t('validation.required', 'validation.required')),
+    nameEn: z.string().min(1, t('validation.required', 'validation.required')),
+    notesTk: z.string().optional(),
+    notesRu: z.string().optional(),
+    notesEn: z.string().optional(),
+    tax: z.string().refine(
+      (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
+      t('validation.positiveNumber', 'validation.positiveNumber'),
+    ),
+    loanTerm: z.string().refine(
+      (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
+      t('validation.positiveNumber', 'validation.positiveNumber'),
+    ),
+    isActive: z.boolean(),
+  })
+}
 
-export const loanTypeFormSchema = z.object({
-  nameTk: z.string().min(1, t('validation.required', '')),
-  nameRu: z.string().min(1, t('validation.required', '')),
-  nameEn: z.string().min(1, t('validation.required', '')),
-  notesTk: z.string().optional(),
-  notesRu: z.string().optional(),
-  notesEn: z.string().optional(),
-  tax: z.string().refine(
-    (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
-    t('validation.positiveNumber', 'Oňyn san gerek'),
-  ),
-  loanTerm: z.string().refine(
-    (v) => v.trim() !== '' && !isNaN(Number(v)) && Number(v) > 0,
-    t('validation.positiveNumber', 'Oňyn san gerek'),
-  ),
-  isActive: z.boolean(),
-})
-
-export type LoanTypeFormData = z.infer<typeof loanTypeFormSchema>
+export type LoanTypeFormData = z.infer<ReturnType<typeof createLoanTypeFormSchema>>
 
 export const DEFAULT_FORM_VALUES: LoanTypeFormData = {
   nameTk: '',

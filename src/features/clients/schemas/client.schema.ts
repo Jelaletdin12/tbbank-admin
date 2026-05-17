@@ -1,27 +1,27 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateClientPayload } from '../api/clientsApi'
 
-const t = i18next.t.bind(i18next)
+export function clientFormSchema(
+  mode: 'create' | 'edit',
+  t: (key: string, fallback?: string) => string,
+) {
+  const baseSchema = z.object({
+    username: z.string().min(1, t('validation.required', 'validation.required')),
+    name: z.string().min(1, t('validation.required', 'validation.required')),
+    phone: z.string().min(1, t('validation.required', 'validation.required')),
+    email: z.string().default(''),
+    password: z.string(),
+    isActive: z.boolean(),
+  })
 
-const baseSchema = z.object({
-  username: z.string().min(1, t('validation.required', '')),
-  name: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
-  email: z.string().default(''),
-  password: z.string(),
-  isActive: z.boolean(),
-})
-
-export function clientFormSchema(mode: 'create' | 'edit') {
   return mode === 'create'
     ? baseSchema.extend({
-        password: z.string().min(1, t('validation.required', '')),
+        password: z.string().min(1, t('validation.required', 'validation.required')),
       })
     : baseSchema
 }
 
-export type ClientFormData = z.infer<typeof baseSchema>
+export type ClientFormData = z.infer<ReturnType<typeof clientFormSchema>>
 
 export const DEFAULT_FORM_VALUES: ClientFormData = {
   username: '',

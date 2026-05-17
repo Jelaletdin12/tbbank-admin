@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
 import { ChevronLeft, ChevronRight, Loader2, Building2, MapPin, Clock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -12,7 +13,7 @@ import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import { useCreateBranch, useUpdateBranch } from '@/features/branches/hooks/useBranches'
 import type { Branch } from '@/features/branches/api/branchesApi'
 import { getDistrictOptions } from '@/features/branches/api/branchesApi'
-import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from '@/features/branches/schemas/branch.schema'
+import { createBranchFormSchema, validateStep, DEFAULT_FORM_VALUES, buildPayload } from '@/features/branches/schemas/branch.schema'
 import type { BranchFormData } from '@/features/branches/schemas/branch.schema'
 
 type FlatErrors = Partial<Record<keyof BranchFormData, string>>
@@ -43,7 +44,7 @@ interface StepDef {
   shortLabel: string
   icon: LucideIcon
   subtitle: string
-  validate: (form: BranchFormData, mode: 'create' | 'edit') => FlatErrors
+  validate: (form: BranchFormData, mode: 'create' | 'edit', t: (key: string, fallback?: string) => string) => FlatErrors
 }
 
 const STEPS: StepDef[] = [
@@ -54,7 +55,7 @@ const STEPS: StepDef[] = [
     shortLabel: 'Esasy',
     icon: Building2,
     subtitle: 'Ady, kody, etrapy',
-    validate: (form, mode) => validateStep(0, form, mode),
+    validate: (form, mode, t) => validateStep(0, form, mode, t),
   },
   {
     id: 'address',
@@ -63,7 +64,7 @@ const STEPS: StepDef[] = [
     shortLabel: 'Salgy',
     icon: MapPin,
     subtitle: 'Salgy, telefon, e-poçta',
-    validate: (form, mode) => validateStep(1, form, mode),
+    validate: (form, mode, t) => validateStep(1, form, mode, t),
   },
   {
     id: 'hours',
@@ -72,9 +73,15 @@ const STEPS: StepDef[] = [
     shortLabel: 'Wagt',
     icon: Clock,
     subtitle: 'Iş wagty we bellikler',
-    validate: (form, mode) => validateStep(2, form, mode),
+    validate: (form, mode, t) => validateStep(2, form, mode, t),
   },
 ]
+
+const STEP_FIELDS: Record<number, (keyof BranchFormData)[]> = {
+  0: ['nameTk', 'nameRu', 'nameEn', 'code', 'districtId', 'isActive'],
+  1: ['addressTk', 'addressRu', 'addressEn', 'phone', 'email'],
+  2: ['workingHours', 'description'],
+}
 
 interface StepContentProps {
   form: BranchFormData
@@ -264,7 +271,11 @@ function mapInitial(data: Branch): Partial<BranchFormData> {
 }
 
 export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateBranch()
@@ -273,9 +284,14 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
 
+  const schema = useMemo(() => createBranchFormSchema(t), [t, i18n.language])
+
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
-  } = useForm<BranchFormData>({ defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES })
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<BranchFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
+  })
 
   const form = watch()
   const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
@@ -284,14 +300,15 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
   const [visited, setVisited] = useState<Set<number>>(
     () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
+  const [isValidated, setIsValidated] = useState(false)
 
   const stepsWithErrors = useMemo(() => {
     const out = new Set<number>()
     visited.forEach((i) => {
-      if (Object.keys(STEPS[i].validate(form, mode)).length > 0) out.add(i)
+      if (Object.keys(STEPS[i].validate(form, mode, t)).length > 0) out.add(i)
     })
     return out
-  }, [form, mode, visited])
+  }, [form, mode, visited, t])
 
   const set = useCallback(<K extends keyof BranchFormData>(key: K, value: BranchFormData[K]) => {
     (setValue as (name: K, val: BranchFormData[K]) => void)(key, value)
@@ -303,10 +320,25 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
   const markVisited = (i: number) =>
     setVisited((prev) => new Set([...prev, i]))
 
-  const handleNext = () => {
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (!isValidated) return
+
+    const visitedFields = Array.from(visited).flatMap((stepIdx) => STEP_FIELDS[stepIdx] || [])
+    if (visitedFields.length > 0) {
+      trigger(visitedFields)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language, isValidated])
+
+  const handleNext = async () => {
+    setIsValidated(true)
     markVisited(currentStep)
-    const errs = STEPS[currentStep].validate(form, mode)
-    if (Object.keys(errs).length > 0) {
+
+    const fields = STEP_FIELDS[currentStep] || []
+    const isValid = await trigger(fields)
+
+    if (!isValid) {
       toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
@@ -330,16 +362,15 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const doSubmit = () => {
+  const doSubmit = async () => {
+    setIsValidated(true)
     setVisited(new Set(STEPS.map((_, i) => i)))
 
-    const allErrors: FlatErrors = {}
-    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode))
-
-    if (Object.keys(allErrors).length > 0) {
+    const isValid = await trigger()
+    if (!isValid) {
       toast.error(t('common.errors.requiredFieldsMissing', 'Käbir hökmany meýdanlar doldurylan däldir.'))
       for (let i = 0; i < STEPS.length; i++) {
-        if (Object.keys(STEPS[i].validate(form, mode)).length > 0) {
+        if (Object.keys(STEPS[i].validate(form, mode, t)).length > 0) {
           setCurrentStep(i); break
         }
       }

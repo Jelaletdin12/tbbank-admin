@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -12,7 +12,7 @@ import {
   useUpdateVisaMasterSetting,
 } from '../hooks/useVisaMasterSettings'
 import {
-  visaMasterSettingFormSchema,
+  createVisaMasterSettingFormSchema,
   DEFAULT_FORM_VALUES,
   buildPayload,
 } from '../schemas/visaMasterSberSetting.schema'
@@ -56,7 +56,11 @@ export function VisaMasterSettingForm({
   initialData,
   settingId,
 }: VisaMasterSettingFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
 
   const errMsg = (msg: string | undefined) =>
     !msg ? undefined : msg.startsWith('validation.') ? t(msg, msg) : msg
@@ -67,6 +71,12 @@ export function VisaMasterSettingForm({
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const schema = useMemo(
+    () => createVisaMasterSettingFormSchema(t),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [i18n.language],
+  )
+
   const {
     watch,
     setValue,
@@ -75,7 +85,7 @@ export function VisaMasterSettingForm({
     trigger,
     getValues,
   } = useForm<VisaMasterSettingFormData>({
-    resolver: zodResolver(visaMasterSettingFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
       : DEFAULT_FORM_VALUES,
@@ -86,6 +96,13 @@ export function VisaMasterSettingForm({
     () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
     [rhfErrors],
   )
+
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) {
+      trigger()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   const set = useCallback(
     (key: keyof VisaMasterSettingFormData) => (value: string) => {
@@ -111,7 +128,7 @@ export function VisaMasterSettingForm({
       await updateMutation.mutateAsync(payload)
       navigate('/resources/visa-master-settings')
     }
-  }, [mode, createMutation, updateMutation, navigate, trigger, getValues])
+  }, [mode, createMutation, updateMutation, navigate, trigger, getValues, t])
 
   const handleCancel = () => navigate('/resources/visa-master-settings')
 

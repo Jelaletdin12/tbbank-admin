@@ -1,18 +1,17 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateDistrictPayload } from '../api/districtsApi'
 
-const t = i18next.t.bind(i18next)
+export function createDistrictFormSchema(t: (key: string, fallback?: string) => string) {
+  return z.object({
+    nameTk: z.string().min(1, t('validation.required', 'validation.required')),
+    nameRu: z.string().min(1, t('validation.required', 'validation.required')),
+    nameEn: z.string().min(1, t('validation.required', 'validation.required')),
+    description: z.string().optional(),
+    isActive: z.boolean(),
+  })
+}
 
-export const districtFormSchema = z.object({
-  nameTk: z.string().min(1, t('validation.required', '')),
-  nameRu: z.string().min(1, t('validation.required', '')),
-  nameEn: z.string().min(1, t('validation.required', '')),
-  description: z.string().optional(),
-  isActive: z.boolean(),
-})
-
-export type DistrictFormData = z.infer<typeof districtFormSchema>
+export type DistrictFormData = z.infer<ReturnType<typeof createDistrictFormSchema>>
 
 export const DEFAULT_FORM_VALUES: DistrictFormData = {
   nameTk: '',

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -59,24 +59,24 @@ type SentDocKey =
   | 'snt_passport_tm' | 'snt_zagran_passport' | 'snt_entry_stamp'
   | 'snt_relation_doc' | 'snt_new_passport_series' | 'snt_old_passport_series'
 
-const ACCEPTED_DOCS: { key: AcceptedDocKey; label: string }[] = [
-  { key: 'acc_sberbank_card',    label: 'Talýba degişli SBERBANK kartynyň rekwizitleri' },
-  { key: 'acc_enrollment',       label: 'Daşary ýurt ÝOM-da okaýandygy baradaky güwänamasy' },
-  { key: 'acc_summons',          label: 'Çagyrylma hatynyn göçürmesi' },
-  { key: 'acc_passport_tm',      label: 'TM içki pasportynyň asyl görnüşi we göçürmesi' },
-  { key: 'acc_zagran_passport',  label: 'Daşary ýurt (zagran) pasportynyň göçürmesi' },
-  { key: 'acc_visa_page',        label: 'Daşary ýurda rugsat (wizasy) bellenen sahypasynyň göçürmesi' },
-  { key: 'acc_entry_stamp',      label: 'Daşary ýurt döwletine girenliği baradaky ştamply sahypasynyň göçürmesi' },
-  { key: 'acc_school_letter',    label: 'ÝOM-dan hat (daşary ýurt dilinde maglumatly)' },
+const ACCEPTED_DOCS = (t: (key: string, fallback?: string) => string): { key: AcceptedDocKey; label: string }[] => [
+  { key: 'acc_sberbank_card',    label: t('sberPayments.documents.sberbankCard',    'Talýba degişli SBERBANK kartynyň rekwizitleri') },
+  { key: 'acc_enrollment',       label: t('sberPayments.documents.enrollment',       'Daşary ýurt ÝOM-da okaýandygy baradaky güwänamasy') },
+  { key: 'acc_summons',          label: t('sberPayments.documents.summons',          'Çagyrylma hatynyn göçürmesi') },
+  { key: 'acc_passport_tm',      label: t('sberPayments.documents.passportTm',       'TM içki pasportynyň asyl görnüşi we göçürmesi') },
+  { key: 'acc_zagran_passport',  label: t('sberPayments.documents.zagranPassport',  'Daşary ýurt (zagran) pasportynyň göçürmesi') },
+  { key: 'acc_visa_page',        label: t('sberPayments.documents.visaPage',        'Daşary ýurda rugsat (wizasy) bellenen sahypasynyň göçürmesi') },
+  { key: 'acc_entry_stamp',      label: t('sberPayments.documents.entryStamp',      'Daşary ýurt döwletine girenliği baradaky ştamply sahypasynyň göçürmesi') },
+  { key: 'acc_school_letter',    label: t('sberPayments.documents.schoolLetter',    'ÝOM-dan hat (daşary ýurt dilinde maglumatly)') },
 ]
 
-const SENT_DOCS: { key: SentDocKey; label: string }[] = [
-  { key: 'snt_passport_tm',         label: 'Ugradyjynyň TM içki pasportynyň asyl görnüşi we göçürmesi' },
-  { key: 'snt_zagran_passport',      label: 'Ugradyjynyň daşary ýurt pasportynyň asyl görnüşi we göçürmesi' },
-  { key: 'snt_entry_stamp',         label: 'Ugradyjynyň daşary döwletine girenliği ştamply sahypasynyň göçürmesi' },
-  { key: 'snt_relation_doc',        label: 'Ugradyjy we kabul edijiniň garyndaşlyk tassyklaýjy resminamasynyn göçürmesi' },
-  { key: 'snt_new_passport_series', label: 'Ugradyjy/kabul ediji täze (2015+) pasport seriýasy maglumaty' },
-  { key: 'snt_old_passport_series', label: 'Ugradyjy/kabul ediji köne pasport seriýasy baradaky güwänamasy' },
+const SENT_DOCS = (t: (key: string, fallback?: string) => string): { key: SentDocKey; label: string }[] => [
+  { key: 'snt_passport_tm',         label: t('sberPayments.documents.sentPassportTm',       'Ugradyjynyň TM içki pasportynyň asyl görnüşi we göçürmesi') },
+  { key: 'snt_zagran_passport',      label: t('sberPayments.documents.sentZagranPassport',   'Ugradyjynyň daşary ýurt pasportynyň asyl görnüşi we göçürmesi') },
+  { key: 'snt_entry_stamp',         label: t('sberPayments.documents.sentEntryStamp',      'Ugradyjynyň daşary döwletine girenliği ştamply sahypasynyň göçürmesi') },
+  { key: 'snt_relation_doc',        label: t('sberPayments.documents.sentRelationDoc',     'Ugradyjy we kabul edijiniň garyndaşlyk tassyklaýjy resminamasynyn göçürmesi') },
+  { key: 'snt_new_passport_series', label: t('sberPayments.documents.sentNewPassportSeries', 'Ugradyjy/kabul ediji täze (2015+) pasport seriýasy maglumaty') },
+  { key: 'snt_old_passport_series', label: t('sberPayments.documents.sentOldPassportSeries', 'Ugradyjy/kabul ediji köne pasport seriýasy baradaky güwänamasy') },
 ]
 
 
@@ -118,30 +118,31 @@ function BentoCard({
 // ─── Step panels ──────────────────────────────────────────────────────────────
 
 function StepGeneral({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: SberPaymentFormData
   errors: FlatErrors
   set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
+  t: (key: string, fallback?: string) => string
 }) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Müşderi">
+      <BentoCard title={t('sberPayments.cards.musteri', 'Müşderi')}>
         <FormInput
           type="searchable-select"
-          label="Ulanyjy"
+          label={t('sberPayments.fields.client_id', 'Ulanyjy')}
           value={form.client_id}
           onChange={(v) => set('client_id', v)}
           options={[]}
-          placeholder="Saýlamak üçin basyň"
+          placeholder={t('sberPayments.placeholders.select', 'Saýlamak üçin basyň')}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Status">
+      <BentoCard title={t('sberPayments.cards.status', 'Status')}>
         <FormInput
           type="select"
-          label="Status"
+          label={t('sberPayments.fields.status', 'Status')}
           value={form.status}
           onChange={(v) => set('status', v as PaymentStatus)}
           options={STATUSES}
@@ -150,13 +151,13 @@ function StepGeneral({
         />
       </BentoCard>
 
-      <BentoCard title="Bellik" span="full">
+      <BentoCard title={t('sberPayments.cards.bellik', 'Bellik')} span="full">
         <FormInput
           type="textarea"
-          label="Bellik"
+          label={t('sberPayments.fields.bellik', 'Bellik')}
           value={form.bellik}
           onChange={(v) => set('bellik', v)}
-          placeholder="Bellik..."
+          placeholder={t('sberPayments.placeholders.bellik', 'Bellik...')}
           rows={2}
         />
       </BentoCard>
@@ -165,40 +166,41 @@ function StepGeneral({
 }
 
 function StepLocation({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: SberPaymentFormData
   errors: FlatErrors
   set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
+  t: (key: string, fallback?: string) => string
 }) {
   const branches = form.welayat ? (SAHAMCALAR[form.welayat] ?? []) : []
 
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Welaýat">
+      <BentoCard title={t('sberPayments.cards.welayat', 'Welaýat')}>
         <FormInput
           type="select"
-          label="Welaýat"
+          label={t('sberPayments.fields.welayat', 'Welaýat')}
           value={form.welayat}
           onChange={(v) => { set('welayat', v); set('sahamca', '') }}
           options={WELAYATLAR.map((w) => ({ value: w, label: w }))}
-          placeholder="Aşgabat"
+          placeholder={t('sberPayments.placeholders.welayat', 'Aşgabat')}
           error={errors.welayat}
           required
         />
         <p className="text-xs text-muted-foreground">
-          Welaýaty saýlasaňyz şahamçalar güncellenar.
+          {t('sberPayments.hints.selectRegion', 'Welaýaty saýlasaňyz şahamçalar güncellenar.')}
         </p>
       </BentoCard>
 
-      <BentoCard title="Şahamça">
+      <BentoCard title={t('sberPayments.cards.sahamca', 'Şahamça')}>
         <FormInput
           type="searchable-select"
-          label="Şahamça"
+          label={t('sberPayments.fields.sahamca', 'Şahamça')}
           value={form.sahamca}
           onChange={(v) => set('sahamca', v)}
           options={branches.map((b) => ({ value: b, label: b }))}
-          placeholder="Saýlamak üçin basyň"
+          placeholder={t('sberPayments.placeholders.select', 'Saýlamak üçin basyň')}
           disabled={!form.welayat}
           error={errors.sahamca}
           required
@@ -209,39 +211,40 @@ function StepLocation({
 }
 
 function StepPersonal({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: SberPaymentFormData
   errors: FlatErrors
   set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
+  t: (key: string, fallback?: string) => string
 }) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="At-familýa">
+      <BentoCard title={t('sberPayments.cards.atFamilia', 'At-familýa')}>
         <FormInput
           type="text"
-          label="Pasportdaky familiýa"
+          label={t('sberPayments.fields.lastName', 'Pasportdaky familiýa')}
           value={form.lastName}
           onChange={(v) => set('lastName', v)}
-          placeholder="NURYYEW"
+          placeholder={t('sberPayments.placeholders.lastName', 'NURYYEW')}
           error={errors.lastName}
           required
         />
         <FormInput
           type="text"
-          label="Pasportdaky ady"
+          label={t('sberPayments.fields.firstName', 'Pasportdaky ady')}
           value={form.firstName}
           onChange={(v) => set('firstName', v)}
-          placeholder="HAÝDAR"
+          placeholder={t('sberPayments.placeholders.firstName', 'HAÝDAR')}
           error={errors.firstName}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Kontakt">
+      <BentoCard title={t('sberPayments.cards.kontakt', 'Kontakt')}>
         <FormInput
           type="phone"
-          label="Telefon"
+          label={t('sberPayments.fields.phone', 'Telefon')}
           value={form.phone}
           onChange={(v) => set('phone', v)}
           error={errors.phone}
@@ -249,20 +252,20 @@ function StepPersonal({
         />
         <FormInput
           type="email"
-          label="E-poçta"
+          label={t('sberPayments.fields.email', 'E-poçta')}
           value={form.email}
           onChange={(v) => set('email', v)}
-          placeholder="email@example.com"
+          placeholder={t('sberPayments.placeholders.email', 'email@example.com')}
         />
       </BentoCard>
 
-      <BentoCard title="Häzirki ýaşyş ýeri" span="full">
+      <BentoCard title={t('sberPayments.cards.yasysYeri', 'Häzirki ýaşyş ýeri')} span="full">
         <FormInput
           type="text"
-          label="Salgy"
+          label={t('sberPayments.fields.address', 'Salgy')}
           value={form.address}
           onChange={(v) => set('address', v)}
-          placeholder="Köçe, jaý belgisi..."
+          placeholder={t('sberPayments.placeholders.address', 'Köçe, jaý belgisi...')}
           error={errors.address}
           required
         />
@@ -272,18 +275,19 @@ function StepPersonal({
 }
 
 function StepPayment({
-  form, errors, set,
+  form, errors, set, t,
 }: {
   form: SberPaymentFormData
   errors: FlatErrors
   set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
+  t: (key: string, fallback?: string) => string
 }) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Pasport maglumatlary">
+      <BentoCard title={t('sberPayments.cards.pasportMaglumatlary', 'Pasport maglumatlary')}>
         <FormInput
           type="searchable-select"
-          label="Pasport seriýasy"
+          label={t('sberPayments.fields.passportSeries', 'Pasport seriýasy')}
           value={form.passportSeries}
           onChange={(v) => set('passportSeries', v)}
           options={[
@@ -292,37 +296,37 @@ function StepPayment({
             { value: 'II-MC', label: 'II-MC' },
             { value: 'II-MD', label: 'II-MD' },
           ]}
-          placeholder="Saýlamak üçin basyň"
+          placeholder={t('sberPayments.placeholders.select', 'Saýlamak üçin basyň')}
           error={errors.passportSeries}
           required
         />
         <FormInput
           type="text"
-          label="Pasport nomeri"
+          label={t('sberPayments.fields.passportNumber', 'Pasport nomeri')}
           value={form.passportNumber}
           onChange={(v) => set('passportNumber', v)}
-          placeholder="A123456"
+          placeholder={t('sberPayments.placeholders.passportNumber', 'A123456')}
           error={errors.passportNumber}
           required
         />
       </BentoCard>
 
-      <BentoCard title="Ugradyjy">
+      <BentoCard title={t('sberPayments.cards.ugradyjy', 'Ugradyjy')}>
         <FormInput
           type="text"
-          label="Ady Familiýasy Atasynyň ady"
+          label={t('sberPayments.fields.fullName', 'Ady Familiýasy Atasynyň ady')}
           value={form.fullName}
           onChange={(v) => set('fullName', v)}
-          placeholder="Doly ady..."
+          placeholder={t('sberPayments.placeholders.fullName', 'Doly ady...')}
           error={errors.fullName}
           required
         />
         <FormInput
           type="text"
-          label="Goýum hasaby"
+          label={t('sberPayments.fields.accountNumber', 'Goýum hasaby')}
           value={form.accountNumber}
           onChange={(v) => set('accountNumber', v)}
-          placeholder="1234 5678 ..."
+          placeholder={t('sberPayments.placeholders.accountNumber', '1234 5678 ...')}
           error={errors.accountNumber}
           required
         />
@@ -332,16 +336,17 @@ function StepPayment({
 }
 
 function StepDocs({
-  form, set,
+  form, set, t,
 }: {
   form: SberPaymentFormData
   set: <K extends keyof SberPaymentFormData>(k: K, v: SberPaymentFormData[K]) => void
+  t: (key: string, fallback?: string) => string
 }) {
   return (
     <BentoGrid cols={2}>
-      <BentoCard title="Kabul ediji talyp — 8 resminama">
+      <BentoCard title={t('sberPayments.cards.documentsAccepted', 'Kabul ediji talyp — 8 resminama')}>
         <div className="space-y-3">
-          {ACCEPTED_DOCS.map(({ key, label }) => (
+          {ACCEPTED_DOCS(t).map(({ key, label }) => (
             <FormInput
               key={key}
               type="file"
@@ -354,9 +359,9 @@ function StepDocs({
         </div>
       </BentoCard>
 
-      <BentoCard title="Ugradyjy — 6 resminama">
+      <BentoCard title={t('sberPayments.cards.documentsSent', 'Ugradyjy — 6 resminama')}>
         <div className="space-y-3">
-          {SENT_DOCS.map(({ key, label }) => (
+          {SENT_DOCS(t).map(({ key, label }) => (
             <FormInput
               key={key}
               type="file"
@@ -376,12 +381,12 @@ function StepDocs({
 
 type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
 
-const STEPS: { id: StepId; title: string; subtitle: string }[] = [
-  { id: 'general',  title: 'Esasy',        subtitle: 'Status, müşderi'   },
-  { id: 'location', title: 'Lokasiýa',     subtitle: 'Welaýat, şahamça' },
-  { id: 'personal', title: 'Şahsy',        subtitle: 'Pasport, kontakt' },
-  { id: 'payment',  title: 'Töleg',        subtitle: 'Hasap, ugradyjy'  },
-  { id: 'docs',     title: 'Resminamalar', subtitle: '14 resminama'     },
+const getSteps = (t: (key: string, fallback?: string) => string): { id: StepId; title: string; subtitle: string }[] => [
+  { id: 'general',  title: t('sberPayments.steps.general.title', 'Esasy'),        subtitle: t('sberPayments.steps.general.subtitle', 'Status, müşderi')   },
+  { id: 'location', title: t('sberPayments.steps.location.title', 'Lokasiýa'),     subtitle: t('sberPayments.steps.location.subtitle', 'Welaýat, şahamça') },
+  { id: 'personal', title: t('sberPayments.steps.personal.title', 'Şahsy'),        subtitle: t('sberPayments.steps.personal.subtitle', 'Pasport, kontakt') },
+  { id: 'payment',  title: t('sberPayments.steps.payment.title', 'Töleg'),        subtitle: t('sberPayments.steps.payment.subtitle', 'Hasap, ugradyjy')  },
+  { id: 'docs',     title: t('sberPayments.steps.docs.title', 'Resminamalar'), subtitle: t('sberPayments.steps.docs.subtitle', '14 resminama')     },
 ]
 
 // ─── Initial data mapper ──────────────────────────────────────────────────────
@@ -407,7 +412,11 @@ function mapInitialData(data: SberPaymentOrder): Partial<SberPaymentFormData> {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
   const createMutation = useCreateSberPayment()
   const updateMutation = useUpdateSberPayment()
@@ -422,33 +431,59 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   })
 
   const form = watch()
-  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
+  const [validationErrors, setValidationErrors] = useState<FlatErrors>({})
+
+  const rhfFlat = useMemo(
+    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
+    [rhfErrors],
+  )
+  const errors = useMemo(
+    () => ({ ...rhfFlat, ...validationErrors }),
+    [rhfFlat, validationErrors],
+  )
+
+  const steps = useMemo(() => getSteps(t), [i18n.language])
 
   const [currentStep, setCurrentStep] = useState(0)
   const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
     () => mode === 'edit'
-      ? STEPS.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle'))
-      : STEPS.map((_, i) => (i === 0 ? 'active' : 'idle')),
+      ? steps.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle'))
+      : steps.map((_, i) => (i === 0 ? 'active' : 'idle')),
   )
 
   // ── Field setter ──
   const set = <K extends keyof SberPaymentFormData>(key: K, value: SberPaymentFormData[K]) => {
     (setValue as (name: K, val: SberPaymentFormData[K]) => void)(key, value)
     clearErrors(key)
+    setValidationErrors((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
 
   // ── Step validation ──
   const doValidateAll = (): FlatErrors => {
     const errs: FlatErrors = {}
     for (let i = 0; i <= 3; i++) {
-      Object.assign(errs, validateStep(i, form, mode))
+      Object.assign(errs, validateStep(i, form, mode, t))
     }
+    setValidationErrors(errs)
     return errs
   }
 
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    const hasErrors = Object.keys(validationErrors).length > 0 || Object.keys(rhfErrors).length > 0
+    if (hasErrors) {
+      doValidateAll()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
+
   // ── Navigation ──
   const goStep = (idx: number) => {
-    if (idx < 0 || idx >= STEPS.length) return
+    if (idx < 0 || idx >= steps.length) return
     setStepStatuses((prev) => {
       const next = [...prev]
       if (idx > currentStep) next[currentStep] = 'done'
@@ -461,18 +496,21 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
       return next
     })
     clearErrors()
+    setValidationErrors({})
     setCurrentStep(idx)
   }
 
   const handleNext = () => {
-    const stepErrors = validateStep(currentStep, form, mode)
+    const stepErrors = validateStep(currentStep, form, mode, t)
     if (Object.keys(stepErrors).length > 0) {
+      setValidationErrors(stepErrors)
       setStepStatuses((prev) => {
         const next = [...prev]; next[currentStep] = 'error'; return next
       })
       return
     }
-    if (currentStep === STEPS.length - 1) {
+    setValidationErrors({})
+    if (currentStep === steps.length - 1) {
       handleSubmit()
     } else {
       goStep(currentStep + 1)
@@ -499,7 +537,7 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   }
 
   // ── StepBarCards data ──
-  const stepCardItems: StepCardItem[] = STEPS.map((s, i) => ({
+  const stepCardItems: StepCardItem[] = steps.map((s, i) => ({
     id:       s.id,
     title:    s.title,
     subtitle: s.subtitle,
@@ -507,16 +545,18 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
     icon:     ([User, MapPin, IdCard, CreditCard, Files] as const)[i],
   }))
 
-  const isLastStep = currentStep === STEPS.length - 1
+  const isLastStep = currentStep === steps.length - 1
 
   const submitLabel = mode === 'create'
-    ? 'Sber töleg (talyplar üçin) dörediň'
-    : 'Ýatda sakla'
+    ? t('sberPayments.buttons.create', 'Sber töleg (talyplar üçin) dörediň')
+    : t('sberPayments.buttons.update', 'Ýatda sakla')
 
   return (
     <div className="mx-auto space-y-6 pb-8">
       <h1 className="text-2xl font-bold text-foreground">
-        {mode === 'create' ? 'Sber töleg dörediň' : 'Sber töleg redaktirläň'}
+        {mode === 'create'
+          ? t('sberPayments.formTitle.create', 'Sber töleg dörediň')
+          : t('sberPayments.formTitle.edit', 'Sber töleg redaktirläň')}
       </h1>
 
       {/* ── Step bar ──────────────────────────────────────────────────────── */}
@@ -530,11 +570,11 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
       </div>
 
       {/* ── Step content ─────────────────────────────────────────────────── */}
-      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} />}
-      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} />}
+      {steps[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} t={t} />}
+      {steps[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} t={t} />}
+      {steps[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} t={t} />}
+      {steps[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} t={t} />}
+      {steps[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} t={t} />}
 
       {/* ── Actions ───────────────────────────────────────────────────────── */}
       <FormActions
@@ -545,7 +585,7 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
         showSubmit={isLastStep}
         onSubmit={isLastStep ? handleNext : undefined}
         submitLabel={submitLabel}
-        loadingLabel="Ýüklenýär..."
+        loadingLabel={t('sberPayments.buttons.loading', 'Ýüklenýär...')}
       />
     </div>
   )

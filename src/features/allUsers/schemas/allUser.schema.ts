@@ -1,39 +1,39 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateUserPayload } from '../api/allUsersApi'
 
-const t = i18next.t.bind(i18next)
+export function allUserFormSchema(
+  mode: 'create' | 'edit',
+  t: (key: string, fallback?: string) => string,
+) {
+  const baseSchema = z.object({
+    username: z.string()
+      .min(1, t('validation.required', 'validation.required'))
+      .min(3, t('validation.minLength', 'validation.minLength')),
+    name: z.string().min(1, t('validation.required', 'validation.required')),
+    phone: z.string()
+      .min(1, t('validation.required', 'validation.required'))
+      .regex(/^\d[\d\s-]{6,}$/, t('validation.invalidPhone', 'validation.invalidPhone')),
+    email: z.string()
+      .refine(
+        (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        t('validation.invalidEmail', 'validation.invalidEmail'),
+      )
+      .default(''),
+    password: z.string(),
+    phoneVerified: z.boolean(),
+    isActive: z.boolean(),
+  })
 
-const baseSchema = z.object({
-  username: z.string()
-    .min(1, t('validation.required', 'Ulanyjy ady hökmany'))
-    .min(3, t('validation.minLength', 'Ulanyjy ady iň az 3 harp bolmaly')),
-  name: z.string().min(1, t('validation.required', 'Ady hökmany')),
-  phone: z.string()
-    .min(1, t('validation.required', 'Telefon hökmany'))
-    .regex(/^\d[\d\s-]{6,}$/, t('validation.invalidPhone', 'Nädogry telefon formaty')),
-  email: z.string()
-    .refine(
-      (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
-      t('validation.invalidEmail', 'Nädogry e-poçta formaty'),
-    )
-    .default(''),
-  password: z.string(),
-  phoneVerified: z.boolean(),
-  isActive: z.boolean(),
-})
-
-export function allUserFormSchema(mode: 'create' | 'edit') {
   return mode === 'create'
     ? baseSchema.extend({
         password: z.string()
-          .min(1, t('validation.required', 'Açar sözi hökmany'))
-          .min(6, t('validation.minLength', 'Açar sözi iň az 6 harp bolmaly')),
+          .min(1, t('validation.required', 'validation.required'))
+          .min(6, t('validation.minLength', 'validation.minLength')),
       })
     : baseSchema
 }
 
-export type AllUserFormData = z.infer<typeof baseSchema>
+export type AllUserFormData = z.infer<ReturnType<typeof allUserFormSchema>>
 
 export const DEFAULT_FORM_VALUES: AllUserFormData = {
   username: '',

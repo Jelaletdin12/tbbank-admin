@@ -1,6 +1,6 @@
 // features/currencyRates/components/CurrencyRateForm.tsx
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -10,7 +10,7 @@ import { FormActions } from '@/components/formActions'
 import { CURRENCY_OPTIONS, type CurrencyRate } from '../api/currencyRatesApi'
 import { useCreateCurrencyRate, useUpdateCurrencyRate } from '../hooks/useCurrencyRates'
 import {
-  currencyRateFormSchema,
+  createCurrencyRateFormSchema,
   DEFAULT_FORM_VALUES,
   buildPayload,
   type CurrencyRateFormData,
@@ -38,13 +38,19 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 // ─── CurrencyRateForm ─────────────────────────────────────────────────────────
 
 export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateCurrencyRate()
   const updateMutation = useUpdateCurrencyRate(rateId ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
+
+  const schema = useMemo(() => createCurrencyRateFormSchema(t), [t, i18n.language])
 
   const {
     watch,
@@ -54,7 +60,7 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
     trigger,
     getValues,
   } = useForm<CurrencyRateFormData>({
-    resolver: zodResolver(currencyRateFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? {
           currencyFrom: initialData.currencyFrom,
@@ -69,6 +75,14 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
     () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
     [rhfErrors],
   )
+
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) {
+      trigger()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   const setField = useCallback(
     (key: keyof CurrencyRateFormData) => (value: string) => {

@@ -1,9 +1,10 @@
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { format } from 'date-fns'
 import { Eye, Edit, ArrowUpDown, Trash2 } from 'lucide-react'
 import type { ColumnDef, VisibilityState } from '@tanstack/react-table'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ColumnMeta, type FilterField, type ActiveFilter } from '@/components/dataTableToolbar'
 import { useSberPaymentOrders, useDeleteSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
@@ -22,46 +23,49 @@ import {
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  GARASYLYYAR: {
-    label:   'Garaşylýar',
-    variant: 'warning' as StatusBadgeVariant,
-    icon:    AlertCircle,
-  },
-  KANAGATLANDYRYLAN: {
-    label:   'Tassyklandy',
-    variant: 'success' as StatusBadgeVariant,
-    icon:    CheckCircle2,
-  },
-  RET_EDILEN: {
-    label:   'Ýatyryldy',
-    variant: 'error' as StatusBadgeVariant,
-    icon:    XCircle,
-  },
- 
-} satisfies Record<PaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+function getStatusConfig(t: (key: string, fallback?: string) => string) {
+  return {
+    GARASYLYYAR: {
+      label:   t('sberPayments.status.pending', 'Garaşylýar'),
+      variant: 'warning' as StatusBadgeVariant,
+      icon:    AlertCircle,
+    },
+    KANAGATLANDYRYLAN: {
+      label:   t('sberPayments.status.approved', 'Tassyklandy'),
+      variant: 'success' as StatusBadgeVariant,
+      icon:    CheckCircle2,
+    },
+    RET_EDILEN: {
+      label:   t('sberPayments.status.rejected', 'Ýatyryldy'),
+      variant: 'error' as StatusBadgeVariant,
+      icon:    XCircle,
+    },
+  } satisfies Record<PaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+}
 
-const PAID_STATUS_CONFIG = {
-  Tolenmedik: {
-    label:   'Tölmedi',
-    variant: 'error' as StatusBadgeVariant,
-    icon:    XCircle,
-  },
-  Tolendi: {
-    label:   'Tölendi',
-    variant: 'success' as StatusBadgeVariant,
-    icon:    CheckCircle2,
-  },
-} satisfies Record<PaymentPaidStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+function getPaidStatusConfig(t: (key: string, fallback?: string) => string) {
+  return {
+    Tolenmedik: {
+      label:   t('sberPayments.paidStatus.unpaid', 'Tölmedi'),
+      variant: 'error' as StatusBadgeVariant,
+      icon:    XCircle,
+    },
+    Tolendi: {
+      label:   t('sberPayments.paidStatus.paid', 'Tölendi'),
+      variant: 'success' as StatusBadgeVariant,
+      icon:    CheckCircle2,
+    },
+  } satisfies Record<PaymentPaidStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+}
 
-function PaymentPaidStatusBadge({ status }: { status: PaymentPaidStatus }) {
-  const cfg = PAID_STATUS_CONFIG[status]
+function PaymentPaidStatusBadge({ status, t }: { status: PaymentPaidStatus; t: (key: string, fallback?: string) => string }) {
+  const cfg = getPaidStatusConfig(t)[status]
   if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
   return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
 
-function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  const cfg = STATUS_CONFIG[status]
+function PaymentStatusBadge({ status, t }: { status: PaymentStatus; t: (key: string, fallback?: string) => string }) {
+  const cfg = getStatusConfig(t)[status]
   if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
   return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
@@ -72,158 +76,183 @@ function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
 
 // ─── Column Meta for Toolbar ──────────────────────────────────────────────────
 
-const columnMeta: ColumnMeta[] = [
-  { id: 'id', label: 'ID' },
-  { id: 'createdAt', label: 'Doredilen wagty' },
-  { id: 'welayat', label: 'Welayat' },
-  { id: 'sahamca', label: 'Sahamca' },
-  { id: 'firstName', label: 'Ady' },
-  { id: 'lastName', label: 'Familiyasy' },
-  { id: 'phone', label: 'Telefon' },
-  { id: 'status', label: 'Status' },
-  { id: 'paidStatus', label: 'Tolenen (sul ay)' },
-]
+function getColumnMeta(t: (key: string, fallback?: string) => string): ColumnMeta[] {
+  return [
+    { id: 'id', label: t('sberPayments.columns.id', 'ID') },
+    { id: 'createdAt', label: t('sberPayments.columns.createdAt', 'Döredilen wagty') },
+    { id: 'welayat', label: t('sberPayments.columns.welayat', 'Welaýat') },
+    { id: 'sahamca', label: t('sberPayments.columns.sahamca', 'Şahamça') },
+    { id: 'firstName', label: t('sberPayments.columns.firstName', 'Ady') },
+    { id: 'lastName', label: t('sberPayments.columns.lastName', 'Familiýasy') },
+    { id: 'phone', label: t('sberPayments.columns.phone', 'Telefon') },
+    { id: 'status', label: t('sberPayments.columns.status', 'Status') },
+    { id: 'paidStatus', label: t('sberPayments.columns.paidStatus', 'Tölenen (şul aý)') },
+  ]
+}
 
 // ─── Filter Fields ────────────────────────────────────────────────────────────
 
-const filterFields: FilterField[] = [
-  {
-    id: 'welayat',
-    label: 'Welayat',
-    options: WELAYATLAR.map((w) => ({ value: w, label: w })),
-  },
-  {
-    id: 'status',
-    label: 'Status',
-    options: STATUSES,
-  },
-]
+function getFilterFields(t: (key: string, fallback?: string) => string): FilterField[] {
+  return [
+    {
+      id: 'welayat',
+      label: t('sberPayments.filters.welayat', 'Welaýat'),
+      options: WELAYATLAR.map((w) => ({ value: w, label: w })),
+    },
+    {
+      id: 'status',
+      label: t('sberPayments.filters.status', 'Status'),
+      options: STATUSES,
+    },
+  ]
+}
 
 // ─── List Page Component ──────────────────────────────────────────────────────
 
 export default function SberPaymentsListPage() {
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
   const deleteMutation = useDeleteSberPayment()
+
+  const colMeta = useMemo(() => getColumnMeta(t), [i18n.language])
+  const filterFlds = useMemo(() => getFilterFields(t), [i18n.language])
   
-  const columns = useMemo<ColumnDef<SberPaymentOrder>[]>(() => [
-    {
-      accessorKey: 'id',
-      header: ({ column }) => (
-        <button
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown size={12} />
-        </button>
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">{row.getValue('id')}</span>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Doredilen wagty',
-      cell: ({ row }) => {
-        const date = new Date(row.getValue('createdAt'))
-        return (
-          <div className="text-sm">
-            <div>{format(date, 'HH:mm, dd.MM.yyyy')}</div>
-          </div>
-        )
+  const columns = useMemo<ColumnDef<SberPaymentOrder>[]>(() => {
+    const colMetaLabels = getColumnMeta(t)
+    const idLabel = colMetaLabels.find(c => c.id === 'id')?.label ?? 'ID'
+    const createdAtLabel = colMetaLabels.find(c => c.id === 'createdAt')?.label ?? 'Döredilen wagty'
+    const welayatLabel = colMetaLabels.find(c => c.id === 'welayat')?.label ?? 'Welaýat'
+    const sahamcaLabel = colMetaLabels.find(c => c.id === 'sahamca')?.label ?? 'Şahamça'
+    const firstNameLabel = colMetaLabels.find(c => c.id === 'firstName')?.label ?? 'Ady'
+    const lastNameLabel = colMetaLabels.find(c => c.id === 'lastName')?.label ?? 'Familiýasy'
+    const phoneLabel = colMetaLabels.find(c => c.id === 'phone')?.label ?? 'Telefon'
+    const statusLabel = colMetaLabels.find(c => c.id === 'status')?.label ?? 'Status'
+    const paidStatusLabel = colMetaLabels.find(c => c.id === 'paidStatus')?.label ?? 'Tölenen (şul aý)'
+
+    return [
+      {
+        accessorKey: 'id',
+        header: ({ column }) => (
+          <button
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            {idLabel}
+            <ArrowUpDown size={12} />
+          </button>
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium text-foreground">{row.getValue('id')}</span>
+        ),
       },
-    },
-    {
-      accessorKey: 'welayat',
-      header: 'Welayat',
-      cell: ({ row }) => <span>{row.getValue('welayat')}</span>,
-    },
-    {
-      accessorKey: 'sahamca',
-      header: ({ column }) => (
-        <button
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Sahamca
-          <ArrowUpDown size={12} />
-        </button>
-      ),
-      cell: ({ row }) => (
-        <span className="text-primary font-medium">{row.getValue('sahamca')}</span>
-      ),
-    },
-    {
-      accessorKey: 'firstName',
-      header: 'Ady',
-      cell: ({ row }) => <span>{row.getValue('firstName')}</span>,
-    },
-    {
-      accessorKey: 'lastName',
-      header: 'Familiyasy',
-      cell: ({ row }) => <span>{row.getValue('lastName')}</span>,
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Telefon',
-      cell: ({ row }) => <span className="text-muted-foreground">{row.getValue('phone')}</span>,
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => (
-        <button
-          className="flex items-center gap-1 hover:text-foreground transition-colors"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Status
-          <ArrowUpDown size={12} />
-        </button>
-      ),
-      cell: ({ row }) => <PaymentStatusBadge status={row.getValue('status')} />,
-    },
-    {
-      accessorKey: 'paidStatus',
-      header: 'Tolenen (sul ay)',
-      cell: ({ row }) => <PaymentPaidStatusBadge status={row.getValue('paidStatus')} />,
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => {
-        const order = row.original
-        
-        return (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => navigate(`/sber-payments/${order.id}`)}
-              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              title="View"
-            >
-              <Eye size={16} />
-            </button>
-            <button
-              onClick={() => navigate(`/sber-payments/${order.id}/edit`)}
-              className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-              title="Edit"
-            >
-              <Edit size={16} />
-            </button>
-            <button
-              onClick={async () => {
-                if (confirm('Bu tolegi pozmak isleyanizmi?')) {
-                  await deleteMutation.mutateAsync(order.id)
-                }
-              }}
-              className="p-1.5 rounded hover:bg-accent text-destructive hover:bg-destructive/10 transition-colors"
-              title="Delete"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )
+      {
+        accessorKey: 'createdAt',
+        header: createdAtLabel,
+        cell: ({ row }) => {
+          const date = new Date(row.getValue('createdAt'))
+          return (
+            <div className="text-sm">
+              <div>{format(date, 'HH:mm, dd.MM.yyyy')}</div>
+            </div>
+          )
+        },
       },
-    },
-  ], [navigate, deleteMutation])
+      {
+        accessorKey: 'welayat',
+        header: welayatLabel,
+        cell: ({ row }) => <span>{row.getValue('welayat')}</span>,
+      },
+      {
+        accessorKey: 'sahamca',
+        header: ({ column }) => (
+          <button
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            {sahamcaLabel}
+            <ArrowUpDown size={12} />
+          </button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-primary font-medium">{row.getValue('sahamca')}</span>
+        ),
+      },
+      {
+        accessorKey: 'firstName',
+        header: firstNameLabel,
+        cell: ({ row }) => <span>{row.getValue('firstName')}</span>,
+      },
+      {
+        accessorKey: 'lastName',
+        header: lastNameLabel,
+        cell: ({ row }) => <span>{row.getValue('lastName')}</span>,
+      },
+      {
+        accessorKey: 'phone',
+        header: phoneLabel,
+        cell: ({ row }) => <span className="text-muted-foreground">{row.getValue('phone')}</span>,
+      },
+      {
+        accessorKey: 'status',
+        header: ({ column }) => (
+          <button
+            className="flex items-center gap-1 hover:text-foreground transition-colors"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          >
+            {statusLabel}
+            <ArrowUpDown size={12} />
+          </button>
+        ),
+        cell: ({ row }) => <PaymentStatusBadge status={row.getValue('status')} t={t} />,
+      },
+      {
+        accessorKey: 'paidStatus',
+        header: paidStatusLabel,
+        cell: ({ row }) => <PaymentPaidStatusBadge status={row.getValue('paidStatus')} t={t} />,
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+          const order = row.original
+          
+          return (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => navigate(`/sber-payments/${order.id}`)}
+                className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                title={t('common.view', 'View')}
+              >
+                <Eye size={16} />
+              </button>
+              <button
+                onClick={() => navigate(`/sber-payments/${order.id}/edit`)}
+                className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                title={t('common.edit', 'Edit')}
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                onClick={async () => {
+                  if (confirm(t('sberPayments.deleteDialog.title', 'Bu tölegi pozmak isleýärsiňizmi?'))) {
+                    await deleteMutation.mutateAsync(order.id)
+                  }
+                }}
+                className="p-1.5 rounded hover:bg-accent text-destructive hover:bg-destructive/10 transition-colors"
+                title={t('common.delete', 'Delete')}
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )
+        },
+      },
+    ]
+  }, [navigate, deleteMutation, t, i18n.language])
   
   // Pagination state
   const [page, setPage] = useState(1)
@@ -237,7 +266,7 @@ export default function SberPaymentsListPage() {
   
   // Column visibility & order
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [columnOrder, setColumnOrder] = useState<string[]>(columnMeta.map((c) => c.id))
+  const [columnOrder, setColumnOrder] = useState<string[]>(colMeta.map((c) => c.id))
   
   // Month filter
   const [selectedMonth, setSelectedMonth] = useState<string>('')
@@ -276,32 +305,32 @@ export default function SberPaymentsListPage() {
       {/* Month Filter Card */}
       <div className="bg-card border border-border rounded-lg p-4 max-w-xs">
         <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          Ay Tolegi
+          {t('sberPayments.list.monthLabel', 'Aý tölegi')}
         </label>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="--" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="01">Yanwar</SelectItem>
-            <SelectItem value="02">Fewral</SelectItem>
-            <SelectItem value="03">Mart</SelectItem>
-            <SelectItem value="04">Aprel</SelectItem>
-            <SelectItem value="05">May</SelectItem>
-            <SelectItem value="06">Iýun</SelectItem>
-            <SelectItem value="07">Iýul</SelectItem>
-            <SelectItem value="08">Awgust</SelectItem>
-            <SelectItem value="09">Sentýabr</SelectItem>
-            <SelectItem value="10">Oktýabr</SelectItem>
-            <SelectItem value="11">Noýabr</SelectItem>
-            <SelectItem value="12">Dekabr</SelectItem>
+            <SelectItem value="01">{t('months.january', 'Ýanwar')}</SelectItem>
+            <SelectItem value="02">{t('months.february', 'Fewral')}</SelectItem>
+            <SelectItem value="03">{t('months.march', 'Mart')}</SelectItem>
+            <SelectItem value="04">{t('months.april', 'Aprel')}</SelectItem>
+            <SelectItem value="05">{t('months.may', 'Maý')}</SelectItem>
+            <SelectItem value="06">{t('months.june', 'Iýun')}</SelectItem>
+            <SelectItem value="07">{t('months.july', 'Iýul')}</SelectItem>
+            <SelectItem value="08">{t('months.august', 'Awgust')}</SelectItem>
+            <SelectItem value="09">{t('months.september', 'Sentýabr')}</SelectItem>
+            <SelectItem value="10">{t('months.october', 'Oktýabr')}</SelectItem>
+            <SelectItem value="11">{t('months.november', 'Noýabr')}</SelectItem>
+            <SelectItem value="12">{t('months.december', 'Dekabr')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
       
       {/* Page Title */}
       <h1 className="text-xl font-semibold text-foreground">
-        Sber tolegier (talyplar ucin)
+        {t('sberPayments.list.title', 'Sber tölegler (talyplar üçin)')}
       </h1>
       <div className="bg-card border border-border rounded-xl p-4">
 
@@ -312,13 +341,13 @@ export default function SberPaymentsListPage() {
           setSearch(val)
           setPage(1)
         }}
-        searchPlaceholder="Gozlemek"
-        columns={columnMeta}
+        searchPlaceholder={t('common.search', 'Gözlemek')}
+        columns={colMeta}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}
         columnOrder={columnOrder}
         onColumnOrderChange={setColumnOrder}
-        filterFields={filterFields}
+        filterFields={filterFlds}
         activeFilters={activeFilters}
         onFilterChange={handleFilterChange}
         onFilterReset={handleFilterReset}
@@ -327,7 +356,7 @@ export default function SberPaymentsListPage() {
           setPerPage(val)
           setPage(1)
         }}
-        actionLabel="Sber toleg (talyplar ucin) doredih"
+        actionLabel={t('sberPayments.list.actionLabel', 'Sber töleg (talyplar üçin) dörediň')}
         onAction={() => navigate('/sber-payments/create')}
       />
       

@@ -1,40 +1,47 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateBranchPayload } from '@/features/branches/api/branchesApi'
 
-const t = i18next.t.bind(i18next)
+export function createBranchFormSchema(t: (key: string, fallback?: string) => string) {
+  return z.object({
+    nameTk: z.string().min(1, t('validation.required', 'validation.required')),
+    nameRu: z.string().min(1, t('validation.required', 'validation.required')),
+    nameEn: z.string().min(1, t('validation.required', 'validation.required')),
+    code: z.string().min(1, t('validation.required', 'validation.required')),
+    districtId: z.string().min(1, t('validation.required', 'validation.required')),
+    addressTk: z.string().min(1, t('validation.required', 'validation.required')),
+    addressRu: z.string().min(1, t('validation.required', 'validation.required')),
+    addressEn: z.string().min(1, t('validation.required', 'validation.required')),
+    phone: z.string().min(1, t('validation.required', 'validation.required')),
+    email: z.string().min(1, t('validation.required', 'validation.required')),
+    workingHours: z.string().min(1, t('validation.required', 'validation.required')),
+    description: z.string().optional(),
+    isActive: z.boolean(),
+  })
+}
 
-export const branchFormSchema = z.object({
-  nameTk: z.string().min(1, t('validation.required', '')),
-  nameRu: z.string().min(1, t('validation.required', '')),
-  nameEn: z.string().min(1, t('validation.required', '')),
-  code: z.string().min(1, t('validation.required', '')),
-  districtId: z.string().min(1, t('validation.required', '')),
-  addressTk: z.string().min(1, t('validation.required', '')),
-  addressRu: z.string().min(1, t('validation.required', '')),
-  addressEn: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
-  email: z.string().min(1, t('validation.required', '')),
-  workingHours: z.string().min(1, t('validation.required', '')),
-  description: z.string().optional(),
-  isActive: z.boolean(),
-})
+export type BranchFormData = z.infer<ReturnType<typeof createBranchFormSchema>>
 
-export type BranchFormData = z.infer<typeof branchFormSchema>
+type StepSchemas = Record<number, z.ZodType<Partial<BranchFormData>>>
 
-export const stepSchemas: Record<number, z.ZodType<Partial<BranchFormData>>> = {
-  0: branchFormSchema.pick({ nameTk: true, nameRu: true, nameEn: true, code: true, districtId: true }),
-  1: branchFormSchema.pick({ addressTk: true, addressRu: true, addressEn: true, phone: true, email: true }),
-  2: branchFormSchema.pick({ workingHours: true }),
+function createStepSchemas(t: (key: string, fallback?: string) => string): StepSchemas {
+  const schema = createBranchFormSchema(t)
+  return {
+    0: schema.pick({ nameTk: true, nameRu: true, nameEn: true, code: true, districtId: true }),
+    1: schema.pick({ addressTk: true, addressRu: true, addressEn: true, phone: true, email: true }),
+    2: schema.pick({ workingHours: true }),
+  }
 }
 
 export function validateStep(
   stepIndex: number,
   form: BranchFormData,
   mode: 'create' | 'edit',
+  t: (key: string, fallback?: string) => string,
 ): Partial<Record<keyof BranchFormData, string>> {
   void mode
+  const stepSchemas = createStepSchemas(t)
   const schema = stepSchemas[stepIndex]
+  if (!schema) return {}
   const result = schema.safeParse(form)
   if (result.success) return {}
   const errors: Partial<Record<keyof BranchFormData, string>> = {}

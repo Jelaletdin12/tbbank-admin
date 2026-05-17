@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { useCreateRole, useUpdateRole } from '../hooks/useRoles'
-import type { Role, RolePayload } from '../api/rolesApi'
+import { createRoleFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/role.schema'
+import type { RoleFormData } from '../schemas/role.schema'
+import type { Role } from '../api/rolesApi'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,14 +16,6 @@ interface RoleFormProps {
   mode: 'create' | 'edit'
   initialData?: Role
   roleId?: number
-}
-
-interface FormErrors {
-  code?: string
-  name_tk?: string
-  name_ru?: string
-  name_en?: string
-  guard_name?: string
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -36,10 +32,25 @@ const GUARD_OPTIONS = [
   { value: 'sanctum', label: 'sanctum' },
 ]
 
+type FlatErrors = Partial<Record<keyof RoleFormData, string>>
+
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): FlatErrors {
+  const result: FlatErrors = {}
+  for (const key of Object.keys(errors)) {
+    const msg = errors[key]?.message
+    if (msg) result[key as keyof RoleFormData] = msg
+  }
+  return result
+}
+
 // ─── RoleForm ─────────────────────────────────────────────────────────────────
 
 export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createRole = useCreateRole()
@@ -48,63 +59,72 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
   const isPending = createRole.isPending || updateRole.isPending
 
   const [activeLang, setActiveLang] = useState<LangKey>('tk')
-  const [errors, setErrors]         = useState<FormErrors>({})
 
-  const [form, setForm] = useState<RolePayload>({
-    code:       initialData?.code           ?? '',
-    guard_name: initialData?.guard_name     ?? 'web',
-    name: {
-      tk: initialData?.name?.tk ?? '',
-      ru: initialData?.name?.ru ?? '',
-      en: initialData?.name?.en ?? '',
-    },
+  const schema = useMemo(() => createRoleFormSchema(t), [t, i18n.language])
+
+  const {
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
+  } = useForm<RoleFormData>({
+    resolver: zodResolver(schema),
+    defaultValues: initialData
+      ? {
+          ...DEFAULT_FORM_VALUES,
+          code: initialData.code,
+          nameTk: initialData.name.tk,
+          nameRu: initialData.name.ru,
+          nameEn: initialData.name.en,
+          guard_name: initialData.guard_name,
+        }
+      : DEFAULT_FORM_VALUES,
   })
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  const form = watch()
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  const setField = (field: keyof Omit<RolePayload, 'name'>, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
+  const setField = useCallback(
+    (key: keyof RoleFormData) => (value: string) => {
+      (setValue as (k: keyof RoleFormData, v: string) => void)(key, value)
+      clearErrors(key)
+    },
+    [setValue, clearErrors],
+  )
 
   const setNameField = (lang: LangKey, value: string) => {
-    setForm((prev) => ({ ...prev, name: { ...prev.name, [lang]: value } }))
-    setErrors((prev) => ({ ...prev, [`name_${lang}`]: undefined }))
+    const key = `name${lang.charAt(0).toUpperCase() + lang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
+    setValue(key, value)
+    clearErrors(key)
   }
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-
-  const validate = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    if (!form.code.trim())
-      newErrors.code = t('roles.validation.codeRequired', 'Kod hökman!')
-    if (!form.name.tk.trim())
-      newErrors.name_tk = t('roles.validation.nameTkRequired', 'Türkmençe ady hökman!')
-    if (!form.guard_name.trim())
-      newErrors.guard_name = t('roles.validation.guardRequired', 'Guard name hökman!')
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   // ── Submit ─────────────────────────────────────────────────────────────────
 
-  const handleSubmit = () => {
-    if (!validate()) return
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const values = getValues()
+    const payload = buildPayload(values)
 
     if (mode === 'create') {
-      createRole.mutate(form, {
+      createRole.mutate(payload, {
         onSuccess: () => navigate('/settings/users/roles'),
       })
     } else {
-      updateRole.mutate(form, {
+      updateRole.mutate(payload, {
         onSuccess: () => navigate('/settings/users/roles'),
       })
     }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  const activeNameKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
+  const nameError = activeLang === 'tk' ? errors[activeNameKey] : undefined
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -118,7 +138,7 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
         <FormInput
           type="text"
           value={form.code}
-          onChange={(v) => setField('code', v)}
+          onChange={setField('code')}
           placeholder={t('roles.fields.code', 'Kod')}
           error={errors.code}
           disabled={isPending}
@@ -132,7 +152,6 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
           <span className="text-destructive ml-0.5">*</span>
         </span>
         <div className="space-y-2">
-          {/* Language tabs */}
           <div className="flex gap-1 justify-end">
             {LANG_TABS.map((tab) => (
               <button
@@ -151,10 +170,10 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
           </div>
           <FormInput
             type="text"
-            value={form.name[activeLang]}
+            value={form[activeNameKey]}
             onChange={(v) => setNameField(activeLang, v)}
             placeholder={t('roles.fields.name', 'Ady')}
-            error={errors[`name_${activeLang}` as keyof FormErrors]}
+            error={nameError}
             disabled={isPending}
           />
         </div>
@@ -169,7 +188,7 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
         <FormInput
           type="select"
           value={form.guard_name}
-          onChange={(v) => setField('guard_name', v)}
+          onChange={setField('guard_name')}
           options={GUARD_OPTIONS}
           error={errors.guard_name}
           disabled={isPending}

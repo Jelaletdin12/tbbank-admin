@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { useCreateRequiredDocument, useUpdateRequiredDocument } from '../hooks/useRequiredDocuments'
-import { requiredDocumentFormSchema, DEFAULT_FORM_VALUES, buildPayload, mapInitial } from '../schemas/requiredDocument.schema'
+import { createRequiredDocumentFormSchema, DEFAULT_FORM_VALUES, buildPayload, mapInitial } from '../schemas/requiredDocument.schema'
 import type { RequiredDocumentFormData } from '../schemas/requiredDocument.schema'
 import type { LoanDocument, LoanDocumentTranslation } from '../api/requiredDocumentsApi'
 
@@ -199,7 +199,11 @@ function flattenErrors(
 // ─── RequiredDocumentForm ─────────────────────────────────────────────────────────
 
 export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: RequiredDocumentFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   // Per-field locale tabs (UI only, not form state)
@@ -211,6 +215,8 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const schema = useMemo(() => createRequiredDocumentFormSchema(t), [t, i18n.language])
+
   const {
     watch,
     setValue,
@@ -218,7 +224,7 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
     formState: { errors: rhfErrors },
     trigger,
   } = useForm<RequiredDocumentFormData>({
-    resolver: zodResolver(requiredDocumentFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
       : DEFAULT_FORM_VALUES,
@@ -229,6 +235,12 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
     () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
     [rhfErrors],
   )
+
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   // Derive LoanDocumentTranslation objects so the JSX stays unchanged
   const name: LoanDocumentTranslation = useMemo(

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -9,7 +9,7 @@ import { FormActions } from '@/components/formActions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCreateLoanType, useUpdateLoanType } from '../hooks/useLoanTypes'
 import type { LoanType } from '../api/loanTypesApi'
-import { loanTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/loanType.schema'
+import { createLoanTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/loanType.schema'
 import type { LoanTypeFormData } from '../schemas/loanType.schema'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -60,7 +60,11 @@ const LANG_TABS: { key: Lang; label: string }[] = [
 // ─── LoanTypeForm ─────────────────────────────────────────────────────────────
 
 export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateLoanType()
@@ -70,6 +74,8 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
 
   const [activeLang, setActiveLang] = useState<Lang>('tk')
 
+  const schema = useMemo(() => createLoanTypeFormSchema(t), [t, i18n.language])
+
   const {
     watch,
     setValue,
@@ -78,7 +84,7 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
     trigger,
     getValues,
   } = useForm<LoanTypeFormData>({
-    resolver: zodResolver(loanTypeFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
       : DEFAULT_FORM_VALUES,
@@ -89,6 +95,12 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
     () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
     [rhfErrors],
   )
+
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   const set = useCallback(
     (key: keyof LoanTypeFormData) => (value: string | boolean) => {

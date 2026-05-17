@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -35,7 +35,11 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 // ─── ClientForm ───────────────────────────────────────────────────────────────
 
 export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateClient()
@@ -43,7 +47,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  const schema = useMemo(() => clientFormSchema(mode), [mode])
+  const schema = useMemo(() => clientFormSchema(mode, t), [mode, t, i18n.language])
 
   const {
     watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
@@ -69,6 +73,14 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
     ;(setValue as (name: K, val: ClientFormData[K]) => void)(key, value)
     clearErrors(key)
   }
+
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) {
+      trigger()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   // ── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -8,7 +8,7 @@ import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
 import type { CardReason } from '../api/cardReasonsApi'
 import { useCreateCardReason, useUpdateCardReason } from '../hooks/useCardReasons'
-import { cardReasonFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardReason.schema'
+import { createCardReasonFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardReason.schema'
 import type { CardReasonFormData } from '../schemas/cardReason.schema'
 
 // ─── Form errors helper ──────────────────────────────────────────────────────
@@ -56,7 +56,11 @@ function mapInitial(data: CardReason): CardReasonFormData {
 }
 
 export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFormProps) {
-  const { t } = useTranslation()
+  const { t: _t, i18n } = useTranslation()
+  const t: (key: string, fallback?: string) => string = useCallback(
+    (key, fallback) => _t(key, fallback ?? key) as string,
+    [_t],
+  )
   const navigate = useNavigate()
 
   const createMutation = useCreateCardReason()
@@ -64,10 +68,12 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  const schema = useMemo(() => createCardReasonFormSchema(t), [t, i18n.language])
+
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, trigger,
   } = useForm<CardReasonFormData>({
-    resolver: zodResolver(cardReasonFormSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
   })
 
@@ -81,11 +87,17 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
     clearErrors(key)
   }, [setValue, clearErrors])
 
-  const handleSubmit = () => {
-    const values = getValues()
-    const result = cardReasonFormSchema.safeParse(values)
-    if (!result.success) return
+  // ── Re-validate on language change ──
+  useEffect(() => {
+    if (Object.keys(rhfErrors).length > 0) trigger()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
+  const handleSubmit = async () => {
+    const isValid = await trigger()
+    if (!isValid) return
+
+    const values = getValues()
     const payload = buildPayload(values)
 
     if (mode === 'create') {

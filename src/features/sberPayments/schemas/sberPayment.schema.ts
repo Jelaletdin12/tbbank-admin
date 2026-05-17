@@ -1,25 +1,22 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { CreateSberPaymentPayload, PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
-
-const t = i18next.t.bind(i18next)
 
 const fileField = z.custom<File | null>((val) => val === null || val instanceof File).nullable()
 
 export const sberPaymentFormSchema = z.object({
-  welayat: z.string().min(1, t('validation.required', '')),
-  sahamca: z.string().min(1, t('validation.required', '')),
-  firstName: z.string().min(1, t('validation.required', '')),
-  lastName: z.string().min(1, t('validation.required', '')),
-  phone: z.string().min(1, t('validation.required', '')),
+  welayat: z.string().min(1, 'validation.required'),
+  sahamca: z.string().min(1, 'validation.required'),
+  firstName: z.string().min(1, 'validation.required'),
+  lastName: z.string().min(1, 'validation.required'),
+  phone: z.string().min(1, 'validation.required'),
   email: z.string(),
-  address: z.string().min(1, t('validation.required', '')),
-  status: z.string().min(1, t('validation.required', '')),
+  address: z.string().min(1, 'validation.required'),
+  status: z.string().min(1, 'validation.required'),
   bellik: z.string(),
-  accountNumber: z.string().min(1, t('validation.required', '')),
-  passportSeries: z.string().min(1, t('validation.required', '')),
-  passportNumber: z.string().min(1, t('validation.required', '')),
-  fullName: z.string().min(1, t('validation.required', '')),
+  accountNumber: z.string().min(1, 'validation.required'),
+  passportSeries: z.string().min(1, 'validation.required'),
+  passportNumber: z.string().min(1, 'validation.required'),
+  fullName: z.string().min(1, 'validation.required'),
   client_id: z.string().optional(),
   acc_sberbank_card: fileField,
   acc_enrollment: fileField,
@@ -50,6 +47,7 @@ export function validateStep(
   stepIndex: number,
   form: SberPaymentFormData,
   mode: 'create' | 'edit',
+  t?: (key: string, fallback?: string) => string,
 ): Partial<Record<keyof SberPaymentFormData, string>> {
   void mode
   const schema = stepSchemas[stepIndex]
@@ -59,7 +57,10 @@ export function validateStep(
   const errors: Partial<Record<keyof SberPaymentFormData, string>> = {}
   for (const issue of result.error.issues) {
     const key = issue.path[0] as keyof SberPaymentFormData
-    if (!errors[key]) errors[key] = issue.message
+    if (!errors[key]) {
+      const msg = issue.message
+      errors[key] = t && msg.startsWith('validation.') ? t(msg, msg) : msg
+    }
   }
   return errors
 }

@@ -1,19 +1,18 @@
 import { z } from 'zod'
-import i18next from 'i18next'
 import type { LoanDocument, LoanDocumentPayload } from '../api/requiredDocumentsApi'
 
-const t = i18next.t.bind(i18next)
+export function createRequiredDocumentFormSchema(t: (key: string, fallback?: string) => string) {
+  return z.object({
+    nameTk: z.string().min(1, t('validation.required', 'validation.required')),
+    nameRu: z.string().min(1, t('validation.required', 'validation.required')),
+    nameEn: z.string().min(1, t('validation.required', 'validation.required')),
+    descTk: z.string().min(1, t('validation.required', 'validation.required')),
+    descRu: z.string().min(1, t('validation.required', 'validation.required')),
+    descEn: z.string().min(1, t('validation.required', 'validation.required')),
+  })
+}
 
-export const requiredDocumentFormSchema = z.object({
-  nameTk: z.string().min(1, t('validation.required', '')),
-  nameRu: z.string().min(1, t('validation.required', '')),
-  nameEn: z.string().min(1, t('validation.required', '')),
-  descTk: z.string().min(1, t('validation.required', '')),
-  descRu: z.string().min(1, t('validation.required', '')),
-  descEn: z.string().min(1, t('validation.required', '')),
-})
-
-export type RequiredDocumentFormData = z.infer<typeof requiredDocumentFormSchema>
+export type RequiredDocumentFormData = z.infer<ReturnType<typeof createRequiredDocumentFormSchema>>
 
 export const DEFAULT_FORM_VALUES: RequiredDocumentFormData = {
   nameTk: '',
