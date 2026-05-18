@@ -28,16 +28,24 @@ import { InfoRow, PassportImage } from "@/components/viewPageComponents";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  pending:  { label: "Garaşylýar", variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
-  approved: { label: "Tassyklandy", variant: "success" as StatusBadgeVariant, icon: CheckCircle2 },
-  rejected: { label: "Ýatyryldy",  variant: "error"   as StatusBadgeVariant, icon: XCircle      },
-} satisfies Record<CardPinStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+const STATUS_VARIANT: Record<CardPinStatus, StatusBadgeVariant> = {
+  pending:  "warning",
+  approved: "success",
+  rejected: "error",
+}
+
+const STATUS_ICON: Record<CardPinStatus, React.ElementType> = {
+  pending:  AlertCircle,
+  approved: CheckCircle2,
+  rejected: XCircle,
+}
 
 function CardPinStatusBadge({ status }: { status: CardPinStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const variant = STATUS_VARIANT[status]
+  const Icon = STATUS_ICON[status]
+  if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
+  return <StatusBadge label={t(`cardPin.status.${status}`)} variant={variant} icon={Icon} />
 }
 
 // ─── Bento primitives ─────────────────────────────────────────────────────────
@@ -164,7 +172,7 @@ export default function CardPinViewPage() {
       {/* ── Row 1: Meta + Kart + Lokasiýa ───────────────────────────────── */}
       <BentoGrid cols={3}>
         <BentoCard title={t("cardPin.metaSection", "Esasy maglumatlar")}>
-          <InfoRow label="ID">
+          <InfoRow label={t("common.id", "ID")}>
             <span className="font-mono">{data.id}</span>
           </InfoRow>
           <InfoRow label={t("cardPin.createdAt", "Döredilen wagty")}>

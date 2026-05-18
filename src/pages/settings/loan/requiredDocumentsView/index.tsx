@@ -70,7 +70,7 @@ export default function RequiredDocumentsViewPage() {
 
       {/* Main info */}
       <Section>
-        <InfoRow label="ID" value={data.id} />
+        <InfoRow label={t('common.id', 'ID')} value={data.id} />
 
         {/* Name — multilingual */}
         <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
@@ -81,7 +81,7 @@ export default function RequiredDocumentsViewPage() {
             {(['tk', 'ru', 'en'] as const).map((lang) => (
               <div key={lang}>
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-0.5">
-                  {lang === 'tk' ? 'Türkmen' : lang === 'ru' ? 'Русский' : 'English'}
+                  {t(lang === 'tk' ? 'languages.tk' : lang === 'ru' ? 'languages.ru' : 'languages.en', lang === 'tk' ? 'Türkmen' : lang === 'ru' ? 'Русский' : 'English')}
                 </span>
                 <span className="text-sm text-foreground">{data.name[lang] || '—'}</span>
               </div>
@@ -98,7 +98,7 @@ export default function RequiredDocumentsViewPage() {
             {(['tk', 'ru', 'en'] as const).map((lang) => (
               <div key={lang}>
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                  {lang === 'tk' ? 'Türkmen' : lang === 'ru' ? 'Русский' : 'English'}
+                  {t(lang === 'tk' ? 'languages.tk' : lang === 'ru' ? 'languages.ru' : 'languages.en', lang === 'tk' ? 'Türkmen' : lang === 'ru' ? 'Русский' : 'English')}
                 </span>
                 {data.description[lang] ? (
                   <div

@@ -11,15 +11,23 @@ import type { IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMa
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_MAP: Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
-  pending:  { label: 'Garaşylýar',  variant: 'warning', icon: AlertCircle  },
-  approved: { label: 'Tassyklandy', variant: 'success', icon: CheckCircle2 },
-  rejected: { label: 'Ret edildi',  variant: 'error',   icon: XCircle      },
+const STATUS_VARIANT: Record<IntlPaymentStatus, StatusBadgeVariant> = {
+  pending:  'warning',
+  approved: 'success',
+  rejected: 'error',
+}
+
+const STATUS_ICON: Record<IntlPaymentStatus, React.ElementType> = {
+  pending:  AlertCircle,
+  approved: CheckCircle2,
+  rejected: XCircle,
 }
 
 function PaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
-  const cfg = STATUS_MAP[status] ?? STATUS_MAP.pending
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const variant = STATUS_VARIANT[status] ?? STATUS_VARIANT.pending
+  const Icon = STATUS_ICON[status] ?? STATUS_ICON.pending
+  return <StatusBadge label={t(`intlPayment.status.${status}`)} variant={variant} icon={Icon} />
 }
 
 // ─── Bento primitives ─────────────────────────────────────────────────────────
@@ -201,7 +209,7 @@ export default function IntlPaymentViewPage() {
           <InfoRow label={t('intlPayment.client', 'Ulanyjy')}>
             <span className="text-primary font-medium">{data.client_label}</span>
           </InfoRow>
-          <InfoRow label="ID">
+          <InfoRow label={t("common.id", "ID")}>
             <span className="font-mono">{data.id}</span>
           </InfoRow>
           <InfoRow label={t('intlPayment.status', 'Status')}>

@@ -150,7 +150,7 @@ export default function CurrencyRatesPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-2xl font-semibold text-foreground mb-5">
         {t("currencyRates.title", "Walýuta kursy")}
       </h1>

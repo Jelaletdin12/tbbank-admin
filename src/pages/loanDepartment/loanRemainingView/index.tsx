@@ -85,7 +85,7 @@ export default function LoanRemainingViewPage() {
 
       {/* ── Basic Info ─────────────────────────────────────────────────────── */}
       <Section title={t("loanRemaining.sections.info", "Esasy maglumatlar")}>
-        <InfoRow label="ID" value={String(record.id)} />
+        <InfoRow label={t("common.id", "ID")} value={String(record.id)} />
         <InfoRow
           label={t("loanRemaining.columns.passportSeries", "Pasport seriýasy")}
           value={record.passportSeries}

@@ -24,17 +24,26 @@ import { ConfirmDialog } from "@/components/confirmDialog";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  GARAŞYLÝAR:        { label: "Garaşylýar",  variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
-  KANAGATLANDYRYLAN: { label: "Tassyklandy", variant: "success" as StatusBadgeVariant, icon: CheckCircle2 },
-  RED_EDILDI:        { label: "Ýatyryldy",   variant: "error"   as StatusBadgeVariant, icon: XCircle      },
-  IŞLENÝÄR:          { label: "Işlenýär",    variant: "warning" as StatusBadgeVariant, icon: AlertCircle  },
-} satisfies Record<LoanOrderMobileStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+const STATUS_VARIANT: Record<LoanOrderMobileStatus, StatusBadgeVariant> = {
+  GARAŞYLÝAR:        "warning",
+  KANAGATLANDYRYLAN: "success",
+  RED_EDILDI:        "error",
+  IŞLENÝÄR:          "warning",
+}
+
+const STATUS_ICON: Record<LoanOrderMobileStatus, React.ElementType> = {
+  GARAŞYLÝAR:        AlertCircle,
+  KANAGATLANDYRYLAN: CheckCircle2,
+  RED_EDILDI:        XCircle,
+  IŞLENÝÄR:          AlertCircle,
+}
 
 function LoanOrderMobileStatusBadge({ status }: { status: LoanOrderMobileStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const variant = STATUS_VARIANT[status]
+  const Icon = STATUS_ICON[status]
+  if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
+  return <StatusBadge label={t(`loanOrderStatus.${status}`)} variant={variant} icon={Icon} />
 }
 
 // ─── Bento primitives ─────────────────────────────────────────────────────────
@@ -174,7 +183,7 @@ export default function LoanOrderMobilesViewPage() {
       {/* ── Row 1: Meta + Loan + Location ───────────────────────────────── */}
       <BentoGrid cols={3}>
         <BentoCard title={t("loanOrders.sections.meta", "Esasy maglumatlar")}>
-          <InfoRow label="ID" value={order.id} />
+          <InfoRow label={t("common.id", "ID")} value={order.id} />
           <InfoRow
             label={t("loanOrders.columns.status", "Status")}
           >

@@ -136,7 +136,7 @@ export default function OperatorDetailPage() {
   const roleColumns: ColumnDef<OperatorRole>[] = [
     {
       accessorKey: "id",
-      header: "ID",
+      header: t("common.id", "ID"),
       cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 80,
     },
@@ -188,7 +188,7 @@ export default function OperatorDetailPage() {
   const branchColumns: ColumnDef<OperatorBranch>[] = [
     {
       accessorKey: "id",
-      header: "ID",
+      header: t("common.id", "ID"),
       cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 60,
     },
@@ -305,7 +305,7 @@ export default function OperatorDetailPage() {
       {/* ── Row 1: Esasy maglumatlar + Kontakt ──────────────────────────── */}
       <BentoGrid cols={2}>
         <BentoCard title={t("operators.sections.basic", "Esasy maglumatlar")}>
-          <InfoRow label="ID" value={operator.id} />
+          <InfoRow label={t("common.id", "ID")} value={operator.id} />
           <InfoRow label={t("operators.fields.username", "Ulanyjy ady")} value={operator.username} />
           <InfoRow label={t("operators.fields.name", "Ady")} value={operator.name} />
           <InfoRow label={t("operators.fields.isActive", "Işjeň")}>

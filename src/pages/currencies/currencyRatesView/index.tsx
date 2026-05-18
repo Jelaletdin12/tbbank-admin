@@ -83,7 +83,7 @@ export default function CurrencyRateDetailPage() {
 
       {/* Detail Card */}
       <Section>
-        <InfoRow label="ID"                                                            value={rate.id}           />
+        <InfoRow label={t('common.id', 'ID')}                                           value={rate.id}           />
         <InfoRow label={t('currencyRates.fields.currencyFrom', 'Currency from')}      value={rate.currencyFrom} />
         <InfoRow label={t('currencyRates.fields.currencyTo',   'Currency to')}        value={rate.currencyTo}   />
         <InfoRow label={t('currencyRates.fields.value',        'Value')}              value={rate.value}        />

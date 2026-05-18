@@ -21,12 +21,6 @@ import { usePermission, useDeletePermission } from '@/features/permissions/hooks
 
 type LangKey = 'tk' | 'ru' | 'en'
 
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
-
 function LangTabs({
   active,
   onChange,
@@ -34,6 +28,12 @@ function LangTabs({
   active: LangKey
   onChange: (l: LangKey) => void
 }) {
+  const { t } = useTranslation()
+  const LANG_TABS: { key: LangKey; label: string }[] = [
+    { key: 'tk', label: t('languages.tk', 'Türkmen') },
+    { key: 'ru', label: t('languages.ru', 'Русский') },
+    { key: 'en', label: t('languages.en', 'English') },
+  ]
   return (
     <div className="flex gap-1 justify-end mb-2">
       {LANG_TABS.map((tab) => (
@@ -130,7 +130,7 @@ export default function PermissionViewPage() {
 
       {/* Detail section */}
       <Section>
-        <InfoRow label="ID"               value={permission.id} />
+        <InfoRow label={t('common.id', 'ID')} value={permission.id} />
         <InfoRow label={t('permissions.fields.code', 'Kod')} value={permission.code} />
 
         {/* Name row — with lang switcher */}

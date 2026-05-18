@@ -100,7 +100,7 @@ export default function LoanTypeViewPage() {
 
       {/* Detail section */}
       <Section>
-        <InfoRow label="ID" value={data.id} />
+        <InfoRow label={t('common.id', 'ID')} value={data.id} />
 
         {/* Multilingual name rows */}
         <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">

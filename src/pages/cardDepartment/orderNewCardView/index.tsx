@@ -23,18 +23,19 @@ import { InfoRow, PassportImage } from "@/components/viewPageComponents";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_CFG: Record<CardOrderStatus, { label: string; className: string; icon: string }> = {
-  PENDING:  { label: "Garaşylýar", icon: "⏳", className: "bg-amber-500/10 text-amber-400 border border-amber-500/20"   },
-  APPROVED: { label: "Tassyklandy", icon: "✓", className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
-  REJECTED: { label: "Ýatyryldy",  icon: "✕", className: "bg-red-500/10 text-red-400 border border-red-500/20"          },
+const STATUS_STYLE: Record<CardOrderStatus, { className: string; icon: string }> = {
+  PENDING:  { icon: "⏳", className: "bg-amber-500/10 text-amber-400 border border-amber-500/20"   },
+  APPROVED: { icon: "✓", className: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" },
+  REJECTED: { icon: "✕", className: "bg-red-500/10 text-red-400 border border-red-500/20"          },
 }
 
 function StatusBadge({ status }: { status: CardOrderStatus }) {
-  const cfg = STATUS_CFG[status]
+  const { t } = useTranslation()
+  const cfg = STATUS_STYLE[status]
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${cfg.className}`}>
       <span className="text-[10px]">{cfg.icon}</span>
-      {cfg.label}
+      {t(`cardOrder.status.${status.toLowerCase()}`)}
     </span>
   )
 }
@@ -163,7 +164,7 @@ export default function CardOrderDetailPage() {
       {/* ── Row 1: Meta + Kart + Lokasiýa ───────────────────────────────── */}
       <BentoGrid cols={3}>
         <BentoCard title={t("cardOrder.section.meta", "Esasy maglumatlar")}>
-          <InfoRow label="ID">{order.id}</InfoRow>
+          <InfoRow label={t("common.id", "ID")}>{order.id}</InfoRow>
           <InfoRow label={t("cardOrder.field.createdAt", "Döredilen wagty")}>
             {order.createdAt}
           </InfoRow>

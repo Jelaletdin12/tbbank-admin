@@ -117,7 +117,7 @@ export default function VisaMasterSettingsPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-2xl font-semibold text-foreground mb-5">{t("visaMasterSettings.title", "Visa/Master, Sber sazlamalar")}</h1>
 
       <div className="bg-card border border-border rounded-xl p-4">

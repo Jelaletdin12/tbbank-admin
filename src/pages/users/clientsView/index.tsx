@@ -160,7 +160,7 @@ export default function ClientDetailPage() {
   const roleColumns: ColumnDef<ClientRole>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 80,
     },
@@ -198,7 +198,7 @@ export default function ClientDetailPage() {
   const branchColumns: ColumnDef<ClientBranch>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 60,
     },
@@ -296,7 +296,7 @@ export default function ClientDetailPage() {
       {/* ── Row 1: Esasy maglumatlar + Kontakt ──────────────────────────── */}
       <BentoGrid cols={2}>
         <BentoCard title={t('clients.sections.basic', 'Esasy maglumatlar')}>
-          <InfoRow label="ID" value={client.id} />
+          <InfoRow label={t('common.id', 'ID')} value={client.id} />
           <InfoRow
             label={t('clients.fields.username', 'Ulanyjy ady')}
             value={client.username}

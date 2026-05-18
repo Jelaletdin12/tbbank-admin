@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { Trash2, Edit, Search, Download, XCircle, CheckCircle2, AlertCircle } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { InfoRow, AuditLog, type AuditRowProps } from '@/components/viewPageComponents'
@@ -11,27 +12,53 @@ import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  GARASYLYYAR:       { label: 'Garaşylýar',  variant: 'warning' as StatusBadgeVariant, icon: AlertCircle  },
-  KANAGATLANDYRYLAN: { label: 'Tassyklandy', variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
-  RET_EDILEN:        { label: 'Ýatyryldy',   variant: 'error'   as StatusBadgeVariant, icon: XCircle      },
-} satisfies Record<PaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+const STATUS_VARIANT: Record<PaymentStatus, StatusBadgeVariant> = {
+  GARASYLYYAR:       'warning',
+  KANAGATLANDYRYLAN: 'success',
+  RET_EDILEN:        'error',
+}
 
-const PAID_STATUS_CONFIG = {
-  Tolenmedik: { label: 'Tölmedi',  variant: 'error'   as StatusBadgeVariant, icon: XCircle      },
-  Tolendi:    { label: 'Tölendi',  variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
-} satisfies Record<PaymentPaidStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
+const STATUS_ICON: Record<PaymentStatus, React.ElementType> = {
+  GARASYLYYAR:       AlertCircle,
+  KANAGATLANDYRYLAN: CheckCircle2,
+  RET_EDILEN:        XCircle,
+}
+
+const STATUS_KEY_MAP: Record<PaymentStatus, string> = {
+  GARASYLYYAR:       'pending',
+  KANAGATLANDYRYLAN: 'approved',
+  RET_EDILEN:        'rejected',
+}
+
+const PAID_STATUS_VARIANT: Record<PaymentPaidStatus, StatusBadgeVariant> = {
+  Tolenmedik: 'error',
+  Tolendi:    'success',
+}
+
+const PAID_STATUS_ICON: Record<PaymentPaidStatus, React.ElementType> = {
+  Tolenmedik: XCircle,
+  Tolendi:    CheckCircle2,
+}
+
+const PAID_STATUS_KEY_MAP: Record<PaymentPaidStatus, string> = {
+  Tolenmedik: 'unpaid',
+  Tolendi:    'paid',
+}
 
 function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const variant = STATUS_VARIANT[status]
+  const Icon = STATUS_ICON[status]
+  if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
+  return <StatusBadge label={t(`sberPayments.status.${STATUS_KEY_MAP[status]}`)} variant={variant} icon={Icon} />
 }
 
 function PaymentPaidStatusBadge({ status }: { status: PaymentPaidStatus }) {
-  const cfg = PAID_STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const variant = PAID_STATUS_VARIANT[status]
+  const Icon = PAID_STATUS_ICON[status]
+  if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
+  return <StatusBadge label={t(`sberPayments.paidStatus.${PAID_STATUS_KEY_MAP[status]}`)} variant={variant} icon={Icon} />
 }
 
 // ─── Bento primitives ─────────────────────────────────────────────────────────
@@ -135,6 +162,7 @@ function SberPaymentViewSkeleton() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SberPaymentViewPage() {
+  const { t }     = useTranslation()
   const { id }     = useParams<{ id: string }>()
   const navigate   = useNavigate()
   const [historySearch, setHistorySearch] = useState('')
@@ -153,7 +181,7 @@ export default function SberPaymentViewPage() {
   if (!order) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
-        Toleg tapylmady
+        {t('sberPayments.notFound', 'Töleg tapylmady')}
       </div>
     )
   }
@@ -176,21 +204,21 @@ export default function SberPaymentViewPage() {
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">
-          Sberbank töleg: {order.id}
+          {t('sberPayments.viewTitle', 'Sberbank töleg')}: {order.id}
         </h1>
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setDeleteOpen(true)}
             disabled={deleteMutation.isPending}
             className="p-2 rounded-md cursor-pointer hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-            title="Poz"
+            title={t('common.delete', 'Poz')}
           >
             <Trash2 size={16} />
           </button>
           <button
             onClick={() => navigate(`/sber-payments/${id}/edit`)}
             className="p-2 rounded-md cursor-pointer hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            title="Redaktirle"
+            title={t('common.edit', 'Redaktirle')}
           >
             <Edit size={16} />
           </button>
@@ -199,55 +227,55 @@ export default function SberPaymentViewPage() {
 
       {/* ── Row 1: Meta + Lokasiýa ────────────────────────────────────────── */}
       <BentoGrid cols={2}>
-        <BentoCard title="Esasy maglumatlar">
-          <InfoRow label="ID" value={order.id} />
-          <InfoRow label="Status">
+        <BentoCard title={t('sberPayments.view.sections.main', 'Esasy maglumatlar')}>
+          <InfoRow label={t('common.id', 'ID')} value={order.id} />
+          <InfoRow label={t('Status', 'Status')}>
             <PaymentStatusBadge status={order.status} />
           </InfoRow>
-          <InfoRow label="Tölenen (Sul aý)">
+          <InfoRow label={t('sberPayments.columns.paidStatus', 'Tölenen (şul aý)')}>
             <PaymentPaidStatusBadge status={order.paidStatus} />
           </InfoRow>
-          <InfoRow label="Bellik" value={order.bellik} />
+          <InfoRow label={t('sberPayments.cards.bellik', 'Bellik')} value={order.bellik} />
         </BentoCard>
 
-        <BentoCard title="Lokasiýa">
-          <InfoRow label="Welaýat"  value={order.welayat} />
-          <InfoRow label="Şahamça" value={order.sahamca} isLink />
+        <BentoCard title={t('sberPayments.view.sections.location', 'Lokasiýa')}>
+          <InfoRow label={t('sberPayments.fields.welayat', 'Welaýat')}  value={order.welayat} />
+          <InfoRow label={t('sberPayments.fields.sahamca', 'Şahamça')} value={order.sahamca} isLink />
         </BentoCard>
       </BentoGrid>
 
       {/* ── Row 2: Şahsy maglumatlar + Töleg ─────────────────────────────── */}
       <BentoGrid cols={2}>
-        <BentoCard title="Şahsy maglumatlar">
-          <InfoRow label="Pasportdaky ady"      value={order.firstName} />
-          <InfoRow label="Pasportdaky familiýa" value={order.lastName}  />
-          <InfoRow label="Telefon"              value={order.phone}     />
-          <InfoRow label="E-poçta"              value={order.email}     />
-          <InfoRow label="Häzirki ýaşaýyş ýeri" value={order.address}  />
+        <BentoCard title={t('sberPayments.view.sections.personal', 'Şahsy maglumatlar')}>
+          <InfoRow label={t('sberPayments.fields.firstName', 'Pasportdaky ady')}      value={order.firstName} />
+          <InfoRow label={t('sberPayments.fields.lastName', 'Pasportdaky familiýa')} value={order.lastName}  />
+          <InfoRow label={t('sberPayments.fields.phone', 'Telefon')}              value={order.phone}     />
+          <InfoRow label={t('sberPayments.fields.email', 'E-poçta')}              value={order.email}     />
+          <InfoRow label={t('sberPayments.fields.address', 'Salgy')}  value={order.address}  />
         </BentoCard>
 
-        <BentoCard title="Töleg">
+        <BentoCard title={t('sberPayments.view.sections.payment', 'Töleg')}>
           <InfoRow
-            label="Töleg ugradyjynyň maglumatlary"
+            label={t('sberPayments.payerInfo', 'Töleg ugradyjynyň maglumatlary')}
             value={`I-M${order.passportNumber?.slice(0, 2) ?? 'XX'}-${order.passportNumber ?? ''} ${order.fullName}`}
           />
-          <InfoRow label="Töleg ugradyjynyň goýum hasaby" value={order.accountNumber} />
-          <InfoRow label="Pasport seriýasy"               value={order.passportSeries} />
-          <InfoRow label="Pasport nomeri"                 value={order.passportNumber} />
-          <InfoRow label="Ady Familiýasy Atasynyň ady"    value={order.fullName} />
+          <InfoRow label={t('sberPayments.fields.accountNumber', 'Goýum hasaby')} value={order.accountNumber} />
+          <InfoRow label={t('sberPayments.fields.passportSeries', 'Pasport seriýasy')}               value={order.passportSeries} />
+          <InfoRow label={t('sberPayments.fields.passportNumber', 'Pasport nomeri')}                 value={order.passportNumber} />
+          <InfoRow label={t('sberPayments.fields.fullName', 'Ady Familiýasy Atasynyň ady')}    value={order.fullName} />
         </BentoCard>
       </BentoGrid>
 
       {/* ── Row 3: Kabul ediji resminamalary ─────────────────────────────── */}
       <BentoGrid cols={1}>
-        <BentoCard title="Kabul ediji talyp boyunca resminamalary">
+        <BentoCard title={t('sberPayments.view.sections.acceptedDocs', 'Kabul ediji talyp boýunça resminamalary')}>
           {kabulDocs.length > 0
             ? kabulDocs.map((doc) => (
                 <DocumentRow key={doc.id} label={doc.label} fileName={doc.name} fileUrl={doc.fileUrl} />
               ))
             : (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Resminamalar ýok
+                {t('sberPayments.view.noDocuments', 'Resminamalar ýok')}
               </div>
             )
           }
@@ -256,14 +284,14 @@ export default function SberPaymentViewPage() {
 
       {/* ── Row 4: Ugradyjy resminamalary ────────────────────────────────── */}
       <BentoGrid cols={1}>
-        <BentoCard title="Ugradyjy boyunca resminamalary">
+        <BentoCard title={t('sberPayments.view.sections.sentDocs', 'Ugradyjy boýunça resminamalary')}>
           {ugradDocs.length > 0
             ? ugradDocs.map((doc) => (
                 <DocumentRow key={doc.id} label={doc.label} fileName={doc.name} fileUrl={doc.fileUrl} />
               ))
             : (
               <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Resminamalar ýok
+                {t('sberPayments.view.noDocuments', 'Resminamalar ýok')}
               </div>
             )
           }
@@ -272,7 +300,7 @@ export default function SberPaymentViewPage() {
 
       {/* ── Row 5: Töleg taryhy ───────────────────────────────────────────── */}
       <BentoGrid cols={1}>
-        <BentoCard title="Töleg taryhy">
+        <BentoCard title={t('sberPayments.view.sections.paymentHistory', 'Töleg taryhy')}>
           <div className="p-4">
             <div className="relative max-w-xs mb-4">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -280,7 +308,7 @@ export default function SberPaymentViewPage() {
                 type="text"
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                placeholder="Gözlemek"
+                placeholder={t('common.search', 'Gözlemek')}
                 className="h-9 w-full pl-9 pr-3 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
@@ -293,7 +321,7 @@ export default function SberPaymentViewPage() {
                   <line x1="9" y1="21" x2="9" y2="9" />
                 </svg>
               </div>
-              <p className="text-sm">Berlen kriteriýalara Töleg gabat gelmedi.</p>
+              <p className="text-sm">{t('sberPayments.view.noPaymentHistory', 'Berlen kriteriýalara Töleg gabat gelmedi.')}</p>
             </div>
           </div>
         </BentoCard>
@@ -305,8 +333,8 @@ export default function SberPaymentViewPage() {
       <ConfirmDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        title="Bu tölegi pozmak isleýärsiňizmi?"
-        confirmLabel="Poz"
+        title={t('sberPayments.deleteDialog.title', 'Bu tölegi pozmak isleýärsiňizmi?')}
+        confirmLabel={t('common.delete', 'Poz')}
         onConfirm={handleDelete}
         isLoading={deleteMutation.isPending}
       />

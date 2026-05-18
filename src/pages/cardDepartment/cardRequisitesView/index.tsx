@@ -25,33 +25,26 @@ import type { CardRequisiteStatus } from "@/features/cardRequisites/api/cardRequ
 import { InfoRow } from "@/components/viewPageComponents";
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  pending: {
-    label: "Garaşylýar",
-    variant: "warning" as StatusBadgeVariant,
-    icon: AlertCircle,
-  },
-  approved: {
-    label: "Tassyklanan",
-    variant: "success" as StatusBadgeVariant,
-    icon: CheckCircle2,
-  },
-  rejected: {
-    label: "Ret edilen",
-    variant: "error" as StatusBadgeVariant,
-    icon: XCircle,
-  },
-} satisfies Record<
-  CardRequisiteStatus,
-  { label: string; variant: StatusBadgeVariant; icon: React.ElementType }
->;
+const STATUS_VARIANT: Record<CardRequisiteStatus, StatusBadgeVariant> = {
+  pending:  "warning",
+  approved: "success",
+  rejected: "error",
+};
+
+const STATUS_ICON: Record<CardRequisiteStatus, React.ElementType> = {
+  pending:  AlertCircle,
+  approved: CheckCircle2,
+  rejected: XCircle,
+};
 
 function CardRequisiteStatusBadge({ status }: { status: CardRequisiteStatus }) {
-  const cfg = STATUS_CONFIG[status];
-  if (!cfg)
-    return <span className="text-xs text-muted-foreground">{String(status)}</span>;
+  const { t } = useTranslation();
+  const variant = STATUS_VARIANT[status];
+  const Icon = STATUS_ICON[status];
+  if (!variant)
+    return <span className="text-xs text-muted-foreground">{status}</span>;
   return (
-    <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+    <StatusBadge label={t(`cardRequisite.status.${status}`)} variant={variant} icon={Icon} />
   );
 }
 
@@ -68,6 +61,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 // ─── Passport image row ───────────────────────────────────────────────────────
 
 function PassportImageRow({ label, url }: { label: string; url?: string }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-[220px_1fr] border-b border-border/50 last:border-0">
       <div className="px-4 py-3 text-sm text-muted-foreground font-medium bg-muted/10">
@@ -87,7 +81,7 @@ function PassportImageRow({ label, url }: { label: string; url?: string }) {
               className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors w-fit"
             >
               <DownloadCloud size={13} />
-              {"Göçürip al"}
+              {t("Download", "Göçürip al")}
             </a>
           </>
         ) : (
