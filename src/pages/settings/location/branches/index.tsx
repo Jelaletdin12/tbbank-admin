@@ -186,7 +186,7 @@ export function BranchesListPage() {
   const totalPages = data ? Math.ceil(data.total / perPage) : 1
 
   return (
-    <div className="p-6">
+    <div >
       <div className="flex items-center justify-between mb-6">
         <div>
          

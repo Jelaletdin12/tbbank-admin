@@ -155,7 +155,7 @@ export default function LoanTypesListPage() {
     }))
 
   return (
-    <div className="p-6">
+    <div>
     
 
       <h1 className="text-xl font-semibold text-foreground mb-5">

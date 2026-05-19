@@ -276,7 +276,7 @@ export default function OperatorDetailPage() {
   const filteredBranches = (operator.branches ?? []).filter((b) => b.name.toLowerCase().includes(branchSearch.toLowerCase()));
 
   return (
-    <div className="p-6 flex flex-col gap-6">
+    <div className=" flex flex-col gap-6">
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-foreground">
