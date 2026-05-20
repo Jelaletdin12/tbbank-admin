@@ -7,7 +7,7 @@ export default function LoanTypeCreatePage() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6 max-w-3xl">
+    <div>
      
 
       <h1 className="text-xl font-semibold text-foreground mb-5">

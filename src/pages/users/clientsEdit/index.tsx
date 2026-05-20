@@ -11,7 +11,7 @@ export default function ClientEditPage() {
   const { data: client, isLoading } = useClient(clientId)
 
   return (
-    <div className="p-6">
+    <div>
      
 
       {/* Page heading */}

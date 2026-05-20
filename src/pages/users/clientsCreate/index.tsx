@@ -5,7 +5,7 @@ export default function ClientCreatePage() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6">
+    <div >
     
 
       {/* Page heading */}

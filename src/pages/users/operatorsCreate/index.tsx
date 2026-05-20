@@ -7,7 +7,7 @@ export default function OperatorCreatePage() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6">
+    <div>
       {/* Page heading */}
       <h1 className="text-2xl font-semibold text-foreground mb-6">
         {t('operators.createTitle', 'Operator döredin')}

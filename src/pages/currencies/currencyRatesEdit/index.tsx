@@ -27,7 +27,7 @@ export default function CurrencyRateEditPage() {
 
   if (!rate) {
     return (
-      <div className="p-6">
+      <div>
         <p className="text-muted-foreground">
           {t('currencyRates.notFound', 'Walýuta kursy tapylmady')}
         </p>

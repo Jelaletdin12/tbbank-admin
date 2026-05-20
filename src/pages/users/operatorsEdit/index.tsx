@@ -13,7 +13,7 @@ export default function OperatorEditPage() {
   const { data: operator, isLoading } = useOperator(operatorId)
 
   return (
-    <div className="p-6">
+    <div >
       {/* Page heading */}
       <h1 className="text-2xl font-semibold text-foreground mb-6">
         {t('operators.editTitle', 'Operator üýtget')}: {operator?.name ?? ''}

@@ -5,7 +5,7 @@ export default function RequiredDocumentsCreatePage() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div>
       <h1 className="text-xl font-semibold text-foreground mb-5">
         {t('loanDocuments.createBtn', 'Karz gerekli resminamalary dörediň')}
       </h1>

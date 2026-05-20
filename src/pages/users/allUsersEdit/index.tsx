@@ -30,7 +30,7 @@ export default function UserEditPage() {
   }
 
   return (
-    <div className="p-6 space-y-4 max-w-4xl">
+    <div className="space-y-4 max-w-4xl">
     
 
       {/* Title */}

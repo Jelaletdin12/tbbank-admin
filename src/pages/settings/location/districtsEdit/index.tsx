@@ -11,7 +11,7 @@ export default function DistrictEditPage() {
   const { data, isLoading, isError } = useDistrictById(numericId)
 
   return (
-    <div className="p-6">
+    <div>
       <div className="mb-6">
       
 

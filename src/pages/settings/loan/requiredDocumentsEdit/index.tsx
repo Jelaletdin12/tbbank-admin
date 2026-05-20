@@ -12,7 +12,7 @@ export default function RequiredDocumentsEditPage() {
   const { data, isLoading, isError } = useGetRequiredDocumentById(documentId)
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div >
       <h1 className="text-xl font-semibold text-foreground mb-5">
         {isLoading
           ? t('common.loading', 'Ýüklenýär...')

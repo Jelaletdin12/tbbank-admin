@@ -9,7 +9,7 @@ export default function CurrencyRateCreatePage() {
   const { t }    = useTranslation()
 
   return (
-    <div className="p-6">
+    <div>
     
       <h1 className="text-2xl font-semibold text-foreground mb-6">
         {t('currencyRates.actions.create', 'Walýuta kursy dörediň')}
