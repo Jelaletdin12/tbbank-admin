@@ -1,37 +1,18 @@
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PageSpinner } from '@/components/pageSpinner'
+import { PageError } from '@/components/pageError'
 import { ClientForm } from '@/features/clients/components/clientForm'
 import { useClient } from '@/features/clients/hooks/useClients'
 
 export default function ClientEditPage() {
   const { id } = useParams<{ id: string }>()
-  const clientId = Number(id)
   const { t } = useTranslation()
+  const numericId = Number(id)
+  const { data: client, isLoading } = useClient(numericId)
 
-  const { data: client, isLoading } = useClient(clientId)
+  if (isLoading) return <PageSpinner />
+  if (!client) return <PageError message={t('common.notFound', 'Tapylmady')} />
 
-  return (
-    <div>
-     
-
-      {/* Page heading */}
-      <h1 className="text-2xl font-semibold text-foreground mb-6">
-        {t('clients.editTitle', 'Müşderi üýtget')}: {client?.name ?? ''}
-      </h1>
-
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-14 bg-muted rounded-xl animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <ClientForm
-          mode="edit"
-          initialData={client}
-          clientId={clientId}
-        />
-      )}
-    </div>
-  )
+  return <ClientForm mode="edit" initialData={client} />
 }

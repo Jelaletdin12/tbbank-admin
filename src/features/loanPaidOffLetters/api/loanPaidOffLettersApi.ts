@@ -10,6 +10,8 @@ export interface LoanPaidOffLetter {
   issuedAt: string;
 }
 
+export type LoanPaidOffLetterPayload = Omit<LoanPaidOffLetter, "id">;
+
 export interface LoanPaidOffLetterListParams {
   search?: string;
   page?: number;
@@ -70,4 +72,39 @@ export async function deleteLoanPaidOffLetter(id: number): Promise<void> {
     return;
   }
   await apiClient.delete(`/loan-paid-off-letter-orders/${id}`);
+}
+
+export async function fetchLoanPaidOffLetterById(id: number): Promise<LoanPaidOffLetter> {
+  if (USE_MOCK) {
+    const item = MOCK_DATA.find((r) => r.id === id);
+    if (!item) throw new Error("Not found");
+    return item;
+  }
+  const { data } = await apiClient.get<LoanPaidOffLetter>(`/loan-paid-off-letter-orders/${id}`);
+  return data;
+}
+
+export async function createLoanPaidOffLetter(payload: LoanPaidOffLetterPayload): Promise<LoanPaidOffLetter> {
+  if (USE_MOCK) {
+    const newItem: LoanPaidOffLetter = {
+      id: Math.max(0, ...MOCK_DATA.map((d) => d.id)) + 1,
+      ...payload,
+    };
+    MOCK_DATA.unshift(newItem);
+    return newItem;
+  }
+  const { data } = await apiClient.post<LoanPaidOffLetter>("/loan-paid-off-letter-orders", payload);
+  return data;
+}
+
+export async function updateLoanPaidOffLetter(id: number, payload: LoanPaidOffLetterPayload): Promise<LoanPaidOffLetter> {
+  if (USE_MOCK) {
+    const idx = MOCK_DATA.findIndex((r) => r.id === id);
+    if (idx === -1) throw new Error("Not found");
+    const updated = { ...MOCK_DATA[idx], ...payload };
+    MOCK_DATA[idx] = updated;
+    return updated;
+  }
+  const { data } = await apiClient.put<LoanPaidOffLetter>(`/loan-paid-off-letter-orders/${id}`, payload);
+  return data;
 }

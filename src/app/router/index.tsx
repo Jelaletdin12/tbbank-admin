@@ -12,10 +12,16 @@ const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const LoanOrdersPage = lazy(() => import("@/pages/loanDepartment/loanOrders"));
 const LoanOrderMobilesPage = lazy(() => import("@/pages/loanDepartment/loanOrderMobile"));
 const LoanRemainingPage = lazy(() => import("@/pages/loanDepartment/loanRemaining"));
+
 const LoanRemainingCreatePage = lazy(() => import("@/pages/loanDepartment/loanRemainingCreate"));
 const LoanRemainingViewPage = lazy(() => import("@/pages/loanDepartment/loanRemainingView"));
 const LoanRemainingEditPage = lazy(() => import("@/pages/loanDepartment/loanRemainingEdit"));
+
 const LoanPaidOffLettersPage = lazy(() => import("@/pages/loanDepartment/loanPaidOffLetters"));
+const LoanPaidOffLettersCreatePage = lazy(() => import("@/pages/loanDepartment/loanPaidOffLettersCreate"));
+const LoanPaidOffLettersViewPage = lazy(() => import("@/pages/loanDepartment/loanPaidOffLettersView"));
+const LoanPaidOffLettersEditPage = lazy(() => import("@/pages/loanDepartment/loanPaidOffLettersEdit"));
+
 const LoanOrderCreatePage = lazy(() => import("@/pages/loanDepartment/loanOrderCreate"));
 const LoanOrderViewPage = lazy(() => import("@/pages/loanDepartment/loanOrderView"));
 const LoanOrderMobileViewPage = lazy(() => import("@/pages/loanDepartment/loanOrderMobileView"));
@@ -291,6 +297,30 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <LoanPaidOffLettersPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-paid-off-letters/create",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanPaidOffLettersCreatePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-paid-off-letters/:id",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanPaidOffLettersViewPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "/loan-paid-off-letters/:id/edit",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <LoanPaidOffLettersEditPage />
               </Suspense>
             ),
           },

@@ -15,7 +15,6 @@ import type { Role } from '../api/rolesApi'
 interface RoleFormProps {
   mode: 'create' | 'edit'
   initialData?: Role
-  roleId?: number
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -45,16 +44,16 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── RoleForm ─────────────────────────────────────────────────────────────────
 
-export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
+export function RoleForm({ mode, initialData }: RoleFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createRole = useCreateRole()
-  const updateRole = useUpdateRole(roleId ?? 0)
+  const updateRole = useUpdateRole(initialData?.id ?? 0)
 
   const isPending = createRole.isPending || updateRole.isPending
 
@@ -127,7 +126,13 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
   const nameError = activeLang === 'tk' ? errors[activeNameKey] : undefined
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('roles.createTitle', 'Rol dörediň')
+          : t('roles.editTitle', 'Rol üýtgetmek')}
+      </h1>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
 
       {/* Code */}
       <div className="grid grid-cols-[220px_1fr] items-start p-5 border-b border-border">
@@ -205,6 +210,7 @@ export function RoleForm({ mode, initialData, roleId }: RoleFormProps) {
           : t('roles.actions.save', 'Ýatda sakla')}
         className="px-5 py-4 border-t border-border bg-muted/20"
       />
+    </div>
     </div>
   )
 }

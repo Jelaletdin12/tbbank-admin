@@ -21,7 +21,6 @@ import {
 export interface CurrencyRateFormProps {
   mode:          'create' | 'edit'
   initialData?:  CurrencyRate
-  rateId?:       number
 }
 
 type FlatErrors = Partial<Record<keyof CurrencyRateFormData, string>>
@@ -37,16 +36,16 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── CurrencyRateForm ─────────────────────────────────────────────────────────
 
-export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateFormProps) {
+export function CurrencyRateForm({ mode, initialData }: CurrencyRateFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createMutation = useCreateCurrencyRate()
-  const updateMutation = useUpdateCurrencyRate(rateId ?? 0)
+  const updateMutation = useUpdateCurrencyRate(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -103,7 +102,7 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
       navigate('/resources/currency-rates')
     } else {
       await updateMutation.mutateAsync(payload)
-      navigate(`/resources/currency-rates/${rateId}`)
+      navigate(`/resources/currency-rates/${initialData!.id}`)
     }
   }
 
@@ -111,12 +110,18 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
     if (mode === 'create') {
       navigate('/resources/currency-rates')
     } else {
-      navigate(`/resources/currency-rates/${rateId}`)
+      navigate(`/resources/currency-rates/${initialData!.id}`)
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('currencyRates.createTitle', 'Walýuta kursy dörediň')
+          : t('currencyRates.editTitle', 'Walýuta kursy üýtgetmek')}
+      </h1>
+      <div className="space-y-6">
       {/* Currency From */}
       <div className="grid grid-cols-[220px_1fr] items-start py-4 px-6 border-b border-border">
         <label className="text-sm text-muted-foreground pt-1.5">
@@ -187,6 +192,7 @@ export function CurrencyRateForm({ mode, initialData, rateId }: CurrencyRateForm
           : t('currencyRates.actions.update', 'Ýatda sakla')}
         className="px-6 py-4 border-t border-border"
       />
+    </div>
     </div>
   )
 }

@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { ChevronLeft, ChevronRight, Loader2, Building2, MapPin, Clock } from 'lucide-react'
+import { Building2, MapPin, Clock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
-import { Button } from '@/components/ui/button'
+import { FormActions } from '@/components/formActions'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import { useCreateBranch, useUpdateBranch } from '@/features/branches/hooks/useBranches'
@@ -26,8 +26,6 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
   }
   return result
 }
-
-type FormErrors = FlatErrors
 
 type LangKey = 'tk' | 'ru' | 'en'
 
@@ -93,7 +91,7 @@ interface StepContentProps {
 
 function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContentProps) {
   const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FormErrors
+  const nameErrorKey = nameFieldKey as keyof FlatErrors
 
   return (
     <div className="flex flex-col gap-6">
@@ -165,7 +163,7 @@ function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContent
 
 function StepAddress({ form, errors, set, activeLang, setActiveLang }: StepContentProps) {
   const addrFieldKey = `address${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'addressTk' | 'addressRu' | 'addressEn'
-  const addrErrorKey = addrFieldKey as keyof FormErrors
+  const addrErrorKey = addrFieldKey as keyof FlatErrors
 
   return (
     <div className="flex flex-col gap-6">
@@ -249,7 +247,6 @@ function StepHours({ form, errors, set }: StepContentProps) {
 export interface BranchFormProps {
   mode: 'create' | 'edit'
   initialData?: Branch
-  branchId?: number
 }
 
 function mapInitial(data: Branch): Partial<BranchFormData> {
@@ -270,7 +267,7 @@ function mapInitial(data: Branch): Partial<BranchFormData> {
   }
 }
 
-export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
+export function BranchForm({ mode, initialData }: BranchFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
@@ -381,9 +378,9 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
 
     if (mode === 'create') {
       createMutation.mutate(payload, { onSuccess: () => navigate('/settings/location/branches') })
-    } else if (branchId !== undefined) {
+    } else if (initialData) {
       updateMutation.mutate(
-        { id: branchId, ...payload },
+        { id: initialData.id, ...payload },
         { onSuccess: () => navigate('/settings/location/branches') },
       )
     }
@@ -437,43 +434,18 @@ export function BranchForm({ mode, initialData, branchId }: BranchFormProps) {
           {currentStep === 2 && <StepHours {...stepProps} />}
         </div>
 
-        <div className="flex items-center justify-between px-5 py-3.5 border-t border-border bg-muted/30">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={currentStep === 0 ? () => navigate(-1) : handleBack}
-            disabled={isPending}
-          >
-            {currentStep === 0 ? (t('Cancel') || 'Ýatyr') : (
-              <span className="flex items-center gap-1.5">
-                <ChevronLeft className="w-3.5 h-3.5" />
-                {t('Back') || 'Yza'}
-              </span>
-            )}
-          </Button>
-
-          {isLastStep ? (
-            <Button type="button" size="sm" onClick={doSubmit} disabled={isPending} className="min-w-[150px]">
-              {isPending ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  {t('common.saving', 'Saklanýar...')}
-                </span>
-              ) : mode === 'create'
-                  ? (t('branches.actions.create', 'Şahamça döret'))
-                  : (t('branches.actions.update', 'Täzelemek'))
-              }
-            </Button>
-          ) : (
-            <Button type="button" size="sm" onClick={handleNext} disabled={isPending} className="min-w-[120px]">
-              <span className="flex items-center gap-1.5">
-                {t('Next') || 'Indiki'}
-                <ChevronRight className="w-3.5 h-3.5" />
-              </span>
-            </Button>
-          )}
-        </div>
+        <FormActions
+          isPending={isPending}
+          onCancel={currentStep === 0 ? () => navigate(-1) : undefined}
+          onPrev={currentStep > 0 ? handleBack : undefined}
+          onNext={!isLastStep ? handleNext : undefined}
+          showSubmit={isLastStep}
+          onSubmit={isLastStep ? doSubmit : undefined}
+          submitLabel={mode === 'create'
+            ? t('branches.actions.create', 'Şahamça döret')
+            : t('branches.actions.update', 'Täzelemek')}
+          className="px-5 py-3.5 border-t border-border bg-muted/30"
+        />
       </div>
     </div>
   )

@@ -1,29 +1,17 @@
 import { useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { PageSpinner } from "@/components/pageSpinner";
+import { PageError } from "@/components/pageError";
 import { LoanOrderForm } from "@/features/loanOrders/components/loanOrderForm";
 import { useLoanOrderById } from "@/features/loanOrders/hooks/useLoanOrders";
 
 export default function LoanOrderEditPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   const { data, isLoading, isError } = useLoanOrderById(id ?? "");
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin text-muted-foreground" size={32} />
-      </div>
-    );
-  }
+  if (isLoading) return <PageSpinner />;
+  if (isError || !data) return <PageError message={t('common.notFound', 'Maglumat ýüklenilmedi')} />;
 
-  if (isError || !data) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-sm text-destructive">
-          Maglumat ýüklenilmedi. Sahypany täzeleläň.
-        </p>
-      </div>
-    );
-  }
-
-  return <LoanOrderForm mode="edit" initialData={data} loanOrderId={id} />;
+  return <LoanOrderForm mode="edit" initialData={data} />;
 }

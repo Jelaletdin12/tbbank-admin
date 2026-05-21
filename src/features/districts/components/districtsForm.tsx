@@ -27,7 +27,6 @@ type FormErrors = FlatErrors
 export interface DistrictFormProps {
   mode: 'create' | 'edit'
   initialData?: District
-  districtId?: number
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -48,11 +47,11 @@ function mapInitial(data: District): DistrictFormData {
   }
 }
 
-export function DistrictForm({ mode, initialData, districtId }: DistrictFormProps) {
+export function DistrictForm({ mode, initialData }: DistrictFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
@@ -97,9 +96,9 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
       createMutation.mutate(payload, {
         onSuccess: () => navigate('/settings/location/districts'),
       })
-    } else if (districtId !== undefined) {
+    } else if (initialData) {
       updateMutation.mutate(
-        { id: districtId, ...payload },
+        { id: initialData.id, ...payload },
         { onSuccess: () => navigate('/settings/location/districts') },
       )
     }
@@ -112,7 +111,13 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
   const nameErrorKey = nameFieldKey as keyof FormErrors
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('districts.createTitle', 'Etrap dörediň')
+          : t('districts.editTitle', 'Etrap üýtgetmek')}
+      </h1>
+      <div>
       <div className="flex gap-3 justify-end mb-4">
         {LANG_TABS.map((tab) => (
           <button
@@ -178,6 +183,7 @@ export function DistrictForm({ mode, initialData, districtId }: DistrictFormProp
           : t('districts.actions.update', 'Täzelemek')}
         className="mt-6"
       />
+    </div>
     </div>
   )
 }

@@ -17,7 +17,6 @@ import type { AllUserFormData } from '../schemas/allUser.schema'
 interface UserFormProps {
   mode: 'create' | 'edit'
   initialData?: User
-  userId?: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -35,16 +34,16 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── UserForm ─────────────────────────────────────────────────────────────────
 
-export function UserForm({ mode, initialData, userId }: UserFormProps) {
+export function UserForm({ mode, initialData }: UserFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createUser = useCreateUser()
-  const updateUser = useUpdateUser(userId ?? 0)
+  const updateUser = useUpdateUser(initialData?.id ?? 0)
 
   const isPending = createUser.isPending || updateUser.isPending
 
@@ -103,12 +102,18 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
         phoneVerified: data.phoneVerified,
         isActive: data.isActive,
       })
-      navigate(`/users/${userId}`)
+      navigate(`/users/${initialData!.id}`)
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('users.createTitle', 'Ulanyjy dörediň')
+          : t('users.editTitle', 'Ulanyjy üýtgetmek')}
+      </h1>
+      <div className="space-y-6">
       {/* Form card */}
       <div className="bg-card border border-border rounded-xl divide-y divide-border">
 
@@ -277,6 +282,7 @@ export function UserForm({ mode, initialData, userId }: UserFormProps) {
           ? t('users.actions.create', 'Ulanyjy dörediň')
           : t('users.actions.save', 'Ýatda sakla')}
       />
+    </div>
     </div>
   )
 }

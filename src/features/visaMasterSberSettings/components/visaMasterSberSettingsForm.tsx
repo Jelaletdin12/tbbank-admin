@@ -23,7 +23,6 @@ import type { VisaMasterSettingFormData } from '../schemas/visaMasterSberSetting
 export interface VisaMasterSettingFormProps {
   mode:         'create' | 'edit'
   initialData?: VisaMasterSetting
-  settingId?:   number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,12 +53,11 @@ function flattenErrors(
 export function VisaMasterSettingForm({
   mode,
   initialData,
-  settingId,
 }: VisaMasterSettingFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
 
   const errMsg = (msg: string | undefined) =>
@@ -67,7 +65,7 @@ export function VisaMasterSettingForm({
   const navigate = useNavigate()
 
   const createMutation = useCreateVisaMasterSetting()
-  const updateMutation = useUpdateVisaMasterSetting(settingId ?? 0)
+  const updateMutation = useUpdateVisaMasterSetting(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -135,7 +133,13 @@ export function VisaMasterSettingForm({
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-0">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('visaMasterSettings.createTitle', 'Visa/Master, Sber sazlamalar dörediň')
+          : t('visaMasterSettings.editTitle', 'Visa/Master, Sber sazlamalar üýtgetmek')}
+      </h1>
+      <div className="space-y-0">
       {/* Kod */}
       <div className="grid grid-cols-[220px_1fr] items-start py-4 px-6 border-b border-border">
         <label className="text-sm text-muted-foreground pt-1.5">
@@ -195,6 +199,7 @@ export function VisaMasterSettingForm({
           : t('visaMasterSettings.actions.update', 'Ýatda sakla')}
         className="px-6 py-4 border-t border-border"
       />
+    </div>
     </div>
   )
 }

@@ -15,6 +15,7 @@ import type { LucideIcon } from "lucide-react";
 import { FormInput } from "@/components/formInput";
 import { FormActions } from "@/components/formActions";
 import { StepBarCards, type StepCardItem } from "@/components/stepBarV2";
+import { BentoGrid, BentoCard } from "@/components/bento";
 import {
   useCreateLoanOrderMobile,
   useUpdateLoanOrderMobile,
@@ -85,50 +86,6 @@ const YEAR_OPTIONS = Array.from({ length: 15 }, (_, i) => ({
   value: String(new Date().getFullYear() + i),
   label: String(new Date().getFullYear() + i),
 }));
-
-// ─── BentoGrid / BentoCard ────────────────────────────────────────────────────
-
-function BentoGrid({
-  cols = 2,
-  children,
-}: {
-  cols?: 1 | 2 | 3 | 4;
-  children: React.ReactNode;
-}) {
-  const colClass = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  }[cols];
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>;
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string;
-  span?: "full" | 2 | 3;
-  children: React.ReactNode;
-}) {
-  const spanClass =
-    span === "full" ? "sm:col-span-full" :
-    span === 2      ? "sm:col-span-2"    :
-    span === 3      ? "sm:col-span-3"    : "";
-
-  return (
-    <div className={`bg-card border border-border rounded-xl p-5 space-y-4 ${spanClass}`}>
-      {title && (
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          {title}
-        </p>
-      )}
-      {children}
-    </div>
-  );
-}
 
 // ─── Form errors helper ──────────────────────────────────────────────────────
 
@@ -506,12 +463,11 @@ function StepFiles({
 interface LoanOrderMobileFormProps {
   mode: "create" | "edit";
   initialData?: LoanOrderMobile;
-  loanOrderId?: string;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrderMobileFormProps) {
+export function LoanOrderMobileForm({ mode, initialData }: LoanOrderMobileFormProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
@@ -623,9 +579,9 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
 
     if (mode === "create") {
       createMutation.mutate(payload, { onSuccess: () => navigate("/loan-order-mobiles") });
-    } else {
+    } else if (initialData) {
       updateMutation.mutate(
-        { id: loanOrderId!, payload },
+        { id: initialData.id, payload },
         { onSuccess: () => navigate("/loan-order-mobiles") },
       );
     }
@@ -689,7 +645,7 @@ export function LoanOrderMobileForm({ mode, initialData, loanOrderId }: LoanOrde
         submitLabel={
           mode === "create"
             ? (t("loanOrderMobiles.createButton") || "Karz sargyt döredüň")
-            : (t("loanOrders.saveButton")         || "Ýatda sakla")
+            : (t("loanOrderMobiles.saveButton")         || "Ýatda sakla")
         }
         loadingLabel={t("Loading") || "Ýüklenilýär..."}
         cancelLabel={t("Cancel") || "Ýatyr"}

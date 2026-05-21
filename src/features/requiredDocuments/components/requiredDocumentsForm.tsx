@@ -36,7 +36,6 @@ type Locale = 'tk' | 'ru' | 'en'
 interface RequiredDocumentFormProps {
   mode: 'create' | 'edit'
   initialData?: LoanDocument
-  requiredDocumentId?: number
 }
 
 // ─── Lang tabs ────────────────────────────────────────────────────────────────
@@ -198,11 +197,11 @@ function flattenErrors(
 
 // ─── RequiredDocumentForm ─────────────────────────────────────────────────────────
 
-export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: RequiredDocumentFormProps) {
+export function RequiredDocumentForm({ mode, initialData }: RequiredDocumentFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
@@ -211,7 +210,7 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
   const [descLang, setDescLang] = useState<Locale>('tk')
 
   const createMutation = useCreateRequiredDocument()
-  const updateMutation = useUpdateRequiredDocument(requiredDocumentId ?? 0)
+  const updateMutation = useUpdateRequiredDocument(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -302,7 +301,13 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
       : t('loanDocuments.form.update', 'Karz gerekli resminamalary täzele')
 
   return (
-    <form onSubmit={handleSubmit} noValidate>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('loanDocuments.createTitle', 'Karz gerekli resminama dörediň')
+          : t('loanDocuments.editTitle', 'Karz gerekli resminama üýtgetmek')}
+      </h1>
+      <form onSubmit={handleSubmit} noValidate>
       <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
 
         {/* ── Name field ──────────────────────────────────────────────────── */}
@@ -361,5 +366,6 @@ export function RequiredDocumentForm({ mode, initialData, requiredDocumentId }: 
         className="mt-4"
       />
     </form>
+    </div>
   )
 }

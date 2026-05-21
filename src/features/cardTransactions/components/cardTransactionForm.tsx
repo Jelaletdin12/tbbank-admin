@@ -14,7 +14,6 @@ import type { CardTransactionFormData } from '../schemas/cardTransaction.schema'
 interface CardTransactionFormProps {
   mode: 'create' | 'edit'
   initialData?: CardTransaction
-  cardTransactionId?: number
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -55,7 +54,6 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 export function CardTransactionForm({
   mode,
   initialData,
-  cardTransactionId,
 }: CardTransactionFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -72,7 +70,7 @@ export function CardTransactionForm({
   const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
   const createMutation = useCreateCardTransaction()
-  const updateMutation = useUpdateCardTransaction(cardTransactionId ?? 0)
+  const updateMutation = useUpdateCardTransaction(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -99,7 +97,7 @@ export function CardTransactionForm({
       navigate('/card-transactions')
     } else {
       await updateMutation.mutateAsync(buildPayload(result.data))
-      navigate(`/card-transactions/${cardTransactionId}`)
+      navigate(`/card-transactions/${initialData!.id}`)
     }
   }
 
@@ -107,12 +105,18 @@ export function CardTransactionForm({
     if (mode === 'create') {
       navigate('/card-transactions')
     } else {
-      navigate(`/card-transactions/${cardTransactionId}`)
+      navigate(`/card-transactions/${initialData!.id}`)
     }
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('cardTransaction.createTitle', 'Kart herekedi dörediň')
+          : t('cardTransaction.editTitle', 'Kart herekedi üýtgetmek')}
+      </h1>
+      <div className="rounded-lg border border-border bg-card p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Passport Series */}
         <FormInput
@@ -186,6 +190,7 @@ export function CardTransactionForm({
           : t('Save changes', 'Üýtgetmeleri sakla')}
         className="mt-6"
       />
+    </div>
     </div>
   )
 }

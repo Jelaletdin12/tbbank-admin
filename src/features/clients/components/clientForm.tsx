@@ -16,7 +16,6 @@ import type { Client } from '../api/clientsApi'
 interface ClientFormProps {
   mode: 'create' | 'edit'
   initialData?: Client
-  clientId?: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -34,16 +33,16 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── ClientForm ───────────────────────────────────────────────────────────────
 
-export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
+export function ClientForm({ mode, initialData }: ClientFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createMutation = useCreateClient()
-  const updateMutation = useUpdateClient(clientId ?? 0)
+  const updateMutation = useUpdateClient(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -103,14 +102,20 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
         isActive: data.isActive,
         ...(data.password.trim() ? { password: data.password } : {}),
       }, {
-        onSuccess: () => navigate(`/clients/${clientId}`),
+        onSuccess: () => navigate(`/clients/${initialData!.id}`),
       })
     }
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('clients.createTitle', 'Müşderi dörediň')
+          : t('clients.editTitle', 'Müşderi üýtgetmek')}
+      </h1>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
       {/* Username */}
       <div className="grid grid-cols-[220px_1fr] items-start py-4 px-6 border-b border-border">
         <span className="text-sm text-muted-foreground pt-2">
@@ -226,6 +231,7 @@ export function ClientForm({ mode, initialData, clientId }: ClientFormProps) {
           : t('clients.updateBtn', 'Üýtgetmeleri sakla')}
         className="px-6 py-4 border-t border-border bg-muted/20"
       />
+    </div>
     </div>
   )
 }

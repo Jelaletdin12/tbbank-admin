@@ -1,46 +1,17 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { PageSpinner } from '@/components/pageSpinner'
+import { PageError } from '@/components/pageError'
 import { IntlPaymentForm } from '@/features/visaMasterPayments/components/intlPaymentForm'
-import { useIntlPayment, useUpdateIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
-import type { IntlPaymentUpdatePayload } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
-import { Spinner } from '@/components/ui/spinner'
+import { useIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
 
 export default function IntlPaymentEditPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
   const { t } = useTranslation()
+  const { data, isLoading, isError } = useIntlPayment(id ?? '')
 
-  const { data, isLoading, isError } = useIntlPayment(id!)
-  const { mutate: updatePayment, isPending } = useUpdateIntlPayment(id!)
+  if (isLoading) return <PageSpinner />
+  if (isError || !data) return <PageError message={t('common.notFound', 'Maglumat tapylmady')} />
 
-  const handleSubmit = (payload: IntlPaymentUpdatePayload) => {
-    updatePayment(payload, {
-      onSuccess: () => navigate(`/intl-payments/visa-master/${id}`),
-    })
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="size-8 text-primary" />
-      </div>
-    )
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground">
-        {t('common.notFound', 'Maglumat tapylmady')}
-      </div>
-    )
-  }
-
-  return (
-    <IntlPaymentForm
-      mode="edit"
-      initialData={data}
-      onSubmit={handleSubmit}
-      isSubmitting={isPending}
-    />
-  )
+  return <IntlPaymentForm mode="edit" initialData={data} />
 }

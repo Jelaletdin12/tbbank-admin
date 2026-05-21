@@ -1,14 +1,15 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { User, MapPin, IdCard, CreditCard, Files } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
-import type { StepStatus } from '@/components/stepBar'
+import { BentoGrid, BentoCard } from '@/components/bento'
 import {
   useCreateSberPayment,
   useUpdateSberPayment,
@@ -32,7 +33,6 @@ import {
 interface SberPaymentFormProps {
   mode: 'create' | 'edit'
   initialData?: SberPaymentOrder | null
-  orderId?: string
 }
 
 type FlatErrors = Partial<Record<keyof SberPaymentFormData, string>>
@@ -78,42 +78,6 @@ const SENT_DOCS = (t: (key: string, fallback?: string) => string): { key: SentDo
   { key: 'snt_new_passport_series', label: t('sberPayments.documents.sentNewPassportSeries', 'Ugradyjy/kabul ediji täze (2015+) pasport seriýasy maglumaty') },
   { key: 'snt_old_passport_series', label: t('sberPayments.documents.sentOldPassportSeries', 'Ugradyjy/kabul ediji köne pasport seriýasy baradaky güwänamasy') },
 ]
-
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2; children: React.ReactNode }) {
-  return (
-    <div className={`grid gap-4 ${cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-      {children}
-    </div>
-  )
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: 'full'
-  children: React.ReactNode
-}) {
-  return (
-    <div
-      className={`bg-card border border-border rounded-xl p-5 space-y-4${
-        span === 'full' ? ' sm:col-span-2' : ''
-      }`}
-    >
-      {title && (
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          {title}
-        </p>
-      )}
-      {children}
-    </div>
-  )
-}
 
 // ─── Step panels ──────────────────────────────────────────────────────────────
 
@@ -351,7 +315,7 @@ function StepDocs({
               key={key}
               type="file"
               label={label}
-              onFileChange={(f) => set(key, f)}
+              onFileChange={(f) => set(key, f as SberPaymentFormData[typeof key])}
               fileValue={form[key] as File | null}
               accept="image/*,.pdf"
             />
@@ -366,7 +330,7 @@ function StepDocs({
               key={key}
               type="file"
               label={label}
-              onFileChange={(f) => set(key, f)}
+              onFileChange={(f) => set(key, f as SberPaymentFormData[typeof key])}
               fileValue={form[key] as File | null}
               accept="image/*,.pdf"
             />
@@ -379,14 +343,22 @@ function StepDocs({
 
 // ─── Step definitions ─────────────────────────────────────────────────────────
 
-type StepId = 'general' | 'location' | 'personal' | 'payment' | 'docs'
+interface StepDef {
+  id: string
+  titleKey: string
+  titleFallback: string
+  subtitleKey: string
+  subtitleFallback: string
+  icon: LucideIcon
+  validate: (form: SberPaymentFormData, mode: 'create' | 'edit', t: (key: string, fallback?: string) => string) => FlatErrors
+}
 
-const getSteps = (t: (key: string, fallback?: string) => string): { id: StepId; title: string; subtitle: string }[] => [
-  { id: 'general',  title: t('sberPayments.steps.general.title', 'Esasy'),        subtitle: t('sberPayments.steps.general.subtitle', 'Status, müşderi')   },
-  { id: 'location', title: t('sberPayments.steps.location.title', 'Lokasiýa'),     subtitle: t('sberPayments.steps.location.subtitle', 'Welaýat, şahamça') },
-  { id: 'personal', title: t('sberPayments.steps.personal.title', 'Şahsy'),        subtitle: t('sberPayments.steps.personal.subtitle', 'Pasport, kontakt') },
-  { id: 'payment',  title: t('sberPayments.steps.payment.title', 'Töleg'),        subtitle: t('sberPayments.steps.payment.subtitle', 'Hasap, ugradyjy')  },
-  { id: 'docs',     title: t('sberPayments.steps.docs.title', 'Resminamalar'), subtitle: t('sberPayments.steps.docs.subtitle', '14 resminama')     },
+const STEPS: StepDef[] = [
+  { id: 'general',  titleKey: 'sberPayments.steps.general.title',  titleFallback: 'Esasy',      subtitleKey: 'sberPayments.steps.general.subtitle',  subtitleFallback: 'Status, müşderi',   icon: User,     validate: (f, m, t) => validateStep(0, f, m, t) },
+  { id: 'location', titleKey: 'sberPayments.steps.location.title',  titleFallback: 'Lokasiýa',   subtitleKey: 'sberPayments.steps.location.subtitle', subtitleFallback: 'Welaýat, şahamça',  icon: MapPin, validate: (f, m, t) => validateStep(1, f, m, t) },
+  { id: 'personal', titleKey: 'sberPayments.steps.personal.title', titleFallback: 'Şahsy',      subtitleKey: 'sberPayments.steps.personal.subtitle', subtitleFallback: 'Pasport, kontakt',  icon: IdCard, validate: (f, m, t) => validateStep(2, f, m, t) },
+  { id: 'payment',  titleKey: 'sberPayments.steps.payment.title',  titleFallback: 'Töleg',      subtitleKey: 'sberPayments.steps.payment.subtitle',  subtitleFallback: 'Hasap, ugradyjy',   icon: CreditCard, validate: (f, m, t) => validateStep(3, f, m, t) },
+  { id: 'docs',     titleKey: 'sberPayments.steps.docs.title',     titleFallback: 'Resminamalar', subtitleKey: 'sberPayments.steps.docs.subtitle',    subtitleFallback: '14 resminama',     icon: Files, validate: () => ({}) },
 ]
 
 // ─── Initial data mapper ──────────────────────────────────────────────────────
@@ -411,7 +383,7 @@ function mapInitialData(data: SberPaymentOrder): Partial<SberPaymentFormData> {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormProps) {
+export function SberPaymentForm({ mode, initialData }: SberPaymentFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
@@ -420,10 +392,10 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   const navigate = useNavigate()
   const createMutation = useCreateSberPayment()
   const updateMutation = useUpdateSberPayment()
-  const isLoading = createMutation.isPending || updateMutation.isPending
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
-    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors,
+    watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
   } = useForm<SberPaymentFormData>({
     defaultValues: mode === 'edit' && initialData
       ? { ...DEFAULT_FORM_VALUES, ...mapInitialData(initialData) }
@@ -431,125 +403,124 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
   })
 
   const form = watch()
-  const [validationErrors, setValidationErrors] = useState<FlatErrors>({})
-
-  const rhfFlat = useMemo(
-    () => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>),
-    [rhfErrors],
-  )
-  const errors = useMemo(
-    () => ({ ...rhfFlat, ...validationErrors }),
-    [rhfFlat, validationErrors],
-  )
-
-  const steps = useMemo(() => getSteps(t), [i18n.language])
-
   const [currentStep, setCurrentStep] = useState(0)
-  const [stepStatuses, setStepStatuses] = useState<StepStatus[]>(
-    () => mode === 'edit'
-      ? steps.map((_, i) => (i === 0 ? 'active' : i < 4 ? 'done' : 'idle'))
-      : steps.map((_, i) => (i === 0 ? 'active' : 'idle')),
+  const [visited, setVisited] = useState<Set<number>>(
+    () => mode === 'edit' ? new Set(STEPS.map((_, i) => i)) : new Set<number>(),
   )
+  const [submittedSteps, setSubmittedSteps] = useState<Set<number>>(new Set())
 
-  // ── Field setter ──
-  const set = <K extends keyof SberPaymentFormData>(key: K, value: SberPaymentFormData[K]) => {
+  const stepsWithErrors = useMemo(() => {
+    const out = new Set<number>()
+    visited.forEach((i) => {
+      if (Object.keys(STEPS[i].validate(form, mode, t)).length > 0) out.add(i)
+    })
+    return out
+  }, [form, mode, visited, i18n.language, t])
+
+  const set = useCallback(<K extends keyof SberPaymentFormData>(key: K, value: SberPaymentFormData[K]) => {
     (setValue as (name: K, val: SberPaymentFormData[K]) => void)(key, value)
     clearErrors(key)
-    setValidationErrors((prev) => {
-      const next = { ...prev }
-      delete next[key]
-      return next
-    })
-  }
+  }, [setValue, clearErrors])
 
-  // ── Step validation ──
-  const doValidateAll = (): FlatErrors => {
-    const errs: FlatErrors = {}
-    for (let i = 0; i <= 3; i++) {
-      Object.assign(errs, validateStep(i, form, mode, t))
+  const allSubmittedErrors = useMemo(() => {
+    const result: FlatErrors = {}
+    for (const stepIdx of submittedSteps) {
+      Object.assign(result, STEPS[stepIdx].validate(form, mode, t))
     }
-    setValidationErrors(errs)
-    return errs
-  }
+    return result
+  }, [form, mode, submittedSteps, i18n.language, t])
 
-  // ── Re-validate on language change ──
-  useEffect(() => {
-    const hasErrors = Object.keys(validationErrors).length > 0 || Object.keys(rhfErrors).length > 0
-    if (hasErrors) {
-      doValidateAll()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language])
+  const errors = useMemo(() => {
+    const fromRHF = flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>)
+    return { ...fromRHF, ...allSubmittedErrors }
+  }, [rhfErrors, allSubmittedErrors])
 
-  // ── Navigation ──
-  const goStep = (idx: number) => {
-    if (idx < 0 || idx >= steps.length) return
-    setStepStatuses((prev) => {
-      const next = [...prev]
-      if (idx > currentStep) next[currentStep] = 'done'
-      next[idx] = 'active'
-      if (idx < currentStep) {
-        for (let i = idx + 1; i <= currentStep; i++) {
-          if (next[i] !== 'done') next[i] = 'idle'
-        }
-      }
-      return next
-    })
-    clearErrors()
-    setValidationErrors({})
-    setCurrentStep(idx)
-  }
+  // ── Navigation ──────────────────────────────────────────────────────────────
+
+  const markVisited = (i: number) =>
+    setVisited((prev) => new Set([...prev, i]))
+
+  const markSubmitted = (i: number) =>
+    setSubmittedSteps((prev) => new Set([...prev, i]))
 
   const handleNext = () => {
-    const stepErrors = validateStep(currentStep, form, mode, t)
-    if (Object.keys(stepErrors).length > 0) {
-      setValidationErrors(stepErrors)
-      setStepStatuses((prev) => {
-        const next = [...prev]; next[currentStep] = 'error'; return next
+    markVisited(currentStep)
+    markSubmitted(currentStep)
+    const errs = STEPS[currentStep].validate(form, mode, t)
+    if (Object.keys(errs).length > 0) {
+      Object.entries(errs).forEach(([key, msg]) => {
+        setError(key as keyof SberPaymentFormData, { type: 'manual', message: msg })
       })
+      toast.error(t('common.errors.fillRequiredCorrectly', 'Dogry maglumat girizmegiňizi haýyş edýäris.'))
       return
     }
-    setValidationErrors({})
-    if (currentStep === steps.length - 1) {
-      handleSubmit()
-    } else {
-      goStep(currentStep + 1)
+    if (currentStep < STEPS.length - 1) {
+      setCurrentStep(currentStep + 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }
 
-  // ── Submit ──
-  const handleSubmit = async () => {
-    const allErrors = doValidateAll()
+  const handleBack = () => {
+    if (currentStep > 0) {
+      markVisited(currentStep)
+      setCurrentStep(currentStep - 1)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  const handleGoTo = (i: number) => {
+    markVisited(currentStep)
+    setCurrentStep(i)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
+  const doSubmit = () => {
+    setVisited(new Set(STEPS.map((_, i) => i)))
+    setSubmittedSteps(new Set(STEPS.map((_, i) => i)))
+
+    const allErrors: FlatErrors = {}
+    for (const step of STEPS) Object.assign(allErrors, step.validate(form, mode, t))
+
     if (Object.keys(allErrors).length > 0) {
-      toast.error(t('common.errors.requiredFieldsMissing', 'Meýdanlary dolduryň'))
+      Object.entries(allErrors).forEach(([key, msg]) => {
+        setError(key as keyof SberPaymentFormData, { type: 'manual', message: msg })
+      })
+      toast.error(t('common.errors.requiredFieldsMissing', 'Käbir hökmany meýdanlar doldurylan däldir.'))
+      for (let i = 0; i < STEPS.length; i++) {
+        if (Object.keys(STEPS[i].validate(form, mode, t)).length > 0) {
+          setCurrentStep(i); break
+        }
+      }
       return
     }
+
     const payload = buildPayload(getValues())
+
     if (mode === 'create') {
-      await createMutation.mutateAsync(payload)
-      toast.success(t('sberPayments.toast.created', 'Töleg üstünlikli döredildi'))
-      navigate('/sber-payments')
-    } else if (orderId) {
-      await updateMutation.mutateAsync({ ...payload, id: orderId })
-      toast.success(t('sberPayments.toast.updated', 'Töleg üstünlikli täzelendi'))
-      navigate(`/sber-payments/${orderId}`)
+      createMutation.mutate(payload, { onSuccess: () => navigate('/sber-payments') })
+    } else if (initialData) {
+      updateMutation.mutate({ ...payload, id: initialData.id }, { onSuccess: () => navigate('/sber-payments') })
     }
   }
 
   // ── StepBarCards data ──
-  const stepCardItems: StepCardItem[] = steps.map((s, i) => ({
-    id:       s.id,
-    title:    s.title,
-    subtitle: s.subtitle,
-    status:   stepStatuses[i],
-    icon:     ([User, MapPin, IdCard, CreditCard, Files] as const)[i],
-  }))
 
-  const isLastStep = currentStep === steps.length - 1
+  const stepBarItems: StepCardItem[] = STEPS.map((s, i) => {
+    const isActive  = i === currentStep
+    const hasErrors = stepsWithErrors.has(i)
+    const isDone    = visited.has(i) && !hasErrors
+    return {
+      id:       s.id,
+      title:    t(s.titleKey) || s.titleFallback,
+      subtitle: t(s.subtitleKey) || s.subtitleFallback,
+      icon:     s.icon,
+      status: isActive ? 'active' : hasErrors ? 'error' : isDone ? 'done' : 'idle',
+    }
+  })
 
-  const submitLabel = mode === 'create'
-    ? t('sberPayments.buttons.create', 'Sber töleg (talyplar üçin) dörediň')
-    : t('sberPayments.buttons.update', 'Ýatda sakla')
+  const isLastStep = currentStep === STEPS.length - 1
 
   return (
     <div className="mx-auto space-y-6 pb-8">
@@ -559,32 +530,31 @@ export function SberPaymentForm({ mode, initialData, orderId }: SberPaymentFormP
           : t('sberPayments.formTitle.edit', 'Sber töleg redaktirläň')}
       </h1>
 
-      {/* ── Step bar ──────────────────────────────────────────────────────── */}
+      {/* Step bar */}
       <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
-        <StepBarCards
-          steps={stepCardItems}
-          onGoTo={(i) => {
-            if (stepStatuses[i] !== 'idle') goStep(i)
-          }}
-        />
+        <StepBarCards steps={stepBarItems} onGoTo={handleGoTo} />
       </div>
 
-      {/* ── Step content ─────────────────────────────────────────────────── */}
-      {steps[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} t={t} />}
-      {steps[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} t={t} />}
-      {steps[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} t={t} />}
-      {steps[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} t={t} />}
-      {steps[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} t={t} />}
+      {/* Step content */}
+      {STEPS[currentStep].id === 'general'  && <StepGeneral  form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'location' && <StepLocation form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'personal' && <StepPersonal form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'payment'  && <StepPayment  form={form} errors={errors} set={set} t={t} />}
+      {STEPS[currentStep].id === 'docs'     && <StepDocs     form={form} set={set} t={t} />}
 
-      {/* ── Actions ───────────────────────────────────────────────────────── */}
+      {/* Actions */}
       <FormActions
-        isPending={isLoading}
+        isPending={isPending}
         onCancel={() => navigate('/sber-payments')}
-        onPrev={currentStep > 0 ? () => goStep(currentStep - 1) : undefined}
+        onPrev={currentStep > 0 ? handleBack : undefined}
         onNext={!isLastStep ? handleNext : undefined}
         showSubmit={isLastStep}
-        onSubmit={isLastStep ? handleNext : undefined}
-        submitLabel={submitLabel}
+        onSubmit={isLastStep ? doSubmit : undefined}
+        submitLabel={
+          mode === 'create'
+            ? t('sberPayments.buttons.create', 'Sber töleg (talyplar üçin) dörediň')
+            : t('sberPayments.buttons.update', 'Ýatda sakla')
+        }
         loadingLabel={t('sberPayments.buttons.loading', 'Ýüklenýär...')}
       />
     </div>

@@ -9,31 +9,31 @@ import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 
 import {
-  useCreateLoanRemaining,
-  useUpdateLoanRemaining,
-} from '../hooks/useLoanRemaining'
-import type { LoanRemaining } from '../api/loanRemainingApi'
+  useCreateLoanPaidOffLetter,
+  useUpdateLoanPaidOffLetter,
+} from '../hooks/useLoanPaidOffLetters'
+import type { LoanPaidOffLetter } from '../api/loanPaidOffLettersApi'
 import {
-  loanRemainingFormSchema,
-  type LoanRemainingFormData,
+  loanPaidOffLetterFormSchema,
+  type LoanPaidOffLetterFormData,
   DEFAULT_FORM_VALUES,
   buildPayload,
-} from '../schemas/loanRemaining.schema'
+} from '../schemas/loanPaidOffLetter.schema'
 
-interface LoanRemainingFormProps {
+interface LoanPaidOffLetterFormProps {
   mode: 'create' | 'edit'
-  initialData?: LoanRemaining
+  initialData?: LoanPaidOffLetter
 }
 
-export function LoanRemainingForm({
+export function LoanPaidOffLetterForm({
   mode,
   initialData,
-}: LoanRemainingFormProps) {
+}: LoanPaidOffLetterFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const createMutation = useCreateLoanRemaining()
-  const updateMutation = useUpdateLoanRemaining(initialData?.id ?? 0)
+  const createMutation = useCreateLoanPaidOffLetter()
+  const updateMutation = useUpdateLoanPaidOffLetter(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -43,8 +43,8 @@ export function LoanRemainingForm({
     setValue,
     reset,
     formState: { errors },
-  } = useForm<LoanRemainingFormData>({
-    resolver: zodResolver(loanRemainingFormSchema),
+  } = useForm<LoanPaidOffLetterFormData>({
+    resolver: zodResolver(loanPaidOffLetterFormSchema),
     defaultValues: DEFAULT_FORM_VALUES,
     mode: 'onSubmit',
   })
@@ -55,25 +55,26 @@ export function LoanRemainingForm({
         passportSeries: initialData.passportSeries,
         passportNumber: initialData.passportNumber,
         loanAccount: initialData.loanAccount,
+        issuedAt: initialData.issuedAt,
       })
     }
   }, [mode, initialData, reset])
 
-  const onSubmit = (data: LoanRemainingFormData) => {
+  const onSubmit = (data: LoanPaidOffLetterFormData) => {
     const payload = buildPayload(data)
 
     if (mode === 'create') {
       createMutation.mutate(payload, {
         onSuccess: () => {
           toast.success(t('common.success.create', 'Üstünlikli döredildi'))
-          navigate('/loan-remaining')
+          navigate('/loan-paid-off-letters')
         },
       })
     } else {
       updateMutation.mutate(payload, {
         onSuccess: () => {
           toast.success(t('common.success.save', 'Üstünlikli ýatda saklandy'))
-          navigate('/loan-remaining')
+          navigate('/loan-paid-off-letters')
         },
       })
     }
@@ -90,23 +91,23 @@ export function LoanRemainingForm({
     <div className="flex flex-col gap-5">
       <h1 className="text-xl font-semibold text-foreground">
         {mode === 'create'
-          ? t('loanRemaining.createTitle', 'Karzyň galyndysy dörediň')
-          : t('loanRemaining.editTitle', 'Karzyň galyndysy üýtgetmek')}
+          ? t('loanPaidOffLetters.createTitle', 'Karzyň ýapylandygy barada güwanama almak dörediň')
+          : t('loanPaidOffLetters.editTitle', 'Karzyň ýapylandygy barada güwanama almak üýtgetmek')}
       </h1>
       <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6">
       <div className="bg-card border border-border rounded-xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput
-            label={t('loanRemaining.columns.passportSeries', 'Pasport seriýasy')}
+            label={t('loanPaidOffLetters.columns.passportSeries', 'Pasport seriýasy')}
             required
             value={watch('passportSeries')}
             onChange={(v) => setValue('passportSeries', v)}
-            placeholder={t('loanRemaining.placeholders.passportSeries', 'TM')}
+            placeholder={t('loanPaidOffLetters.placeholders.passportSeries', 'TM')}
             error={errMsg(errors.passportSeries?.message)}
           />
 
           <FormInput
-            label={t('loanRemaining.columns.passportNumber', 'Pasport belgisi')}
+            label={t('loanPaidOffLetters.columns.passportNumber', 'Pasport belgisi')}
             required
             value={watch('passportNumber')}
             onChange={(v) => setValue('passportNumber', v)}
@@ -114,23 +115,30 @@ export function LoanRemainingForm({
             error={errMsg(errors.passportNumber?.message)}
           />
 
-          <div className="md:col-span-2">
-            <FormInput
-              label={t('loanRemaining.columns.loanAccount', 'Karz hasaby')}
-              required
-              value={watch('loanAccount')}
-              onChange={(v) => setValue('loanAccount', v)}
-              placeholder="NOVA-..."
-              error={errMsg(errors.loanAccount?.message)}
-            />
-          </div>
+          <FormInput
+            label={t('loanPaidOffLetters.columns.loanAccount', 'Karz hasaby')}
+            required
+            value={watch('loanAccount')}
+            onChange={(v) => setValue('loanAccount', v)}
+            placeholder="LOAN-..."
+            error={errMsg(errors.loanAccount?.message)}
+          />
+
+          <FormInput
+            label={t('loanPaidOffLetters.columns.issuedAt', 'Berlen wagty')}
+            required
+            type="date"
+            value={watch('issuedAt')}
+            onChange={(v) => setValue('issuedAt', v)}
+            error={errMsg(errors.issuedAt?.message)}
+          />
         </div>
       </div>
 
       <FormActions
         isPending={isPending}
         onSubmit={handleSubmit(onSubmit, onError)}
-        onCancel={() => navigate('/loan-remaining')}
+        onCancel={() => navigate('/loan-paid-off-letters')}
         submitLabel={mode === 'create'
           ? t('common.create', 'Döret')
           : t('common.save', 'Ýatda sakla')}

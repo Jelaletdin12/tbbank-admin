@@ -19,7 +19,6 @@ type FormMode = 'create' | 'edit'
 interface LoanTypeFormProps {
   mode: FormMode
   initialData?: LoanType
-  loanTypeId?: number
 }
 
 type FlatErrors = Partial<Record<keyof LoanTypeFormData, string>>
@@ -59,16 +58,16 @@ const LANG_TABS: { key: Lang; label: string }[] = [
 
 // ─── LoanTypeForm ─────────────────────────────────────────────────────────────
 
-export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProps) {
+export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createMutation = useCreateLoanType()
-  const updateMutation = useUpdateLoanType(loanTypeId ?? 0)
+  const updateMutation = useUpdateLoanType(initialData?.id ?? 0)
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
@@ -122,7 +121,7 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
       navigate(`/resources/loan-types/${result.id}`)
     } else {
       await updateMutation.mutateAsync(payload)
-      navigate(`/resources/loan-types/${loanTypeId}`)
+      navigate(`/resources/loan-types/${initialData!.id}`)
     }
   }
 
@@ -144,7 +143,13 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-0">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('loanTypes.createTitle', 'Karz görnüşi dörediň')
+          : t('loanTypes.editTitle', 'Karz görnüşi üýtgetmek')}
+      </h1>
+      <div className="space-y-0">
       {/* Language tabs row */}
       <div className="flex items-center justify-end gap-1 mb-0 pb-0">
         {LANG_TABS.map((tab) => (
@@ -253,6 +258,7 @@ export function LoanTypeForm({ mode, initialData, loanTypeId }: LoanTypeFormProp
           : t('loanTypes.actions.save', 'Ýatda sakla')}
         className="pt-4"
       />
+    </div>
     </div>
   )
 }

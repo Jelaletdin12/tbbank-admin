@@ -15,7 +15,6 @@ import type { Permission } from '../api/permissionsApi'
 interface PermissionFormProps {
   mode: 'create' | 'edit'
   initialData?: Permission
-  permissionId?: number
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -45,16 +44,16 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── PermissionForm ───────────────────────────────────────────────────────────
 
-export function PermissionForm({ mode, initialData, permissionId }: PermissionFormProps) {
+export function PermissionForm({ mode, initialData }: PermissionFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
   const createPermission = useCreatePermission()
-  const updatePermission = useUpdatePermission(permissionId ?? 0)
+  const updatePermission = useUpdatePermission(initialData?.id ?? 0)
 
   const isPending = createPermission.isPending || updatePermission.isPending
 
@@ -127,7 +126,13 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
   const nameError = errors[activeNameKey]
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('permissions.createTitle', 'Rugsat dörediň')
+          : t('permissions.editTitle', 'Rugsat üýtgetmek')}
+      </h1>
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
 
       {/* Code */}
       <div className="grid grid-cols-[220px_1fr] items-start p-5 border-b border-border">
@@ -204,6 +209,7 @@ export function PermissionForm({ mode, initialData, permissionId }: PermissionFo
           : t('permissions.actions.save', 'Ýatda sakla')}
         className="px-5 py-4 border-t border-border bg-muted/20"
       />
+    </div>
     </div>
   )
 }

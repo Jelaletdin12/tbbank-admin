@@ -16,7 +16,6 @@ import type { CardTypeFormData } from '../schemas/cardType.schema'
 export interface CardTypeFormProps {
   mode: 'create' | 'edit'
   initialData?: CardType
-  cardTypeId?: number
 }
 
 type LangKey = 'tk' | 'ru' | 'en'
@@ -53,11 +52,11 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
 
 // ─── CardTypeForm ─────────────────────────────────────────────────────────────
 
-export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProps) {
+export function CardTypeForm({ mode, initialData }: CardTypeFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
@@ -114,13 +113,13 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
       createMutation.mutate(payload, {
         onSuccess: () => navigate('/settings/card/card-types'),
       })
-    } else if (cardTypeId !== undefined) {
+    } else if (initialData) {
       updateMutation.mutate(
-        { id: cardTypeId, ...payload },
+        { id: initialData.id, ...payload },
         { onSuccess: () => navigate('/settings/card/card-types') },
       )
     }
-  }, [mode, cardTypeId, createMutation, updateMutation, navigate, trigger, getValues])
+  }, [mode, initialData, createMutation, updateMutation, navigate, trigger, getValues])
 
   const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as
     | 'nameTk'
@@ -129,7 +128,13 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
   const nameErrorKey = nameFieldKey as keyof FlatErrors
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('cardTypes.createTitle', 'Kart görnüşi dörediň')
+          : t('cardTypes.editTitle', 'Kart görnüşi üýtgetmek')}
+      </h1>
+      <div>
       {/* Language tabs */}
       <div className="flex gap-3 justify-end mb-4">
         {LANG_TABS.map((tab) => (
@@ -214,6 +219,7 @@ export function CardTypeForm({ mode, initialData, cardTypeId }: CardTypeFormProp
           : t('cardTypes.actions.update', 'Täzelemek')}
         className="mt-6"
       />
+    </div>
     </div>
   )
 }

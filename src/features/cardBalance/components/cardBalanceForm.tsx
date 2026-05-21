@@ -12,7 +12,6 @@ import type { CardBalanceFormData } from '@/features/cardBalance/schemas/cardBal
 interface CardBalanceFormProps {
   mode: 'create' | 'edit'
   initialData?: CardBalance
-  cardBalanceId?: number
 }
 
 type FlatErrors = Partial<Record<keyof CardBalanceFormData, string>>
@@ -56,12 +55,12 @@ const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanceFormProps) {
+export function CardBalanceForm({ mode, initialData }: CardBalanceFormProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
   const createMutation = useCreateCardBalance()
-  const updateMutation = useUpdateCardBalance(cardBalanceId ?? 0)
+  const updateMutation = useUpdateCardBalance(initialData?.id ?? 0)
   const isPending      = createMutation.isPending || updateMutation.isPending
 
   const {
@@ -96,17 +95,23 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
       navigate('/card-balances')
     } else {
       await updateMutation.mutateAsync(payload)
-      navigate(`/card-balances/${cardBalanceId}`)
+      navigate(`/card-balances/${initialData!.id}`)
     }
   }
 
   const handleCancel = () => {
     if (mode === 'create') navigate('/card-balances')
-    else navigate(`/card-balances/${cardBalanceId}`)
+    else navigate(`/card-balances/${initialData!.id}`)
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-6">
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('cardBalance.createTitle', 'Kart galyndysy dörediň')
+          : t('cardBalance.editTitle', 'Kart galyndysy üýtgetmek')}
+      </h1>
+      <div className="rounded-lg border border-border bg-card p-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Row 1 */}
         <FormInput
@@ -176,6 +181,7 @@ export function CardBalanceForm({ mode, initialData, cardBalanceId }: CardBalanc
           : t('Save changes', 'Üýtgetmeleri sakla')}
         className="mt-6"
       />
+    </div>
     </div>
   )
 }

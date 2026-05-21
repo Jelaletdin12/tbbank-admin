@@ -10,6 +10,7 @@ import type { LucideIcon } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
+import { BentoGrid, BentoCard } from '@/components/bento'
 import type { CardRequisite } from '../api/cardRequisitesApi'
 import { useCreateCardRequisite, useUpdateCardRequisite } from '../hooks/useCardRequisites'
 import { validateStep, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardRequisite.schema'
@@ -20,7 +21,6 @@ import type { CardRequisiteFormData } from '../schemas/cardRequisite.schema'
 interface CardRequisiteFormProps {
   mode: 'create' | 'edit'
   initialData?: CardRequisite
-  cardRequisiteId?: string
 }
 
 type FlatErrors = Partial<Record<keyof CardRequisiteFormData, string>>
@@ -149,50 +149,6 @@ const STEPS: StepDef[] = [
     validate: (form, mode) => validateStep(2, form, mode),
   },
 ]
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({
-  cols = 2,
-  children,
-}: {
-  cols?: 1 | 2 | 3 | 4
-  children: React.ReactNode
-}) {
-  const colClass = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: 'full' | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === 'full' ? 'sm:col-span-full' :
-    span === 2      ? 'sm:col-span-2'    :
-    span === 3      ? 'sm:col-span-3'    : ''
-
-  return (
-    <div className={`bg-card border border-border rounded-xl p-5 space-y-4 ${spanClass}`}>
-      {title && (
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          {title}
-        </p>
-      )}
-      {children}
-    </div>
-  )
-}
 
 // ─── Shared step content props ────────────────────────────────────────────────
 
@@ -471,16 +427,12 @@ function StepPassport({ form, errors, set, t, mode, initialData }: StepContentPr
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function CardRequisiteForm({
-  mode,
-  initialData,
-  cardRequisiteId,
-}: CardRequisiteFormProps) {
+export function CardRequisiteForm({ mode, initialData }: CardRequisiteFormProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
   const createMutation = useCreateCardRequisite()
-  const updateMutation = useUpdateCardRequisite(cardRequisiteId ?? '')
+  const updateMutation = useUpdateCardRequisite(initialData?.id ?? '')
   const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
@@ -564,7 +516,7 @@ export function CardRequisiteForm({
 
   const handleCancel = () => {
     if (mode === 'create') navigate('/card-requisites')
-    else navigate(`/card-requisites/${cardRequisiteId}`)
+    else navigate(`/card-requisites/${initialData?.id}`)
   }
 
   // ── Submit ─────────────────────────────────────────────────────────────────
@@ -597,7 +549,7 @@ export function CardRequisiteForm({
       navigate('/card-requisites')
     } else {
       await updateMutation.mutateAsync(payload)
-      navigate(`/card-requisites/${cardRequisiteId}`)
+      navigate(`/card-requisites/${initialData?.id}`)
     }
   }
 
@@ -622,7 +574,17 @@ export function CardRequisiteForm({
 
   return (
     <div className="flex flex-col gap-5">
- 
+      {/* Page header */}
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">
+          {mode === 'create'
+            ? t('Create card requisite order', 'Kart rekwiziti üçin sargyt dörediň')
+            : t('Edit card requisite', 'Kart rekwizitini üýtget')}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t('common.form.subtitle', 'Ähli meýdanlary dolduryp, ädim-ädim öň geçiň.')}
+        </p>
+      </div>
 
       {/* Step bar */}
       <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">

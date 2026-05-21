@@ -41,7 +41,6 @@ const LANG_TABS: { key: LangKey; label: string }[] = [
 interface CardReasonFormProps {
   mode: 'create' | 'edit'
   initialData?: CardReason
-  CardReasonId?: number
 }
 
 function mapInitial(data: CardReason): CardReasonFormData {
@@ -55,11 +54,11 @@ function mapInitial(data: CardReason): CardReasonFormData {
   }
 }
 
-export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFormProps) {
+export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
   const { t: _t, i18n } = useTranslation()
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
-    [_t],
+    [_t, i18n.language],
   )
   const navigate = useNavigate()
 
@@ -104,9 +103,9 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
       createMutation.mutate(payload, {
         onSuccess: () => navigate('/resources/card-states'),
       })
-    } else if (CardReasonId !== undefined) {
+    } else if (initialData) {
       updateMutation.mutate(
-        { id: CardReasonId, ...payload },
+        { id: initialData.id, ...payload },
         { onSuccess: () => navigate('/resources/card-states') }
       )
     }
@@ -119,7 +118,13 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
   const nameErrorKey = nameFieldKey as keyof FormErrors
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
+      <h1 className="text-xl font-semibold text-foreground">
+        {mode === 'create'
+          ? t('reasons.createTitle', 'Sebäp dörediň')
+          : t('reasons.editTitle', 'Sebäp üýtgetmek')}
+      </h1>
+      <div>
       {/* Language tabs */}
       <div className="flex gap-3 justify-end mb-4">
         {LANG_TABS.map((tab) => (
@@ -205,6 +210,7 @@ export function CardReasonForm({ mode, initialData, CardReasonId }: CardReasonFo
           : t('CardReasons.actions.update', 'Täzelemek')}
         className="mt-6"
       />
+    </div>
     </div>
   )
 }

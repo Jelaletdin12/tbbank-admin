@@ -10,7 +10,9 @@ import type { LucideIcon } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
+import { BentoGrid, BentoCard } from '@/components/bento'
 import type { CardPinItem, CardPinCreatePayload } from '@/features/cardPins/api/cardPinApi'
+import { useCreateCardPin, useUpdateCardPin } from '@/features/cardPins/hooks/useCardPins'
 import { validateStep, DEFAULT_FORM_VALUES } from '@/features/cardPins/schemas/cardPin.schema'
 import type { CardPinFormData } from '@/features/cardPins/schemas/cardPin.schema'
 
@@ -19,8 +21,6 @@ import type { CardPinFormData } from '@/features/cardPins/schemas/cardPin.schema
 interface CardPinFormProps {
   mode: 'create' | 'edit'
   initialData?: CardPinItem
-  onSubmit: (payload: CardPinCreatePayload) => void
-  isSubmitting: boolean
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -107,50 +107,6 @@ const STEPS: StepDef[] = [
     validate: (form, mode) => validateStep(2, form, mode),
   },
 ]
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({
-  cols = 2,
-  children,
-}: {
-  cols?: 1 | 2 | 3 | 4
-  children: React.ReactNode
-}) {
-  const colClass = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: 'full' | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === 'full' ? 'sm:col-span-full' :
-    span === 2      ? 'sm:col-span-2'    :
-    span === 3      ? 'sm:col-span-3'    : ''
-
-  return (
-    <div className={`bg-card border border-border rounded-xl p-5 space-y-4 ${spanClass}`}>
-      {title && (
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          {title}
-        </p>
-      )}
-      {children}
-    </div>
-  )
-}
 
 // ─── Shared step content props ────────────────────────────────────────────────
 
@@ -399,9 +355,12 @@ function StepPassport({ form, errors, set, t, mode, initialData }: StepContentPr
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardPinFormProps) {
+export function CardPinForm({ mode, initialData }: CardPinFormProps) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const createMutation = useCreateCardPin()
+  const updateMutation = useUpdateCardPin(initialData?.id ?? '')
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   const {
     watch, setValue, getValues, formState: { errors: rhfErrors }, clearErrors, setError,
@@ -508,7 +467,7 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
       return
     }
 
-    onSubmit({
+    const payload: CardPinCreatePayload = {
       status:          values.status as CardPinCreatePayload['status'],
       note:            values.note ?? '',
       card_type:       values.card_type,
@@ -526,7 +485,13 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
       passport_file_2: values.passport_file_2,
       passport_file_3: values.passport_file_3,
       passport_file_4: values.passport_file_4,
-    })
+    }
+
+    if (mode === 'create') {
+      createMutation.mutate(payload, { onSuccess: (data) => navigate(`/card-pins/${data.id}`) })
+    } else {
+      updateMutation.mutate(payload, { onSuccess: () => navigate('/card-pins') })
+    }
   }
 
   // ── StepBar items ──────────────────────────────────────────────────────────
@@ -550,7 +515,17 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
 
   return (
     <div className="flex flex-col gap-5">
-    
+      {/* Page header */}
+      <div>
+        <h1 className="text-xl font-semibold text-foreground">
+          {mode === 'create'
+            ? t('cardPin.createTitle', 'Kart pin bukja dörediň')
+            : t('cardPin.editTitle', 'Kart pin bukja redaktirläň')}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t('common.form.subtitle', 'Ähli meýdanlary dolduryp, ädim-ädim öň geçiň.')}
+        </p>
+      </div>
 
       {/* Step bar */}
       <div className="bg-card border border-border rounded-xl p-3 overflow-x-auto">
@@ -566,7 +541,7 @@ export function CardPinForm({ mode, initialData, onSubmit, isSubmitting }: CardP
 
       {/* Actions */}
       <FormActions
-        isPending={isSubmitting}
+        isPending={isPending}
         onCancel={currentStep === 0 ? () => navigate('/card-pins') : undefined}
         onPrev={currentStep > 0 ? handleBack : undefined}
         prevLabel={t('common.prev', 'Yza')}
