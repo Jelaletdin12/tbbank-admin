@@ -124,7 +124,8 @@ interface SelectAllDropdownProps {
   isAllTotalSelected: boolean
   totalCount: number
   pageCount: number
-  onSelectPage: (checked: boolean) => void
+  onTogglePage: (checked: boolean) => void
+  onSelectThisPage: () => void
   onSelectAll: () => void
   onClearAll: () => void
 }
@@ -135,7 +136,8 @@ function SelectAllDropdown({
   isAllTotalSelected,
   totalCount,
   pageCount,
-  onSelectPage,
+  onTogglePage,
+  onSelectThisPage,
   onSelectAll,
   onClearAll,
 }: SelectAllDropdownProps) {
@@ -143,28 +145,42 @@ function SelectAllDropdown({
   const ref = useRef<HTMLDivElement>(null)
   useOutsideClick(ref, () => setOpen(false))
 
-  const checkboxChecked = isAllPageSelected || (isSomePageSelected && 'indeterminate')
+  const checkboxChecked = isAllTotalSelected || isAllPageSelected 
+    ? true 
+    : isSomePageSelected 
+      ? 'indeterminate' 
+      : false
 
   return (
-    <div ref={ref} className="flex items-center gap-0.5">
+    <div ref={ref} className="flex items-center gap-1">
       <Checkbox
-        checked={checkboxChecked as boolean | 'indeterminate'}
-        onCheckedChange={(value) => onSelectPage(!!value)}
+        checked={checkboxChecked}
+        onCheckedChange={(value) => onTogglePage(!!value)}
         aria-label="Select all on page"
+        onClick={(e) => e.stopPropagation()}
+        className="after:content-none"
       />
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center text-muted-foreground hover:text-foreground transition-colors p-0.5"
+        type="button"
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+        className="relative z-10 flex items-center justify-center w-5 h-5 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors rounded"
         aria-label="Selection options"
       >
-        <ChevronDown size={11} />
+        <ChevronDown size={12} />
       </button>
 
       {open && (
-        <div className="absolute top-10 left-0 z-50 w-52 bg-card border border-border rounded-md shadow-lg py-1">
+        <div className="absolute top-8 left-0 z-50 w-52 bg-card border border-border rounded-md shadow-lg py-1">
           <button
-            onClick={() => {
-              onSelectPage(true)
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onSelectThisPage()
               setOpen(false)
             }}
             className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 transition-colors"
@@ -173,7 +189,10 @@ function SelectAllDropdown({
             <span className="ml-1 text-muted-foreground text-xs">({pageCount})</span>
           </button>
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
               onSelectAll()
               setOpen(false)
             }}
@@ -186,7 +205,10 @@ function SelectAllDropdown({
             <>
               <div className="border-t border-border my-1" />
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   onClearAll()
                   setOpen(false)
                 }}
@@ -257,9 +279,18 @@ export function DataTable<TData>({
           isAllTotalSelected={allTotalSelected}
           totalCount={resolvedTotalCount}
           pageCount={data.length}
-          onSelectPage={(checked) => {
-            table.toggleAllPageRowsSelected(checked)
-            if (!checked) setAllTotalSelected(false)
+          onTogglePage={(checked) => {
+            if (!checked) {
+              if (allTotalSelected) setAllTotalSelected(false)
+              table.toggleAllPageRowsSelected(false)
+              table.setRowSelection({})
+            } else {
+              table.toggleAllPageRowsSelected(true)
+            }
+          }}
+          onSelectThisPage={() => {
+            table.toggleAllPageRowsSelected(true)
+            setAllTotalSelected(false)
           }}
           onSelectAll={() => {
             table.toggleAllPageRowsSelected(true)
@@ -267,19 +298,36 @@ export function DataTable<TData>({
           }}
           onClearAll={() => {
             table.toggleAllPageRowsSelected(false)
+            table.setRowSelection({})
             setAllTotalSelected(false)
           }}
         />
       </div>
     ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-        onClick={(e) => e.stopPropagation()}
-      />
-    ),
+    cell: ({ row, table }) => {
+      const isSelected = allTotalSelected || row.getIsSelected()
+      return (
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={(value) => {
+            if (allTotalSelected && !value) {
+              const newSelection: RowSelectionState = {}
+              table.getRowModel().rows.forEach((r) => {
+                if (r.id !== row.id) {
+                  newSelection[r.id] = true
+                }
+              })
+              table.setRowSelection(newSelection)
+              setAllTotalSelected(false)
+            } else {
+              row.toggleSelected(!!value)
+            }
+          }}
+          aria-label="Select row"
+          onClick={(e) => e.stopPropagation()}
+        />
+      )
+    },
     enableSorting: false,
     enableHiding: false,
     size: 48,
@@ -357,6 +405,7 @@ export function DataTable<TData>({
           <button
             onClick={() => {
               table.toggleAllPageRowsSelected(false)
+              table.setRowSelection({})
               setAllTotalSelected(false)
             }}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors"

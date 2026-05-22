@@ -121,7 +121,7 @@ export function CurrencyRateForm({ mode, initialData }: CurrencyRateFormProps) {
           ? t('currencyRates.createTitle', 'Walýuta kursy dörediň')
           : t('currencyRates.editTitle', 'Walýuta kursy üýtgetmek')}
       </h1>
-      <div className="space-y-6">
+      <div className="space-y-6 bg-card border border-border rounded-xl overflow-hidden">
       {/* Currency From */}
       <div className="grid grid-cols-[220px_1fr] items-start py-4 px-6 border-b border-border">
         <label className="text-sm text-muted-foreground pt-1.5">

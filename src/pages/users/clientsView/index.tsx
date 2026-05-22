@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, ChevronDown } from 'lucide-react'
+import { Pencil, Trash2, ChevronDown, XCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/confirmDialog'
 import { InfoRow, AuditLog } from '@/components/viewPageComponents'
@@ -54,18 +54,10 @@ function BentoCard({
 
 function ActiveIndicator({ active }: { active: boolean }) {
   return active ? (
-    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary text-primary">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
+    <CheckCircle2 size={18} className="text-emerald-500" />
   ) : (
-    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full border-2 border-destructive text-destructive">
-      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-        <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-    </span>
-  )
+    <XCircle size={18} className="text-destructive" />
+  );
 }
 
 // ─── CollapsibleSection ───────────────────────────────────────────────────────

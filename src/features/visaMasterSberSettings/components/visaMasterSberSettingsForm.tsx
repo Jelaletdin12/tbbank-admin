@@ -139,7 +139,7 @@ export function VisaMasterSettingForm({
           ? t('visaMasterSettings.createTitle', 'Visa/Master, Sber sazlamalar dörediň')
           : t('visaMasterSettings.editTitle', 'Visa/Master, Sber sazlamalar üýtgetmek')}
       </h1>
-      <div className="space-y-0">
+      <div className="space-y-0 bg-card border border-border rounded-xl overflow-hidden">
       {/* Kod */}
       <div className="grid grid-cols-[220px_1fr] items-start py-4 px-6 border-b border-border">
         <label className="text-sm text-muted-foreground pt-1.5">

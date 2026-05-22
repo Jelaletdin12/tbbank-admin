@@ -315,6 +315,7 @@ export default function CardOrdersPage() {
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
+          enableRowSelection
           getRowId={(row) => row.id}
           currentPage={page}
           totalPages={data?.totalPages ?? 1}

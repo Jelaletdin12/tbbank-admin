@@ -153,6 +153,7 @@ export default function RolesPage() {
         onColumnVisibilityChange={setColumnVisibility}
         columnOrder={columnOrder}
         onColumnOrderChange={setColumnOrder}
+        enableRowSelection
         getRowId={(row) => String(row.id)}
         currentPage={data?.meta?.current_page ?? 1}
         totalPages={data?.meta?.last_page ?? 1}

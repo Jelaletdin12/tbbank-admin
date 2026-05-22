@@ -32,7 +32,7 @@ export function CreditCardVisual({
 
   return (
     <div
-      className={`${bgGradient} w-full max-w-[340px] h-[210px] rounded-2xl p-6 flex flex-col justify-between text-white shadow-xl relative overflow-hidden`}
+      className={`${bgGradient} w-full max-w-[360px] h-[210px] rounded-2xl p-6 flex flex-col justify-between text-white shadow-xl relative overflow-hidden`}
     >
       {/* Glow effects */}
       <div className="absolute -top-16 -right-16 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>

@@ -122,7 +122,7 @@ export default function UserViewPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl space-y-0">
+    <div className="p-6 space-y-0">
       {/* Title + actions */}
       <div className="flex items-start justify-between mb-6">
         <h1 className="text-xl font-bold text-foreground leading-tight">

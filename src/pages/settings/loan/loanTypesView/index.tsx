@@ -42,7 +42,7 @@ export default function LoanTypeViewPage() {
   // ── Skeleton ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-6 max-w-3xl">
+      <div className="p-6">
         <Skeleton className="h-4 w-64 mb-4" />
         <Skeleton className="h-7 w-80 mb-6" />
         <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
@@ -68,7 +68,7 @@ export default function LoanTypeViewPage() {
 
   // ── View ───────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6 max-w-3xl">
+    <div className="p-6">
     
 
       {/* Page header */}

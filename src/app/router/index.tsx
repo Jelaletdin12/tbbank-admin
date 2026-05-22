@@ -127,6 +127,8 @@ const DistrictsViewPage = lazy(() => import("@/pages/settings/location/districts
 const DistrictEditPage = lazy(() => import("@/pages/settings/location/districtsEdit"));
 
 const BranchesPage = lazy(() => import("@/pages/settings/location/branches"));
+
+const BackupsPage = lazy(() => import("@/pages/backups"));
 const BranchCreatePage = lazy(() => import("@/pages/settings/location/branchesCreate"));
 const BranchesViewPage = lazy(() => import("@/pages/settings/location/branchesView"));
 const BranchEditPage = lazy(() => import("@/pages/settings/location/branchesEdit"));
@@ -946,6 +948,15 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={<PageLoader />}>
                 <DistrictEditPage />
+              </Suspense>
+            ),
+          },
+          {
+            // Sidebar: /backups
+            path: "/backups",
+            element: (
+              <Suspense fallback={<PageLoader />}>
+                <BackupsPage />
               </Suspense>
             ),
           },
