@@ -1,6 +1,47 @@
 import { Download, Eye, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+// ─── BentoGrid ────────────────────────────────────────────────────────────────
+
+export function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+  const colClass = {
+    1: "grid-cols-1",
+    2: "grid-cols-1 sm:grid-cols-2",
+    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+  }[cols]
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+}
+
+// ─── BentoCard ────────────────────────────────────────────────────────────────
+
+interface BentoCardProps {
+  title?: string;
+  span?: "full" | 2 | 3;
+  children: React.ReactNode;
+  noPadding?: boolean;
+}
+
+export function BentoCard({ title, span, children, noPadding }: BentoCardProps) {
+  const spanClass =
+    span === "full" ? "sm:col-span-full" :
+    span === 2      ? "sm:col-span-2"    :
+    span === 3      ? "sm:col-span-3"    : ""
+
+  return (
+    <div className={`bg-card border border-border rounded-xl overflow-hidden min-w-0 ${spanClass}`}>
+      {title && (
+        <div className="px-4 py-2.5 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
+            {title}
+          </p>
+        </div>
+      )}
+      {noPadding ? <div>{children}</div> : children}
+    </div>
+  )
+}
+
 // ─── InfoRow ──────────────────────────────────────────────────────────────────
 // Supports both:
 //   <InfoRow label="ID" value={data.id} />
@@ -15,25 +56,67 @@ export interface InfoRowProps {
   isLink?: boolean;
 }
 
+
+// ─── InfoRow ──────────────────────────────────────────────────────────────────
 export function InfoRow({ label, value, children, isLink }: InfoRowProps) {
   const content = children ?? (value != null ? String(value) : null);
 
   return (
-    <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
+    <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 border-b border-border last:border-0 gap-0.5 sm:gap-0">
+      <span className="text-xs sm:text-sm text-muted-foreground leading-snug">{label}</span>
       {content != null && content !== "" ? (
         typeof content === "string" ? (
-          <span
-            className={`text-sm ${isLink ? "text-primary font-medium" : "text-foreground"}`}
-          >
+          <span className={`text-sm break-words min-w-0 ${isLink ? "text-primary font-medium" : "text-foreground"}`}>
             {content}
           </span>
         ) : (
-          <div className="text-sm">{content}</div>
+          <div className="text-sm min-w-0">{content}</div>
         )
       ) : (
         <span className="text-muted-foreground/40 text-sm">—</span>
       )}
+    </div>
+  );
+}
+
+// ─── MultiLangRow ─────────────────────────────────────────────────────────────
+
+export interface MultiLangRowProps {
+  label: string;
+  value?: { tk?: string; ru?: string; en?: string } | null;
+}
+
+export function MultiLangRow({ label, value }: MultiLangRowProps) {
+  if (!value) {
+    return <InfoRow label={label} value="—" />;
+  }
+
+  const langs = [
+    { code: "TK", val: value.tk },
+    { code: "RU", val: value.ru },
+    { code: "EN", val: value.en },
+  ];
+
+  const hasAny = langs.some((l) => l.val);
+
+  return (
+    <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start py-2.5 px-4 border-b border-border last:border-0 gap-1 sm:gap-0">
+      <span className="text-xs sm:text-sm text-muted-foreground leading-snug pt-1">{label}</span>
+      <div className="w-full min-w-0 flex flex-col gap-1.5 py-0.5">
+        {langs.map((l) =>
+          l.val ? (
+            <div key={l.code} className="flex items-start gap-2.5">
+              <span className="inline-flex items-center justify-center border border-border bg-muted/50 text-muted-foreground text-[9px] font-bold px-1.5 py-0.5 rounded min-w-[22px] mt-0.5 select-none">
+                {l.code}
+              </span>
+              <span className="text-sm text-foreground break-words flex-1 min-w-0">
+                {l.val}
+              </span>
+            </div>
+          ) : null
+        )}
+        {!hasAny && <span className="text-sm text-muted-foreground/40">—</span>}
+      </div>
     </div>
   );
 }
@@ -70,13 +153,14 @@ export interface PassportImageProps {
   url?: string | null;
 }
 
+// ─── PassportImage ────────────────────────────────────────────────────────────
 export function PassportImage({ label, src, url }: PassportImageProps) {
   const { t } = useTranslation();
   const imageSrc = src ?? url ?? null;
 
   return (
-    <div className="grid grid-cols-[220px_1fr] items-start py-3 px-4 border-b border-border last:border-0">
-      <span className="text-sm text-muted-foreground pt-1">{label}</span>
+    <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start py-3 px-4 border-b border-border last:border-0 gap-1 sm:gap-0">
+      <span className="text-xs sm:text-sm text-muted-foreground">{label}</span>
       <div className="flex flex-col gap-2">
         {imageSrc ? (
           <img

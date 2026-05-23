@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { useGetLoanTypeById, useDeleteLoanType } from '@/features/loanTypes/hooks/useLoanTypes'
 
 // ─── LoanTypeViewPage ─────────────────────────────────────────────────────────
@@ -42,12 +42,12 @@ export default function LoanTypeViewPage() {
   // ── Skeleton ───────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="p-6">
+      <div>
         <Skeleton className="h-4 w-64 mb-4" />
         <Skeleton className="h-7 w-80 mb-6" />
         <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="grid grid-cols-[220px_1fr] items-center px-4 py-3">
+            <div key={i} className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center px-4 py-3 gap-2 sm:gap-0">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-40" />
             </div>
@@ -60,7 +60,7 @@ export default function LoanTypeViewPage() {
   // ── Error ──────────────────────────────────────────────────────────────────
   if (isError || !data) {
     return (
-      <div className="p-6 flex items-center justify-center py-20 text-destructive text-sm">
+      <div className=" flex items-center justify-center py-20 text-destructive text-sm">
         {t('common.error', 'Ýalňyşlyk ýüze çykdy')}
       </div>
     )
@@ -68,7 +68,7 @@ export default function LoanTypeViewPage() {
 
   // ── View ───────────────────────────────────────────────────────────────────
   return (
-    <div className="p-6">
+    <div >
     
 
       {/* Page header */}
@@ -102,26 +102,7 @@ export default function LoanTypeViewPage() {
       <Section>
         <InfoRow label={t('common.id', 'ID')} value={data.id} />
 
-        {/* Multilingual name rows */}
-        <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground pt-1">
-            {t('loanTypes.fields.name', 'Ady')}
-          </span>
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-muted-foreground w-6">TK</span>
-              <span className="text-sm text-foreground">{data.name.tk}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-muted-foreground w-6">RU</span>
-              <span className="text-sm text-foreground">{data.name.ru}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold text-muted-foreground w-6">EN</span>
-              <span className="text-sm text-foreground">{data.name.en}</span>
-            </div>
-          </div>
-        </div>
+        <MultiLangRow label={t('loanTypes.fields.name', 'Ady')} value={data.name} />
 
         <InfoRow
           label={t('loanTypes.fields.tax', 'Salgyt')}
@@ -133,17 +114,17 @@ export default function LoanTypeViewPage() {
           value={data.loanTerm}
         />
 
-        <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 border-b border-border gap-0.5 sm:gap-0">
+          <span className="text-xs sm:text-sm text-muted-foreground leading-snug">
             {t('loanTypes.fields.notes', 'Bellikler')}
           </span>
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-foreground break-words min-w-0">
             {data.notes ? data.notes[lang] || '—' : '—'}
           </span>
         </div>
 
-        <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border last:border-0">
-          <span className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 border-b border-border last:border-0 gap-1 sm:gap-0">
+          <span className="text-xs sm:text-sm text-muted-foreground leading-snug">
             {t('loanTypes.fields.isActive', 'Işjeň')}
           </span>
           {data.isActive ? (

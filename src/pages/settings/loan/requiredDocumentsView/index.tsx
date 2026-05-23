@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Section, InfoRow } from '@/components/viewPageComponents'
 import { useGetRequiredDocumentById, useDeleteRequiredDocument } from '@/features/requiredDocuments/hooks/useRequiredDocuments'
 import { ConfirmDialog } from '@/components/confirmDialog'
@@ -26,7 +27,7 @@ export default function RequiredDocumentsViewPage() {
     return (
       <div className="space-y-2">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />
+          <Skeleton key={i} className="h-12 rounded-lg" />
         ))}
       </div>
     )

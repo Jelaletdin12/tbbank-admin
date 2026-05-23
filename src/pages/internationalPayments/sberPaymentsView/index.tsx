@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
-import { InfoRow, AuditLog, type AuditRowProps } from '@/components/viewPageComponents'
+import { BentoGrid, BentoCard, InfoRow, AuditLog, type AuditRowProps } from '@/components/viewPageComponents'
 import { useSberPaymentOrder, useDeleteSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
 import type { PaymentPaidStatus, PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
 import { useState } from 'react'
@@ -59,46 +59,6 @@ function PaymentPaidStatusBadge({ status }: { status: PaymentPaidStatus }) {
   const Icon = PAID_STATUS_ICON[status]
   if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
   return <StatusBadge label={t(`sberPayments.paidStatus.${PAID_STATUS_KEY_MAP[status]}`)} variant={variant} icon={Icon} />
-}
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
-  const colClass = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: 'full' | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === 'full' ? 'sm:col-span-full' :
-    span === 2      ? 'sm:col-span-2'    :
-    span === 3      ? 'sm:col-span-3'    : ''
-
-  return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
-      {title && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {title}
-          </p>
-        </div>
-      )}
-      {children}
-    </div>
-  )
 }
 
 // ─── Document row ─────────────────────────────────────────────────────────────

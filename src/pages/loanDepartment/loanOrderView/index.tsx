@@ -14,6 +14,8 @@ import {
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import type { LoanOrderMobileStatus } from "@/features/loanOrderMobiles/api/loanOrderMobilesApi";
 import {
+  BentoGrid,
+  BentoCard,
   InfoRow,
   PassportImage,
   AuditLog,
@@ -43,46 +45,6 @@ function LoanOrderMobileStatusBadge({ status }: { status: LoanOrderMobileStatus 
   const Icon = STATUS_ICON[status]
   if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
   return <StatusBadge label={t(`loanOrderStatus.${status}`)} variant={variant} icon={Icon} />
-}
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
-  const colClass = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: "full" | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === "full" ? "sm:col-span-full" :
-    span === 2      ? "sm:col-span-2"    :
-    span === 3      ? "sm:col-span-3"    : ""
-
-  return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
-      {title && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {title}
-          </p>
-        </div>
-      )}
-      {children}
-    </div>
-  )
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────

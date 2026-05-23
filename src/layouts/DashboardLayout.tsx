@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useMatches } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Sidebar,
@@ -82,13 +82,7 @@ function isActiveItem(item: NavItem | NavSubItem, pathname: string): boolean {
 
 // ─── Sub-sub collapsible (3rd level) ──────────────────────────────────────────
 
-function NavSubGroup({
-  subItem,
-  pathname,
-}: {
-  subItem: NavSubItem;
-  pathname: string;
-}) {
+function NavSubGroup({ subItem, pathname }: { subItem: NavSubItem; pathname: string }) {
   const active = subItem.items?.some((s) => pathname === s.url) ?? false;
   const [open, setOpen] = useState(active);
 
@@ -107,13 +101,7 @@ function NavSubGroup({
           )}
         >
           <span>{subItem.title}</span>
-          <ChevronRight
-            size={10}
-            className={cn(
-              "transition-transform duration-200",
-              open && "rotate-90",
-            )}
-          />
+          <ChevronRight size={10} className={cn("transition-transform duration-200", open && "rotate-90")} />
         </button>
       </CollapsibleTrigger>
 
@@ -156,10 +144,7 @@ function NavGroupItem({ item }: { item: NavItem }) {
   }, [active, collapsed]);
 
   return (
-    <Collapsible
-      open={!collapsed && open}
-      onOpenChange={(v) => !collapsed && setOpen(v)}
-    >
+    <Collapsible open={!collapsed && open} onOpenChange={(v) => !collapsed && setOpen(v)}>
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton
@@ -171,9 +156,7 @@ function NavGroupItem({ item }: { item: NavItem }) {
               "data-[active=true]:text-sidebar-foreground data-[active=true]:bg-sidebar-accent",
             )}
           >
-            <item.icon
-              className={cn("shrink-0", active && "text-sidebar-primary")}
-            />
+            <item.icon className={cn("shrink-0", active && "text-sidebar-primary")} />
             <span>{item.title}</span>
             <ChevronRight
               size={14}
@@ -191,9 +174,7 @@ function NavGroupItem({ item }: { item: NavItem }) {
         <SidebarMenuSub className="border-l-2 border-sidebar-border/40 ml-3 pl-2 mt-0.5 gap-0">
           {item.items?.map((subItem, i) => {
             if (subItem.items) {
-              return (
-                <NavSubGroup key={i} subItem={subItem} pathname={pathname} />
-              );
+              return <NavSubGroup key={i} subItem={subItem} pathname={pathname} />;
             }
             return (
               <SidebarMenuSubItem key={i}>
@@ -230,9 +211,7 @@ function NavGroupLabel({ label }: { label: string }) {
 
   return (
     <div className="px-2 pb-1 pt-3">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">
-        {label}
-      </p>
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/35 select-none">{label}</p>
     </div>
   );
 }
@@ -341,10 +320,7 @@ function AppSidebar() {
               url: "/currency-rates",
             },
             {
-              title: t(
-                "Visa/Master, Sber Settings",
-                "Visa/Master, Sber sazlamalary",
-              ),
+              title: t("Visa/Master, Sber Settings", "Visa/Master, Sber sazlamalary"),
               url: "/visa-master-sber-settings",
             },
           ],
@@ -390,10 +366,7 @@ function AppSidebar() {
               title: t("Card", "Kart"),
               items: [
                 {
-                  title: t(
-                    "Card Issuance Reasons",
-                    "Kartyň çykarylmagynyň sebäpleri",
-                  ),
+                  title: t("Card Issuance Reasons", "Kartyň çykarylmagynyň sebäpleri"),
                   url: "/settings/card/card-reasons",
                 },
                 {
@@ -452,12 +425,8 @@ function AppSidebar() {
           <img className="h-5 w-5" src={Icon} alt="" />
         </div>
         <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-          <span className="truncate font-semibold text-sm tracking-tight text-sidebar-foreground">
-            TBBANK
-          </span>
-          <span className="truncate text-[10px] text-sidebar-foreground/40">
-            Admin Panel v2.0
-          </span>
+          <span className="truncate font-semibold text-sm tracking-tight text-sidebar-foreground">TBBANK</span>
+          <span className="truncate text-[10px] text-sidebar-foreground/40">Admin Panel v2.0</span>
         </div>
       </SidebarHeader>
 
@@ -482,12 +451,7 @@ function AppSidebar() {
                         )}
                       >
                         <Link to={item.url ?? "#"}>
-                          <item.icon
-                            className={cn(
-                              "shrink-0",
-                              pathname === item.url && "text-sidebar-primary",
-                            )}
-                          />
+                          <item.icon className={cn("shrink-0", pathname === item.url && "text-sidebar-primary")} />
                           <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
@@ -508,12 +472,8 @@ function AppSidebar() {
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <div className="mb-1 rounded-lg  py-1 group-data-[collapsible=icon]:hidden">
               <div className="px-3 py-2 border-b border-sidebar-border/50 mb-1">
-                <p className="truncate text-xs font-medium text-sidebar-foreground">
-                  {user?.name ?? "Admin"}
-                </p>
-                <p className="truncate text-[11px] text-sidebar-foreground/40">
-                  {user?.email ?? ""}
-                </p>
+                <p className="truncate text-xs font-medium text-sidebar-foreground">{user?.name ?? "Admin"}</p>
+                <p className="truncate text-[11px] text-sidebar-foreground/40">{user?.email ?? ""}</p>
               </div>
               <button className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-foreground hover:bg-sidebar-accent/10 transition-colors">
                 <User size={14} />
@@ -544,17 +504,10 @@ function AppSidebar() {
               </div>
               {/* Name + email */}
               <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate text-sm font-medium text-sidebar-foreground">
-                  {user?.name ?? "Admin"}
-                </span>
-                <span className="truncate text-[11px] text-sidebar-foreground/40">
-                  {user?.email ?? ""}
-                </span>
+                <span className="truncate text-sm font-medium text-sidebar-foreground">{user?.name ?? "Admin"}</span>
+                <span className="truncate text-[11px] text-sidebar-foreground/40">{user?.email ?? ""}</span>
               </div>
-              <ChevronsUpDown
-                size={14}
-                className="ml-auto shrink-0 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden"
-              />
+              <ChevronsUpDown size={14} className="ml-auto shrink-0 text-sidebar-foreground/40 group-data-[collapsible=icon]:hidden" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
         </Collapsible>
@@ -567,7 +520,7 @@ function AppSidebar() {
 
 function DashboardHeader() {
   const { t } = useTranslation();
-  const location = useLocation();
+  const matches = useMatches();
   const { theme, toggleTheme } = useThemeStore();
   const { language, setLanguage } = useI18nStore();
 
@@ -576,11 +529,7 @@ function DashboardHeader() {
 
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (
-        langMenuRef.current &&
-        !langMenuRef.current.contains(e.target as Node)
-      )
-        setLangMenuOpen(false);
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) setLangMenuOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -592,49 +541,78 @@ function DashboardHeader() {
     { code: "tk", label: "Türkmençe" },
   ] as const;
 
+  // ── Breadcrumbs ────────────────────────────────────────────────────────────
+
+  const breadcrumbs = matches
+    .filter(
+      (m) =>
+        (
+          m.handle as {
+            title?: (t: (key: string, fallback: string) => string) => string;
+            indexPath?: string;
+          }
+        )?.title,
+    )
+    .map((m) => {
+      const handle = m.handle as {
+        title: (t: (key: string, fallback: string) => string) => string;
+        indexPath?: string;
+      };
+
+      return {
+        title: handle.title(t),
+        url: handle.indexPath,
+        isClickable: !!handle.indexPath,
+      };
+    });
+
+  // DashboardHeader içindeki breadcrumb render kısmı
+
   const generateBreadcrumbs = () => {
-    const paths = location.pathname.split("/").filter(Boolean);
-    if (
-      paths.length === 0 ||
-      (paths.length === 1 && paths[0] === "dashboard")
-    ) {
+    if (breadcrumbs.length === 0) return null;
+
+    if (breadcrumbs.length === 1) {
       return (
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbPage>{t("Dashboard", "Baş sahypa")}</BreadcrumbPage>
+            <BreadcrumbPage>{breadcrumbs[0].title}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       );
     }
+
+    const last = breadcrumbs[breadcrumbs.length - 1];
+
     return (
       <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/dashboard">Dashboard</Link>
-          </BreadcrumbLink>
+        {/* Mobilde sadece "… / Son Sayfa" göster */}
+        <BreadcrumbItem className="sm:hidden">
+          <span className="text-muted-foreground">…</span>
         </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        {paths.map((path, index) => {
-          const isLast = index === paths.length - 1;
-          const url = `/${paths.slice(0, index + 1).join("/")}`;
-          const formatted = path
-            .replace(/-/g, " ")
-            .split(" ")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" ");
-          const title = t(formatted, formatted);
+        <BreadcrumbSeparator className="sm:hidden" />
+        <BreadcrumbItem className="sm:hidden">
+          <BreadcrumbPage className="max-w-[160px] truncate block">{last.title}</BreadcrumbPage>
+        </BreadcrumbItem>
+
+        {/* Tablet+ full breadcrumb */}
+        {breadcrumbs.map((crumb, index) => {
+          const isLast = index === breadcrumbs.length - 1;
           return (
-            <React.Fragment key={url}>
-              <BreadcrumbItem>
+            <React.Fragment key={`${crumb.title}-${index}`}>
+              {index > 0 && <BreadcrumbSeparator className="hidden sm:block" />}
+              <BreadcrumbItem className="hidden sm:flex">
                 {isLast ? (
-                  <BreadcrumbPage>{title}</BreadcrumbPage>
-                ) : (
+                  <BreadcrumbPage className="max-w-[200px] truncate block">{crumb.title}</BreadcrumbPage>
+                ) : crumb.isClickable ? (
                   <BreadcrumbLink asChild>
-                    <Link to={url}>{title}</Link>
+                    <Link to={crumb.url!} className="max-w-[120px] truncate block">
+                      {crumb.title}
+                    </Link>
                   </BreadcrumbLink>
+                ) : (
+                  <span className="cursor-default text-muted-foreground max-w-[120px] truncate block">{crumb.title}</span>
                 )}
               </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
             </React.Fragment>
           );
         })}
@@ -660,17 +638,13 @@ function DashboardHeader() {
             className="flex items-center gap-1.5 h-8 px-2.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
           >
             <Globe size={15} />
-            <span className="uppercase font-medium text-xs hidden sm:block">
-              {language}
-            </span>
+            <span className="uppercase font-medium text-xs hidden sm:block">{language}</span>
           </button>
           <div
             className={cn(
               "absolute right-0 mt-1.5 w-36 bg-popover border border-border rounded-lg shadow-lg py-1 z-50",
               "transition-all duration-150 origin-top-right",
-              langMenuOpen
-                ? "opacity-100 scale-100 pointer-events-auto"
-                : "opacity-0 scale-95 pointer-events-none",
+              langMenuOpen ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none",
             )}
           >
             {languages.map((lang) => (
@@ -682,9 +656,7 @@ function DashboardHeader() {
                 }}
                 className={cn(
                   "w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors",
-                  language === lang.code
-                    ? "text-primary font-medium"
-                    : "text-foreground",
+                  language === lang.code ? "text-primary font-medium" : "text-foreground",
                 )}
               >
                 {lang.label}
@@ -728,9 +700,7 @@ export function DashboardLayout() {
               <Outlet />
             </main>
 
-            <div className="text-center text-[11px] text-muted-foreground/30 py-3 ">
-              © 2026 TBBANK.GOV.TM
-            </div>
+            <div className="text-center text-[11px] text-muted-foreground/30 py-3 ">© 2026 TBBANK.GOV.TM</div>
           </div>
         </div>
       </SidebarProvider>

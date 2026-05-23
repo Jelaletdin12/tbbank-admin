@@ -5,7 +5,7 @@ import { Pencil, Trash2, Download, Search, AlertCircle, CheckCircle2, XCircle } 
 import { ConfirmDialog } from '@/components/confirmDialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
-import { InfoRow } from '@/components/viewPageComponents'
+import { BentoGrid, BentoCard, InfoRow } from '@/components/viewPageComponents'
 import { useIntlPayment, useDeleteIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
 import type { IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
 
@@ -28,46 +28,6 @@ function PaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
   const variant = STATUS_VARIANT[status] ?? STATUS_VARIANT.pending
   const Icon = STATUS_ICON[status] ?? STATUS_ICON.pending
   return <StatusBadge label={t(`intlPayment.status.${status}`)} variant={variant} icon={Icon} />
-}
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
-  const colClass = {
-    1: 'grid-cols-1',
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: 'full' | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === 'full' ? 'sm:col-span-full' :
-    span === 2      ? 'sm:col-span-2'    :
-    span === 3      ? 'sm:col-span-3'    : ''
-
-  return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
-      {title && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {title}
-          </p>
-        </div>
-      )}
-      {children}
-    </div>
-  )
 }
 
 // ─── DocFile row ──────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import {  useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
+import { MultiLangInput } from '@/components/multiLangInput'
 import type { CardReason } from '../api/cardReasonsApi'
 import { useCreateCardReason, useUpdateCardReason } from '../hooks/useCardReasons'
 import { createCardReasonFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardReason.schema'
@@ -24,17 +25,6 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
   return result
 }
 
-type FormErrors = FlatErrors
-
-// ─── Lang Tab ─────────────────────────────────────────────────────────────────
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
 
 // ─── CardReasonForm ─────────────────────────────────────────────────────────────
 
@@ -79,8 +69,6 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
   const form = watch()
   const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
-
   const set = useCallback(<K extends keyof CardReasonFormData>(key: K, value: CardReasonFormData[K]) => {
     (setValue as (name: K, val: CardReasonFormData[K]) => void)(key, value)
     clearErrors(key)
@@ -111,11 +99,11 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
     }
   }
 
-  const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as
-    | 'nameTk'
-    | 'nameRu'
-    | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FormErrors
+  const nameFields = {
+    tk: { value: form.nameTk, onChange: (v: string) => set('nameTk', v), error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: (v: string) => set('nameRu', v), error: errors.nameRu },
+    en: { value: form.nameEn, onChange: (v: string) => set('nameEn', v), error: errors.nameEn },
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -125,39 +113,15 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
           : t('reasons.editTitle', 'Sebäp üýtgetmek')}
       </h1>
       <div>
-      {/* Language tabs */}
-      <div className="flex gap-3 justify-end mb-4">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`text-sm transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Form rows */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {/* Name row */}
-        <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-[220px_1fr] items-start py-4 px-4 border-b border-border">
+          <span className="text-sm text-muted-foreground pt-2">
             {t('CardReasons.fields.name', 'Ady')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
-          <FormInput
-            type="text"
-            value={form[nameFieldKey]}
-            onChange={(v) => set(nameFieldKey, v)}
-            placeholder={t('CardReasons.fields.name', 'Ady')}
-            error={errors[nameErrorKey]}
-          />
+          <MultiLangInput fields={nameFields} placeholder={t('CardReasons.fields.name', 'Ady')} disabled={isPending} />
         </div>
 
         {/* Value row */}

@@ -14,45 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { usePermission, useDeletePermission } from '@/features/permissions/hooks/usePermissions'
-
-// ─── LangTabs ─────────────────────────────────────────────────────────────────
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-function LangTabs({
-  active,
-  onChange,
-}: {
-  active: LangKey
-  onChange: (l: LangKey) => void
-}) {
-  const { t } = useTranslation()
-  const LANG_TABS: { key: LangKey; label: string }[] = [
-    { key: 'tk', label: t('languages.tk', 'Türkmen') },
-    { key: 'ru', label: t('languages.ru', 'Русский') },
-    { key: 'en', label: t('languages.en', 'English') },
-  ]
-  return (
-    <div className="flex gap-1 justify-end mb-2">
-      {LANG_TABS.map((tab) => (
-        <button
-          key={tab.key}
-          type="button"
-          onClick={() => onChange(tab.key)}
-          className={`px-3 py-0.5 text-xs font-medium rounded-md transition-colors ${
-            active === tab.key
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 // ─── PermissionViewPage ───────────────────────────────────────────────────────
 
@@ -62,7 +25,6 @@ export default function PermissionViewPage() {
   const navigate     = useNavigate()
   const permissionId = Number(id)
 
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
   const [showDelete, setShowDelete] = useState(false)
 
   const { data: permission, isLoading, isError } = usePermission(permissionId)
@@ -82,7 +44,7 @@ export default function PermissionViewPage() {
         <Skeleton className="h-8 w-72 mb-6" />
         <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="grid grid-cols-[220px_1fr] items-center py-3 px-4">
+            <div key={i} className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-3 px-4 gap-2 sm:gap-0">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-40" />
             </div>
@@ -133,18 +95,7 @@ export default function PermissionViewPage() {
         <InfoRow label={t('common.id', 'ID')} value={permission.id} />
         <InfoRow label={t('permissions.fields.code', 'Kod')} value={permission.code} />
 
-        {/* Name row — with lang switcher */}
-        <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground pt-1">
-            {t('permissions.fields.name', 'Ady')}
-          </span>
-          <div>
-            <LangTabs active={activeLang} onChange={setActiveLang} />
-            <span className="text-sm text-foreground">
-              {permission.name?.[activeLang] || '—'}
-            </span>
-          </div>
-        </div>
+        <MultiLangRow label={t('permissions.fields.name', 'Ady')} value={permission.name} />
 
         <InfoRow label={t('permissions.fields.guardName', 'Guard name')} value={permission.guard_name} />
       </Section>

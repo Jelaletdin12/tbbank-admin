@@ -163,13 +163,13 @@ export default function IntlPaymentsPage() {
         <div className="flex items-center gap-1">
           <Button
             size="icon" variant="ghost" className="h-7 w-7"
-            onClick={() => navigate(`/visa-master-payments/${row.original.id}`)}
+            onClick={() => navigate(`/visa-master/${row.original.id}`)}
           >
             <Eye size={14} />
           </Button>
           <Button
             size="icon" variant="ghost" className="h-7 w-7"
-            onClick={() => navigate(`/visa-master-payments/${row.original.id}/edit`)}
+            onClick={() => navigate(`/visa-master/${row.original.id}/edit`)}
           >
             <Pencil size={14} />
           </Button>
@@ -237,7 +237,7 @@ export default function IntlPaymentsPage() {
         perPage={perPage}
         onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
         actionLabel={t('intlPayment.createBtn', 'Visa/Master tölegler (talyplar üçin) dörediň')}
-        onAction={() => navigate('/visa-master-payments/create')}
+        onAction={() => navigate('/visa-master/create')}
       />
 
       <DataTable

@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Section, InfoRow } from '@/components/viewPageComponents'
 import { useBranchById, useDeleteBranch } from '@/features/branches/hooks/useBranches'
 
@@ -29,7 +30,7 @@ export function BranchViewPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
-    <div className="p-6">
+    <div>
       <div className="flex items-start justify-between mb-6">
         <div>
         
@@ -68,8 +69,8 @@ export function BranchViewPage() {
               key={i}
               className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border last:border-0"
             >
-              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-              <div className="h-4 w-40 bg-muted rounded animate-pulse" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-40" />
             </div>
           ))}
         </div>

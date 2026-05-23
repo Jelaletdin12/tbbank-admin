@@ -1,29 +1,21 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import {  useMemo, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
+import { MultiLangInput } from '@/components/multiLangInput'
 import { useCreatePermission, useUpdatePermission } from '../hooks/usePermissions'
 import { createPermissionFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/permission.schema'
 import type { PermissionFormData } from '../schemas/permission.schema'
 import type { Permission } from '../api/permissionsApi'
-
+import { FormInput } from '@/components/formInput'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface PermissionFormProps {
   mode: 'create' | 'edit'
   initialData?: Permission
 }
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
 
 const GUARD_OPTIONS = [
   { value: 'web',     label: 'web' },
@@ -57,8 +49,6 @@ export function PermissionForm({ mode, initialData }: PermissionFormProps) {
 
   const isPending = createPermission.isPending || updatePermission.isPending
 
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
-
   const schema = useMemo(() => createPermissionFormSchema(t), [t, i18n.language])
 
   const {
@@ -88,10 +78,10 @@ export function PermissionForm({ mode, initialData }: PermissionFormProps) {
     [setValue, clearErrors],
   )
 
-  const setNameField = (lang: LangKey, value: string) => {
-    const key = `name${lang.charAt(0).toUpperCase() + lang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
-    setValue(key, value)
-    clearErrors(key)
+  const nameFields = {
+    tk: { value: form.nameTk, onChange: (v: string) => { setValue('nameTk', v); clearErrors('nameTk'); }, error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: (v: string) => { setValue('nameRu', v); clearErrors('nameRu'); }, error: errors.nameRu },
+    en: { value: form.nameEn, onChange: (v: string) => { setValue('nameEn', v); clearErrors('nameEn'); }, error: errors.nameEn },
   }
 
   // ── Re-validate on language change ──
@@ -121,9 +111,6 @@ export function PermissionForm({ mode, initialData }: PermissionFormProps) {
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
-
-  const activeNameKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
-  const nameError = errors[activeNameKey]
 
   return (
     <div className="flex flex-col gap-5">
@@ -156,32 +143,7 @@ export function PermissionForm({ mode, initialData }: PermissionFormProps) {
           {t('permissions.fields.name', 'Ady')}
           <span className="text-destructive ml-0.5">*</span>
         </span>
-        <div className="space-y-2">
-          <div className="flex gap-1 justify-end">
-            {LANG_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveLang(tab.key)}
-                className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  activeLang === tab.key
-                    ? 'text-primary border-b-2 border-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <FormInput
-            type="text"
-            value={form[activeNameKey]}
-            onChange={(v) => setNameField(activeLang, v)}
-            placeholder={t('permissions.fields.name', 'Ady')}
-            error={nameError}
-            disabled={isPending}
-          />
-        </div>
+        <MultiLangInput fields={nameFields} placeholder={t('permissions.fields.name', 'Ady')} disabled={isPending} />
       </div>
 
       {/* Guard name */}

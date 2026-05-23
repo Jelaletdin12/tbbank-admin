@@ -14,7 +14,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { useCardReasonById, useDeleteCardReason } from '@/features/cardReasons/hooks/useCardReasons'
 
 // ─── CardReasonViewPage ────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ export function CardReasonViewPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   return (
-    <div className="p-6">
+    <div >
     
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -70,10 +71,10 @@ export function CardReasonViewPage() {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border last:border-0"
+              className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 border-b border-border last:border-0 gap-2 sm:gap-0"
             >
-              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
-              <div className="h-4 w-40 bg-muted rounded animate-pulse" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-40" />
             </div>
           ))}
         </div>
@@ -81,28 +82,7 @@ export function CardReasonViewPage() {
         <Section>
           <InfoRow label="ID" value={data.id} />
 
-          {/* Multilang name tabs */}
-          <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-            <span className="text-sm text-muted-foreground pt-1">
-              {t('CardReasons.fields.name', 'Ady')}
-            </span>
-            <div>
-              {/* Lang switcher is displayed in top-right corner of this cell */}
-              <div className="flex gap-3 mb-2 justify-end">
-                {(['tk', 'ru', 'en'] as const).map((l) => (
-                  <span
-                    key={l}
-                    className={`text-sm cursor-default ${
-                      l === lang ? 'text-primary font-semibold underline underline-offset-4' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {l === 'tk' ? 'Türkmen' : l === 'ru' ? 'Русский' : 'English'}
-                  </span>
-                ))}
-              </div>
-              <span className="text-sm text-foreground">{data.name[lang]}</span>
-            </div>
-          </div>
+          <MultiLangRow label={t('CardReasons.fields.name', 'Ady')} value={data.name} />
 
           <InfoRow
             label={t('CardReasons.fields.value', 'Baha')}
@@ -114,8 +94,8 @@ export function CardReasonViewPage() {
           />
 
           {/* isActive custom row */}
-          <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 gap-1 sm:gap-0">
+            <span className="text-xs sm:text-sm text-muted-foreground leading-snug">
               {t('CardReasons.fields.isActive', 'Işjeň')}
             </span>
             {data.isActive ? (

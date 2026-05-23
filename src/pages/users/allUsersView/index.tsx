@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Loader2, Pencil, Trash2, CheckCircle2, XCircle, ChevronDown, Plus, Search, SlidersHorizontal, ChevronUp } from "lucide-react";
+import { Pencil, Trash2, CheckCircle2, XCircle, ChevronDown, Plus, Search, SlidersHorizontal, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -111,8 +112,16 @@ export default function UserViewPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-7 w-64" />
+        <div className="bg-card border border-border rounded-xl overflow-hidden">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4 border-b border-border last:border-0">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -122,7 +131,7 @@ export default function UserViewPage() {
   }
 
   return (
-    <div className="p-6 space-y-0">
+    <div className="space-y-0">
       {/* Title + actions */}
       <div className="flex items-start justify-between mb-6">
         <h1 className="text-xl font-bold text-foreground leading-tight">

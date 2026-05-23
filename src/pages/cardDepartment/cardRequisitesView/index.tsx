@@ -6,7 +6,7 @@ import {
   useDownloadCardRequisite,
 } from "@/features/cardRequisites/hooks/useCardRequisites";
 import type { CardRequisiteStatus } from "@/features/cardRequisites/api/cardRequisitesApi";
-import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Download } from "lucide-react";
 import {
@@ -18,14 +18,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   StatusBadge,
   type StatusBadgeVariant,
 } from "@/components/ui/statusBadge";
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
-import { InfoRow, PassportImage } from "@/components/viewPageComponents";
+import { BentoGrid, BentoCard, InfoRow, PassportImage } from "@/components/viewPageComponents";
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -49,42 +48,22 @@ function CardRequisiteStatusBadge({ status }: { status: CardRequisiteStatus }) {
   return <StatusBadge label={t(`cardRequisite.status.${status}`)} variant={variant} icon={Icon} />
 }
 
-// ─── Bento primitives ─────────────────────────────────────────────────────────
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
-  const colClass = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
-}
-
-function BentoCard({
-  title,
-  span,
-  children,
-}: {
-  title?: string
-  span?: "full" | 2 | 3
-  children: React.ReactNode
-}) {
-  const spanClass =
-    span === "full" ? "sm:col-span-full" :
-    span === 2      ? "sm:col-span-2"    :
-    span === 3      ? "sm:col-span-3"    : ""
-
+function CardRequisiteViewSkeleton() {
   return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
-      {title && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            {title}
-          </p>
-        </div>
-      )}
-      {children}
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-7 w-64" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+            <Skeleton className="h-3 w-24 mb-1" />
+            {Array.from({ length: 3 }).map((_, j) => (
+              <Skeleton key={j} className="h-4 w-full" />
+            ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -101,11 +80,7 @@ export default function CardRequisiteViewPage() {
   const downloadMutation = useDownloadCardRequisite()
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Spinner className="size-8 text-primary" />
-      </div>
-    )
+    return <CardRequisiteViewSkeleton />
   }
 
   if (isError || !data) {
@@ -134,7 +109,7 @@ export default function CardRequisiteViewPage() {
             <Download size={15} />
           </Button>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
+            <AlertDialogTitle asChild>
               <Button
                 size="icon"
                 variant="ghost"
@@ -142,7 +117,7 @@ export default function CardRequisiteViewPage() {
               >
                 <Trash2 size={15} />
               </Button>
-            </AlertDialogTrigger>
+            </AlertDialogTitle>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

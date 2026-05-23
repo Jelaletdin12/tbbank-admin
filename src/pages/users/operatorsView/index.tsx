@@ -3,39 +3,13 @@ import { useTranslation } from "react-i18next";
 import { Pencil, Trash2, ChevronDown, CheckCircle2, XCircle,  } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirmDialog";
-import { InfoRow, AuditLog } from "@/components/viewPageComponents";
+import { BentoGrid, BentoCard, InfoRow, AuditLog } from "@/components/viewPageComponents";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { useOperator, useDeleteOperator } from "@/features/operators/hooks/useOperators";
 import type { OperatorRole, OperatorBranch, OperatorAuditLog } from "@/features/operators/api/operatorsApi";
-
-// ─── Bento primitives ─────────────────────────────────────────────────────────
-
-function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
-  const colClass = {
-    1: "grid-cols-1",
-    2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  }[cols];
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>;
-}
-
-function BentoCard({ title, span, children }: { title?: string; span?: "full" | 2 | 3; children: React.ReactNode }) {
-  const spanClass = span === "full" ? "sm:col-span-full" : span === 2 ? "sm:col-span-2" : span === 3 ? "sm:col-span-3" : "";
-
-  return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${spanClass}`}>
-      {title && (
-        <div className="px-4 py-2.5 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{title}</p>
-        </div>
-      )}
-      {children}
-    </div>
-  );
-}
 
 // ─── IsActive indicator ───────────────────────────────────────────────────────
 
@@ -243,10 +217,18 @@ export default function OperatorDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />
-        ))}
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-7 w-64" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+              <Skeleton className="h-3 w-24 mb-1" />
+              {Array.from({ length: 3 }).map((_, j) => (
+                <Skeleton key={j} className="h-4 w-full" />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

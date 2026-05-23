@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
+import { MultiLangInput } from '@/components/multiLangInput'
 import type { CardType } from '../api/cardTypesApi'
 import { useCreateCardType, useUpdateCardType } from '../hooks/useCardTypes'
 import { createCardTypeFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/cardType.schema'
@@ -17,14 +18,6 @@ export interface CardTypeFormProps {
   mode: 'create' | 'edit'
   initialData?: CardType
 }
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -64,8 +57,6 @@ export function CardTypeForm({ mode, initialData }: CardTypeFormProps) {
   const updateMutation = useUpdateCardType()
 
   const isPending = createMutation.isPending || updateMutation.isPending
-
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
 
   const schema = useMemo(() => createCardTypeFormSchema(t), [t, i18n.language])
 
@@ -121,11 +112,11 @@ export function CardTypeForm({ mode, initialData }: CardTypeFormProps) {
     }
   }, [mode, initialData, createMutation, updateMutation, navigate, trigger, getValues])
 
-  const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as
-    | 'nameTk'
-    | 'nameRu'
-    | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FlatErrors
+  const nameFields = {
+    tk: { value: form.nameTk, onChange: (v: string) => set('nameTk')(v), error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: (v: string) => set('nameRu')(v), error: errors.nameRu },
+    en: { value: form.nameEn, onChange: (v: string) => set('nameEn')(v), error: errors.nameEn },
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -135,39 +126,15 @@ export function CardTypeForm({ mode, initialData }: CardTypeFormProps) {
           : t('cardTypes.editTitle', 'Kart görnüşi üýtgetmek')}
       </h1>
       <div>
-      {/* Language tabs */}
-      <div className="flex gap-3 justify-end mb-4">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`text-sm transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Form rows */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {/* Name */}
-        <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-[220px_1fr] items-start py-4 px-4 border-b border-border">
+          <span className="text-sm text-muted-foreground pt-2">
             {t('cardTypes.fields.name', 'Ady')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
-          <FormInput
-            type="text"
-            value={form[nameFieldKey]}
-            onChange={set(nameFieldKey)}
-            placeholder={t('cardTypes.fields.name', 'Ady')}
-            error={errors[nameErrorKey]}
-          />
+          <MultiLangInput fields={nameFields} placeholder={t('cardTypes.fields.name', 'Ady')} disabled={isPending} />
         </div>
 
         {/* Value */}

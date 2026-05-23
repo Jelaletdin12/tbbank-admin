@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Section, InfoRow } from '@/components/viewPageComponents'
 import { useGetCurrencyRateById, useDeleteCurrencyRate } from '@/features/currencyRates/hooks/useCurrencyRates'
 import { ConfirmDialog } from '@/components/confirmDialog'
@@ -32,15 +33,15 @@ export default function CurrencyRateDetailPage() {
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
-        <div className="h-6 w-64 bg-muted rounded animate-pulse" />
-        <div className="h-48 bg-muted rounded-xl animate-pulse" />
+        <Skeleton className="h-6 w-64" />
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     )
   }
 
   if (!rate) {
     return (
-      <div className="p-6">
+      <div>
         <p className="text-muted-foreground">
           {t('currencyRates.notFound', 'Walýuta kursy tapylmady')}
         </p>
@@ -51,7 +52,7 @@ export default function CurrencyRateDetailPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6">
+    <div >
     
 
       {/* Header */}

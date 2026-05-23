@@ -495,9 +495,9 @@ All authenticated routes are nested under `DashboardLayout`. The full list:
 /card-pins/:id/edit
 
 /visa-master                               (list route — note: different from CRUD base)
-/visa-master-payments/create
-/visa-master-payments/:id
-/visa-master-payments/:id/edit
+/visa-master/create
+/visa-master/:id
+/visa-master/:id/edit
 
 /sber-payments
 /sber-payments/create
@@ -616,7 +616,6 @@ These items exist in the sidebar nav or codebase but are **not yet implemented**
 | **`/settings/language/resources`** | ❌ No route or page | Same as above |
 | **`/backups`** | ❌ No route or page | Sidebar entry exists |
 | **`/logs`** | ❌ No route or page | Sidebar entry exists |
-| **`/visa-master` route inconsistency** | ⚠️ Minor | List route is `/visa-master` but CRUD routes use `/visa-master-payments/…` |
 | **`client.ts` uses `any`** | ⚠️ | `failedQueue: any[]` violates the no-`any` rule — should be typed |
 | **`authStore` role type** | ⚠️ | `role: 'admin' \| 'manager' \| 'viewer'` — actual role enforcement (RBAC) not wired to UI |
 | **`auth:unauthorized` / `auth:forbidden` events** | ⚠️ | Dispatched in `client.ts` but no global listener is registered in `App.tsx` or the router |

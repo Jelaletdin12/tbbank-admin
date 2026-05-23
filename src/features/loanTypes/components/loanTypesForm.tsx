@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import {  useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { FormInput } from '@/components/formInput'
 import { Label } from '@/components/ui/label'
 import { FormActions } from '@/components/formActions'
+import { MultiLangInput } from '@/components/multiLangInput'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useCreateLoanType, useUpdateLoanType } from '../hooks/useLoanTypes'
 import type { LoanType } from '../api/loanTypesApi'
@@ -46,16 +47,6 @@ function mapInitial(data: LoanType): LoanTypeFormData {
   }
 }
 
-// ─── Language Tab ─────────────────────────────────────────────────────────────
-
-type Lang = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: Lang; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
-
 // ─── LoanTypeForm ─────────────────────────────────────────────────────────────
 
 export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
@@ -69,9 +60,8 @@ export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
   const createMutation = useCreateLoanType()
   const updateMutation = useUpdateLoanType(initialData?.id ?? 0)
 
-  const isPending = createMutation.isPending || updateMutation.isPending
 
-  const [activeLang, setActiveLang] = useState<Lang>('tk')
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   const schema = useMemo(() => createLoanTypeFormSchema(t), [t, i18n.language])
 
@@ -128,13 +118,13 @@ export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
   const handleCancel = () => navigate('/resources/loan-types')
 
   // ── Name fields per lang ───────────────────────────────────────────────────
-  const nameFields: Record<Lang, { value: string; onChange: (v: string) => void; error?: string }> = {
+  const nameFields = {
     tk: { value: form.nameTk, onChange: set('nameTk'), error: errors.nameTk },
     ru: { value: form.nameRu, onChange: set('nameRu'), error: errors.nameRu },
     en: { value: form.nameEn, onChange: set('nameEn'), error: errors.nameEn },
   }
 
-  const notesFields: Record<Lang, { value: string; onChange: (v: string) => void }> = {
+  const notesFields = {
     tk: { value: form.notesTk ?? '', onChange: set('notesTk') },
     ru: { value: form.notesRu ?? '', onChange: set('notesRu') },
     en: { value: form.notesEn ?? '', onChange: set('notesEn') },
@@ -150,39 +140,15 @@ export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
           : t('loanTypes.editTitle', 'Karz görnüşi üýtgetmek')}
       </h1>
       <div className="space-y-0">
-      {/* Language tabs row */}
-      <div className="flex items-center justify-end gap-1 mb-0 pb-0">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* Form card */}
       <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
         {/* Ady */}
-        <div className="grid grid-cols-[220px_1fr] items-center px-4 py-3">
-          <span className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-[220px_1fr] items-start px-4 py-4">
+          <span className="text-sm text-muted-foreground pt-2">
             {t('loanTypes.fields.name', 'Ady')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
-          <FormInput
-            type="text"
-            value={nameFields[activeLang].value}
-            onChange={nameFields[activeLang].onChange}
-            placeholder={t('loanTypes.fields.name', 'Ady')}
-            error={nameFields[activeLang].error}
-          />
+          <MultiLangInput fields={nameFields} placeholder={t('loanTypes.fields.name', 'Ady')} disabled={isPending} />
         </div>
 
         {/* Salgyt */}
@@ -216,16 +182,11 @@ export function LoanTypeForm({ mode, initialData }: LoanTypeFormProps) {
         </div>
 
         {/* Bellikler */}
-        <div className="grid grid-cols-[220px_1fr] items-center px-4 py-3">
-          <span className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-[220px_1fr] items-start px-4 py-4">
+          <span className="text-sm text-muted-foreground pt-2">
             {t('loanTypes.fields.notes', 'Bellikler')}
           </span>
-          <FormInput
-            type="text"
-            value={notesFields[activeLang].value}
-            onChange={notesFields[activeLang].onChange}
-            placeholder={t('loanTypes.fields.notes', 'Bellikler')}
-          />
+          <MultiLangInput fields={notesFields} placeholder={t('loanTypes.fields.notes', 'Bellikler')} disabled={isPending} />
         </div>
 
         {/* Işjeň */}

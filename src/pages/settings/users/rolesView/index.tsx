@@ -14,45 +14,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { useRole, useDeleteRole } from '@/features/roles/hooks/useRoles'
-
-// ─── LangTabs ─────────────────────────────────────────────────────────────────
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
-
-function LangTabs({
-  active,
-  onChange,
-}: {
-  active: LangKey
-  onChange: (l: LangKey) => void
-}) {
-  return (
-    <div className="flex gap-1 justify-end mb-2">
-      {LANG_TABS.map((tab) => (
-        <button
-          key={tab.key}
-          type="button"
-          onClick={() => onChange(tab.key)}
-          className={`px-3 py-0.5 text-xs font-medium rounded-md transition-colors ${
-            active === tab.key
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 // ─── RoleViewPage ─────────────────────────────────────────────────────────────
 
@@ -62,7 +25,6 @@ export default function RoleViewPage() {
   const navigate     = useNavigate()
   const roleId       = Number(id)
 
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
   const [showDelete, setShowDelete] = useState(false)
 
   const { data: role, isLoading, isError } = useRole(roleId)
@@ -82,7 +44,7 @@ export default function RoleViewPage() {
         <Skeleton className="h-8 w-72 mb-6" />
         <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="grid grid-cols-[220px_1fr] items-center py-3 px-4">
+            <div key={i} className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-3 px-4 gap-2 sm:gap-0">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-40" />
             </div>
@@ -133,18 +95,7 @@ export default function RoleViewPage() {
         <InfoRow label="ID"               value={role.id} />
         <InfoRow label={t('roles.fields.code', 'Kod')} value={role.code} />
 
-        {/* Name row — with lang switcher */}
-        <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground pt-1">
-            {t('roles.fields.name', 'Ady')}
-          </span>
-          <div>
-            <LangTabs active={activeLang} onChange={setActiveLang} />
-            <span className="text-sm text-foreground">
-              {role.name?.[activeLang] || '—'}
-            </span>
-          </div>
-        </div>
+        <MultiLangRow label={t('roles.fields.name', 'Ady')} value={role.name} />
 
         <InfoRow label={t('roles.fields.guardName', 'Guard name')} value={role.guard_name} />
       </Section>
