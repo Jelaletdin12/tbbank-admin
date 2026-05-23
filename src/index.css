@@ -1,9 +1,17 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+/* @import "@fontsource-variable/inter"; */
 
 @custom-variant dark (&:is(.dark *));
+
+@font-face {
+  font-family: 'Inter Variable';
+  src: url('/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme inline {
     --font-heading: var(--font-sans);
