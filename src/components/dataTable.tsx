@@ -243,6 +243,9 @@ interface DataTableProps<TData> {
   totalPages?: number
   totalCount?: number
   onPageChange?: (page: number) => void
+
+  // Optional content rendered above the table (e.g. month selector)
+  headerContent?: React.ReactNode
 }
 
 export function DataTable<TData>({
@@ -260,6 +263,7 @@ export function DataTable<TData>({
   totalPages = 1,
   totalCount,
   onPageChange,
+  headerContent,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
@@ -394,6 +398,11 @@ export function DataTable<TData>({
 
   return (
     <div className="space-y-0">
+      {/* Header content (e.g. month selector) */}
+      {headerContent && (
+        <div className="mb-3">{headerContent}</div>
+      )}
+
       {/* Selection banner */}
       {showBanner && (
         <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border border-primary/20 rounded-t-lg text-sm border-b-0">

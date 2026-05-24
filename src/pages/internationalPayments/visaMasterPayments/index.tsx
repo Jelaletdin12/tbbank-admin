@@ -7,9 +7,9 @@ import { DataTableToolbar } from '@/components/dataTableToolbar'
 import { useIntlPayments, useDeleteIntlPayment } from '@/features/visaMasterPayments/hooks/useVisaMasterPayments'
 import type { IntlPaymentItem, IntlPaymentStatus } from '@/features/visaMasterPayments/api/visaMasterPaymentsApi'
 import { Button } from '@/components/ui/button'
-import { Eye, Pencil, Trash2, ChevronDown } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/confirmDialog'
-import { cn } from '@/lib/utils'
+import { MonthSelect } from '@/components/monthSelect'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -36,51 +36,6 @@ function IntlPaymentStatusStatusBadge({ status }: { status: IntlPaymentStatus })
   const cfg = STATUS_CONFIG[status]
   if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
   return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
-}
-
-// ─── Month selector (AÝ TOLEGI) ───────────────────────────────────────────────
-
-const MONTHS = [
-  { value: '01', label: 'Ýanwar' },
-  { value: '02', label: 'Fewral' },
-  { value: '03', label: 'Mart' },
-  { value: '04', label: 'Aprel' },
-  { value: '05', label: 'Maý' },
-  { value: '06', label: 'Iýun' },
-  { value: '07', label: 'Iýul' },
-  { value: '08', label: 'Awgust' },
-  { value: '09', label: 'Sentýabr' },
-  { value: '10', label: 'Oktýabr' },
-  { value: '11', label: 'Noýabr' },
-  { value: '12', label: 'Dekabr' },
-]
-
-function MonthSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const { t } = useTranslation()
-  return (
-    <div className="bg-card border border-border rounded-lg p-4 mb-4 inline-flex flex-col gap-2">
-      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        {t('intlPayment.monthFilter', 'AÝ TÖLEGI')}
-      </span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={cn(
-            'h-9 pl-3 pr-8 rounded-md border border-border bg-background',
-            'text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring',
-            'appearance-none cursor-pointer min-w-[120px]',
-          )}
-        >
-          <option value="">—</option>
-          {MONTHS.map((m) => (
-            <option key={m.value} value={m.value}>{m.label}</option>
-          ))}
-        </select>
-        <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-      </div>
-    </div>
-  )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -205,7 +160,6 @@ export default function IntlPaymentsPage() {
           {t("intlPayment.title", "Halkara tölegler (Visa/Mastercard)")}
         </h1>
       </div>
-      <MonthSelector value={month} onChange={(v) => { setMonth(v); setPage(1) }} />
 <div className="bg-card border border-border rounded-xl p-4">
 
       <DataTableToolbar
@@ -238,6 +192,12 @@ export default function IntlPaymentsPage() {
         onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
         actionLabel={t('intlPayment.createBtn', 'Visa/Master tölegler (talyplar üçin) dörediň')}
         onAction={() => navigate('/visa-master/create')}
+        extraActions={
+          <MonthSelect
+            value={month}
+            onChange={(v) => { setMonth(v); setPage(1) }}
+          />
+        }
       />
 
       <DataTable

@@ -7,18 +7,11 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { DataTable } from '@/components/dataTable'
 import { DataTableToolbar, type ColumnMeta, type FilterField, type ActiveFilter } from '@/components/dataTableToolbar'
+import { MonthSelect } from '@/components/monthSelect'
 import { useSberPaymentOrders, useDeleteSberPayment } from '@/features/sberPayments/hooks/useSberPayments'
 import { type SberPaymentOrder, WELAYATLAR, STATUSES, type PaymentStatus, type PaymentPaidStatus } from '@/features/sberPayments/api/sberPaymentsApi'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -71,7 +64,6 @@ function PaymentStatusBadge({ status, t }: { status: PaymentStatus; t: (key: str
 }
 
 // ─── Column Definitions ───────────────────────────────────────────────────────
-
 
 
 // ─── Column Meta for Toolbar ──────────────────────────────────────────────────
@@ -302,32 +294,6 @@ export default function SberPaymentsListPage() {
   
   return (
     <div className="space-y-4">
-      {/* Month Filter Card */}
-      <div className="bg-card border border-border rounded-lg p-4 max-w-xs">
-        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-          {t('sberPayments.list.monthLabel', 'Aý tölegi')}
-        </label>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="--" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="01">{t('months.january', 'Ýanwar')}</SelectItem>
-            <SelectItem value="02">{t('months.february', 'Fewral')}</SelectItem>
-            <SelectItem value="03">{t('months.march', 'Mart')}</SelectItem>
-            <SelectItem value="04">{t('months.april', 'Aprel')}</SelectItem>
-            <SelectItem value="05">{t('months.may', 'Maý')}</SelectItem>
-            <SelectItem value="06">{t('months.june', 'Iýun')}</SelectItem>
-            <SelectItem value="07">{t('months.july', 'Iýul')}</SelectItem>
-            <SelectItem value="08">{t('months.august', 'Awgust')}</SelectItem>
-            <SelectItem value="09">{t('months.september', 'Sentýabr')}</SelectItem>
-            <SelectItem value="10">{t('months.october', 'Oktýabr')}</SelectItem>
-            <SelectItem value="11">{t('months.november', 'Noýabr')}</SelectItem>
-            <SelectItem value="12">{t('months.december', 'Dekabr')}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
       {/* Page Title */}
       <h1 className="text-xl font-semibold text-foreground">
         {t('sberPayments.list.title', 'Sber tölegler (talyplar üçin)')}
@@ -358,6 +324,12 @@ export default function SberPaymentsListPage() {
         }}
         actionLabel={t('sberPayments.list.actionLabel', 'Sber töleg (talyplar üçin) dörediň')}
         onAction={() => navigate('/sber-payments/create')}
+        extraActions={
+          <MonthSelect
+            value={selectedMonth}
+            onChange={(v) => { setSelectedMonth(v); setPage(1) }}
+          />
+        }
       />
       
       {/* Data Table */}

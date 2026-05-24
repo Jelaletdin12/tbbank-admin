@@ -6,6 +6,18 @@ import { useOutsideClick } from '@/lib/hooks/useOutsideClick'
 import { cn } from '@/lib/utils'
 import { TableSearchInput } from '@/components/tableSearch'
 import { TableActionButton } from '@/components/tableButton'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,6 +62,8 @@ interface DataTableToolbarProps {
 
   hideSearch?: boolean
   hideAction?: boolean
+
+  extraActions?: React.ReactNode
 }
 
 // ─── Toggle Columns Dropdown ──────────────────────────────────────────────────
@@ -84,7 +98,6 @@ function ToggleColumnsDropdown({
     onColumnVisibilityChange({ ...columnVisibility, [id]: !isVisible(id) })
   }
 
-  // columnOrder'a göre sırala; columnOrder'da olmayan kolonları sona at
   const orderedColumns = [...columns].sort((a, b) => {
     const ai = columnOrder.indexOf(a.id)
     const bi = columnOrder.indexOf(b.id)
@@ -94,9 +107,7 @@ function ToggleColumnsDropdown({
     return ai - bi
   })
 
-  const handleDragStart = (id: string) => {
-    dragIdRef.current = id
-  }
+  const handleDragStart = (id: string) => { dragIdRef.current = id }
 
   const handleDragOver = (e: React.DragEvent, id: string) => {
     e.preventDefault()
@@ -106,19 +117,14 @@ function ToggleColumnsDropdown({
   const handleDrop = (targetId: string) => {
     const sourceId = dragIdRef.current
     if (!sourceId || sourceId === targetId) return
-
     const next = [...columnOrder]
     const from = next.indexOf(sourceId)
     const to = next.indexOf(targetId)
-
-    // columnOrder'da yoksa ekle
     const safeFrom = from === -1 ? next.length : from
     const safeTo = to === -1 ? next.length : to
-
     next.splice(safeFrom, 1)
     next.splice(safeTo, 0, sourceId)
     onColumnOrderChange(next)
-
     dragIdRef.current = null
     setDragOverId(null)
   }
@@ -226,8 +232,6 @@ function FilterDropdown({
 }: FilterDropdownProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useOutsideClick(ref, () => setOpen(false))
 
   const activeCount = activeFilters.filter((f) => f.value !== '').length
   const hasActive = activeCount > 0
@@ -236,95 +240,138 @@ function FilterDropdown({
     activeFilters.find((f) => f.fieldId === fieldId)?.value ?? ''
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border cursor-pointer',
-          'text-muted-foreground bg-background',
-          'hover:bg-muted/50 hover:text-foreground transition-colors',
-          open && 'bg-muted/50 text-foreground border-ring',
-          // emerald yerine primary token
-          hasActive && 'border-primary text-primary'
-        )}
-      >
-        <Filter size={14} />
-        {hasActive && (
-          <span className="text-xs font-semibold bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center leading-none">
-            {activeCount}
-          </span>
-        )}
-        <ChevronDown size={12} />
-      </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            'flex items-center gap-1.5 h-9 px-3 rounded-md border border-border cursor-pointer',
+            'text-muted-foreground bg-background',
+            'hover:bg-muted/50 hover:text-foreground transition-colors',
+            open && 'bg-muted/50 text-foreground border-ring',
+            hasActive && 'border-primary text-primary'
+          )}
+        >
+          <Filter size={14} />
+          {hasActive && (
+            <span className="text-xs font-semibold bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center leading-none">
+              {activeCount}
+            </span>
+          )}
+          <ChevronDown size={12} />
+        </button>
+      </PopoverTrigger>
 
-      {open && (
-        <div className="absolute right-0 mt-1.5 w-64 bg-card border border-border rounded-md shadow-lg z-50 py-3">
-          <div className="flex items-center justify-between px-3 pb-2 border-b border-border mb-2">
-            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              {t('table.filters', 'Filters')}
-            </p>
-            {hasActive && (
-              <button
-                onClick={onFilterReset}
-                className="flex items-center gap-1 text-xs text-destructive hover:text-destructive/80 transition-colors"
-              >
-                <X size={11} />
-                {t('table.reset', 'Reset')}
-              </button>
-            )}
-          </div>
+      <PopoverContent align="end" sideOffset={4} className="w-64 p-0">
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            {t('table.filters', 'Filters')}
+          </p>
+        </div>
 
-          <div className="px-3 space-y-3">
-            {filterFields.map((field) => (
-              <div key={field.id}>
-                <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+        {/* Fields */}
+        <div className="px-3 py-3 space-y-3">
+          {filterFields.map((field) => {
+            const current = getActiveValue(field.id)
+            const isFieldActive = current !== ''
+
+            return (
+              <div key={field.id} className="space-y-1">
+                <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   {field.label}
                 </label>
-                <select
-                  value={getActiveValue(field.id)}
-                  onChange={(e) => onFilterChange(field.id, e.target.value)}
-                  className={cn(
-                    'w-full h-8 px-2 rounded-md border border-border bg-background',
-                    'text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring',
-                    'transition-colors appearance-none cursor-pointer'
-                  )}
-                >
-                  <option value="">—</option>
-                  {field.options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ))}
 
-            {onPerPageChange && (
-              <div>
-                <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  {t('table.perPage', 'Sahypa başyna')}
-                </label>
-                <select
-                  value={perPage}
-                  onChange={(e) => onPerPageChange(Number(e.target.value))}
-                  className={cn(
-                    'w-full h-8 px-2 rounded-md border border-border bg-background',
-                    'text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring',
-                    'transition-colors appearance-none cursor-pointer'
+                {/* MonthSelect ile aynı pattern: manuel span + sentinel */}
+                <div className="flex items-center gap-1">
+                  <Select
+                    value={current || '__all__'}
+                    onValueChange={(val) =>
+                      onFilterChange(field.id, val === '__all__' ? '' : val)
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        'h-8 flex-1 text-sm gap-1.5 transition-colors',
+                        isFieldActive
+                          ? 'border-primary text-primary [&>svg:last-child]:text-primary'
+                          : 'text-muted-foreground'
+                      )}
+                    >
+                      {/* SelectValue kullanmıyoruz — MonthSelect gibi manuel */}
+                      <span className="flex-1 text-left truncate">
+                        {isFieldActive
+                          ? field.options.find((o) => o.value === current)?.label
+                          : '—'}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent position="popper" sideOffset={4} className='p-1'>
+                      <SelectItem value="__all__">
+                        <span className="text-muted-foreground">— Ählisi</span>
+                      </SelectItem>
+                      {field.options.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Field bazlı temizle — MonthSelect'teki X butonu ile aynı */}
+                  {isFieldActive && (
+                    <button
+                      type="button"
+                      onClick={() => onFilterChange(field.id, '')}
+                      className="h-6 w-6 rounded flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors shrink-0"
+                    >
+                      <X size={11} />
+                    </button>
                   )}
-                >
-                  {perPageOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+                </div>
               </div>
-            )}
-          </div>
+            )
+          })}
+
+          {onPerPageChange && (
+            <div className="space-y-1">
+              <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {t('table.perPage', 'Sahypa başyna')}
+              </label>
+              <Select
+                value={String(perPage)}
+                onValueChange={(val) => onPerPageChange(Number(val))}
+              >
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" sideOffset={4} className='p-1'>
+                  {perPageOptions.map((n) => (
+                    <SelectItem key={n} value={String(n)}>
+                      {n}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Reset — tüm filtreler, sadece aktif filter varsa göster */}
+          {hasActive && (
+            <button
+              type="button"
+              onClick={onFilterReset}
+              className={cn(
+                'w-full cursor-pointer flex items-center justify-center gap-1.5 h-8 rounded-md text-xs font-medium transition-colors',
+                'bg-destructive/10 text-destructive border border-destructive/20',
+                'hover:bg-destructive/30 hover:text-destructive-foreground'
+              )}
+            >
+              <X size={11} />
+              {t('table.reset', 'Reset')} ({activeCount})
+            </button>
+          )}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   )
 }
 
@@ -350,9 +397,10 @@ export function DataTableToolbar({
   onAction,
   hideSearch = false,
   hideAction = false,
+  extraActions,
 }: DataTableToolbarProps) {
   return (
-    <div className={cn("flex items-center gap-3 mb-3", hideSearch ? "justify-end" : "justify-between")}>
+    <div className={cn('flex items-center gap-3 mb-3', hideSearch ? 'justify-end' : 'justify-between')}>
       {!hideSearch && (
         <TableSearchInput
           value={searchValue}
@@ -383,6 +431,8 @@ export function DataTableToolbar({
             onPerPageChange={onPerPageChange}
           />
         )}
+
+        {extraActions}
 
         {!hideAction && actionLabel && onAction && (
           <TableActionButton label={actionLabel} onClick={onAction} />
