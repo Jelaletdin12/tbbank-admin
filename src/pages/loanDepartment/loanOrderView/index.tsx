@@ -26,25 +26,36 @@ import { ConfirmDialog } from "@/components/confirmDialog";
 // ─── Status config ────────────────────────────────────────────────────────────
 
 const STATUS_VARIANT: Record<LoanOrderMobileStatus, StatusBadgeVariant> = {
-  GARAŞYLÝAR:        "warning",
+  GARAŞYLÝAR: "warning",
   KANAGATLANDYRYLAN: "success",
-  RED_EDILDI:        "error",
-  IŞLENÝÄR:          "warning",
-}
+  RED_EDILDI: "error",
+  IŞLENÝÄR: "warning",
+};
 
 const STATUS_ICON: Record<LoanOrderMobileStatus, React.ElementType> = {
-  GARAŞYLÝAR:        AlertCircle,
+  GARAŞYLÝAR: AlertCircle,
   KANAGATLANDYRYLAN: CheckCircle2,
-  RED_EDILDI:        XCircle,
-  IŞLENÝÄR:          AlertCircle,
-}
+  RED_EDILDI: XCircle,
+  IŞLENÝÄR: AlertCircle,
+};
 
-function LoanOrderMobileStatusBadge({ status }: { status: LoanOrderMobileStatus }) {
-  const { t } = useTranslation()
-  const variant = STATUS_VARIANT[status]
-  const Icon = STATUS_ICON[status]
-  if (!variant) return <span className="text-xs text-muted-foreground">{status}</span>
-  return <StatusBadge label={t(`loanOrderStatus.${status}`)} variant={variant} icon={Icon} />
+function LoanOrderMobileStatusBadge({
+  status,
+}: {
+  status: LoanOrderMobileStatus;
+}) {
+  const { t } = useTranslation();
+  const variant = STATUS_VARIANT[status];
+  const Icon = STATUS_ICON[status];
+  if (!variant)
+    return <span className="text-xs text-muted-foreground">{status}</span>;
+  return (
+    <StatusBadge
+      label={t(`loanOrderStatus.${status}`)}
+      variant={variant}
+      icon={Icon}
+    />
+  );
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -55,7 +66,10 @@ function LoanOrderViewSkeleton() {
       <Skeleton className="h-7 w-64" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+          <div
+            key={i}
+            className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
+          >
             <Skeleton className="h-3 w-24 mb-1" />
             {[...Array(3)].map((_, j) => (
               <Skeleton key={j} className="h-4 w-full" />
@@ -64,54 +78,53 @@ function LoanOrderViewSkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LoanOrderViewPage() {
-  const { t }    = useTranslation()
-  const navigate = useNavigate()
-  const { id }   = useParams<{ id: string }>()
-  const deleteMutation = useDeleteLoanOrder()
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const deleteMutation = useDeleteLoanOrder();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const { data: order, isLoading } = useLoanOrderById(id!)
+  const { data: order, isLoading } = useLoanOrderById(id!);
 
   const handleDelete = () => {
-    setShowDeleteDialog(true)
-  }
+    setShowDeleteDialog(true);
+  };
 
   const confirmDelete = () => {
     deleteMutation.mutate(id!, {
       onSuccess: () => navigate("/loan-orders"),
-    })
-  }
+    });
+  };
 
-  if (isLoading) return <LoanOrderViewSkeleton />
+  if (isLoading) return <LoanOrderViewSkeleton />;
 
   if (!order) {
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
         {t("common.notFound", "Tapylmady")}
       </div>
-    )
+    );
   }
 
   const auditLogs: AuditRowProps[] = [
     {
-      id:     "44548",
+      id: "44548",
       action: t("audit.actions.view", "Görmek"),
-      by:     order.createdBy ?? "",
+      by: order.createdBy ?? "",
       target: `${t("loanOrders.title", "Karz sargyt")}: ${order.id}`,
       status: "FINISHED",
-      date:   order.createdAt ?? "",
+      date: order.createdAt ?? "",
     },
-  ]
+  ];
 
   return (
     <div className="flex flex-col gap-6">
-
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">
@@ -145,9 +158,7 @@ export default function LoanOrderViewPage() {
             label={t("loanOrders.columns.createdAt", "Döredilen wagty")}
             value={order.createdAt}
           />
-          <InfoRow
-            label={t("loanOrders.columns.status", "Status")}
-          >
+          <InfoRow label={t("loanOrders.columns.status", "Status")}>
             <LoanOrderMobileStatusBadge status={order.status} />
           </InfoRow>
           <InfoRow
@@ -191,7 +202,9 @@ export default function LoanOrderViewPage() {
       {/* ── Row 2: Personal + Contacts ──────────────────────────────────── */}
       <BentoGrid cols={2}>
         {/* Personal */}
-        <BentoCard title={t("loanOrders.sections.personal", "Şahsy maglumatlar")}>
+        <BentoCard
+          title={t("loanOrders.sections.personal", "Şahsy maglumatlar")}
+        >
           <InfoRow
             label={t("loanOrders.fields.fullName", "Doly ady")}
             value={order.fullName ?? `${order.firstName} ${order.lastName}`}
@@ -209,11 +222,17 @@ export default function LoanOrderViewPage() {
             value={order.birthDate ?? undefined}
           />
           <InfoRow
-            label={t("loanOrders.fields.registeredAddress", "Ýazgy edilen salgy")}
+            label={t(
+              "loanOrders.fields.registeredAddress",
+              "Ýazgy edilen salgy",
+            )}
             value={order.registeredAddress ?? undefined}
           />
           <InfoRow
-            label={t("loanOrders.fields.currentAddress", "Häzirki ýaşaýyş ýeri")}
+            label={t(
+              "loanOrders.fields.currentAddress",
+              "Häzirki ýaşaýyş ýeri",
+            )}
             value={order.currentAddress ?? undefined}
           />
         </BentoCard>
@@ -248,7 +267,10 @@ export default function LoanOrderViewPage() {
             value={order.employer ?? undefined}
           />
           <InfoRow
-            label={t("loanOrders.fields.deptPhone", "Işgärler bölüminiň belgisi")}
+            label={t(
+              "loanOrders.fields.deptPhone",
+              "Işgärler bölüminiň belgisi",
+            )}
             value={order.deptPhone ?? undefined}
           />
           <InfoRow
@@ -281,11 +303,17 @@ export default function LoanOrderViewPage() {
             value={order.passportNumber ?? undefined}
           />
           <InfoRow
-            label={t("loanOrders.fields.passportIssuedBy", "Kim tarapyndan berildi")}
+            label={t(
+              "loanOrders.fields.passportIssuedBy",
+              "Kim tarapyndan berildi",
+            )}
             value={order.passportIssuedBy ?? undefined}
           />
           <InfoRow
-            label={t("loanOrders.fields.passportBirthPlace", "Doglan ýeri (pasport)")}
+            label={t(
+              "loanOrders.fields.passportBirthPlace",
+              "Doglan ýeri (pasport)",
+            )}
             value={order.passportBirthPlace ?? undefined}
           />
         </BentoCard>
@@ -301,19 +329,28 @@ export default function LoanOrderViewPage() {
         </BentoCard>
         <BentoCard title={t("loanOrders.fields.passportPage23", "Sahypa 2-3")}>
           <PassportImage
-            label={t("loanOrders.fields.passportPage23", "Pasport (2-3-nji sahypa)")}
+            label={t(
+              "loanOrders.fields.passportPage23",
+              "Pasport (2-3-nji sahypa)",
+            )}
             src={order.passportPage23Url ?? undefined}
           />
         </BentoCard>
         <BentoCard title={t("loanOrders.fields.passportPage89", "Sahypa 8-9")}>
           <PassportImage
-            label={t("loanOrders.fields.passportPage89", "Pasport (8-9 sahypa)")}
+            label={t(
+              "loanOrders.fields.passportPage89",
+              "Pasport (8-9 sahypa)",
+            )}
             src={order.passportPage89Url ?? undefined}
           />
         </BentoCard>
         <BentoCard title={t("loanOrders.fields.passportPage32", "Sahypa 32")}>
           <PassportImage
-            label={t("loanOrders.fields.passportPage32", "Pasport (32-nji sahypa)")}
+            label={t(
+              "loanOrders.fields.passportPage32",
+              "Pasport (32-nji sahypa)",
+            )}
             src={order.passportPage32Url ?? undefined}
           />
         </BentoCard>
@@ -331,5 +368,5 @@ export default function LoanOrderViewPage() {
         isLoading={deleteMutation.isPending}
       />
     </div>
-  )
+  );
 }

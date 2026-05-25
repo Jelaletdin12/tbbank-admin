@@ -1,16 +1,25 @@
-import { Download, Eye, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Download, Eye, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/components/ui/badge";
+import { DataTable, type ColumnDef } from "@/components/dataTable";
 
 // ─── BentoGrid ────────────────────────────────────────────────────────────────
 
-export function BentoGrid({ cols = 2, children }: { cols?: 1 | 2 | 3 | 4; children: React.ReactNode }) {
+export function BentoGrid({
+  cols = 2,
+  children,
+}: {
+  cols?: 1 | 2 | 3 | 4;
+  children: React.ReactNode;
+}) {
   const colClass = {
     1: "grid-cols-1",
     2: "grid-cols-1 sm:grid-cols-2",
     3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
     4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  }[cols]
-  return <div className={`grid ${colClass} gap-4`}>{children}</div>
+  }[cols];
+  return <div className={`grid ${colClass} gap-4`}>{children}</div>;
 }
 
 // ─── BentoCard ────────────────────────────────────────────────────────────────
@@ -22,14 +31,25 @@ interface BentoCardProps {
   noPadding?: boolean;
 }
 
-export function BentoCard({ title, span, children, noPadding }: BentoCardProps) {
+export function BentoCard({
+  title,
+  span,
+  children,
+  noPadding,
+}: BentoCardProps) {
   const spanClass =
-    span === "full" ? "sm:col-span-full" :
-    span === 2      ? "sm:col-span-2"    :
-    span === 3      ? "sm:col-span-3"    : ""
+    span === "full"
+      ? "sm:col-span-full"
+      : span === 2
+        ? "sm:col-span-2"
+        : span === 3
+          ? "sm:col-span-3"
+          : "";
 
   return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden min-w-0 ${spanClass}`}>
+    <div
+      className={`bg-card border border-border rounded-xl overflow-hidden min-w-0 ${spanClass}`}
+    >
       {title && (
         <div className="px-4 py-2.5 border-b border-border">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">
@@ -39,34 +59,31 @@ export function BentoCard({ title, span, children, noPadding }: BentoCardProps) 
       )}
       {noPadding ? <div>{children}</div> : children}
     </div>
-  )
+  );
 }
 
 // ─── InfoRow ──────────────────────────────────────────────────────────────────
-// Supports both:
-//   <InfoRow label="ID" value={data.id} />
-//   <InfoRow label="ID">{data.id}</InfoRow>
 
 export interface InfoRowProps {
   label: string;
-  /** Plain string/number value — use this or children, not both */
   value?: string | number | null;
-  /** Arbitrary JSX — status badges, links, custom formatting, etc. */
   children?: React.ReactNode;
   isLink?: boolean;
 }
 
-
-// ─── InfoRow ──────────────────────────────────────────────────────────────────
 export function InfoRow({ label, value, children, isLink }: InfoRowProps) {
   const content = children ?? (value != null ? String(value) : null);
 
   return (
     <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 border-b border-border last:border-0 gap-0.5 sm:gap-0">
-      <span className="text-xs sm:text-sm text-muted-foreground leading-snug">{label}</span>
+      <span className="text-xs sm:text-sm text-muted-foreground leading-snug">
+        {label}
+      </span>
       {content != null && content !== "" ? (
         typeof content === "string" ? (
-          <span className={`text-sm break-words min-w-0 ${isLink ? "text-primary font-medium" : "text-foreground"}`}>
+          <span
+            className={`text-sm break-words min-w-0 ${isLink ? "text-primary font-medium" : "text-foreground"}`}
+          >
             {content}
           </span>
         ) : (
@@ -87,9 +104,7 @@ export interface MultiLangRowProps {
 }
 
 export function MultiLangRow({ label, value }: MultiLangRowProps) {
-  if (!value) {
-    return <InfoRow label={label} value="—" />;
-  }
+  if (!value) return <InfoRow label={label} value="—" />;
 
   const langs = [
     { code: "TK", val: value.tk },
@@ -101,7 +116,9 @@ export function MultiLangRow({ label, value }: MultiLangRowProps) {
 
   return (
     <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start py-2.5 px-4 border-b border-border last:border-0 gap-1 sm:gap-0">
-      <span className="text-xs sm:text-sm text-muted-foreground leading-snug pt-1">{label}</span>
+      <span className="text-xs sm:text-sm text-muted-foreground leading-snug pt-1">
+        {label}
+      </span>
       <div className="w-full min-w-0 flex flex-col gap-1.5 py-0.5">
         {langs.map((l) =>
           l.val ? (
@@ -113,7 +130,7 @@ export function MultiLangRow({ label, value }: MultiLangRowProps) {
                 {l.val}
               </span>
             </div>
-          ) : null
+          ) : null,
         )}
         {!hasAny && <span className="text-sm text-muted-foreground/40">—</span>}
       </div>
@@ -122,7 +139,6 @@ export function MultiLangRow({ label, value }: MultiLangRowProps) {
 }
 
 // ─── Section ──────────────────────────────────────────────────────────────────
-// title is optional — omit or pass empty string to skip the heading
 
 export interface SectionProps {
   title?: string;
@@ -144,8 +160,38 @@ export function Section({ title, children }: SectionProps) {
   );
 }
 
+// ─── CollapsibleSection ────────────────────────────────────────────────────────
+
+export interface CollapsibleSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+export function CollapsibleSection({ title, children }: CollapsibleSectionProps) {
+  const [open, setOpen] = useState(true);
+
+  return (
+    <div>
+      <div
+        className="flex items-center gap-2 mb-2 cursor-pointer select-none w-fit"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        <ChevronDown
+          size={15}
+          className={`text-muted-foreground transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
+        />
+      </div>
+      {open && (
+        <div className="bg-card border border-border rounded-xl overflow-hidden p-4 space-y-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── PassportImage ────────────────────────────────────────────────────────────
-// Accepts both `src` and `url` prop names for compatibility
 
 export interface PassportImageProps {
   label: string;
@@ -153,7 +199,6 @@ export interface PassportImageProps {
   url?: string | null;
 }
 
-// ─── PassportImage ────────────────────────────────────────────────────────────
 export function PassportImage({ label, src, url }: PassportImageProps) {
   const { t } = useTranslation();
   const imageSrc = src ?? url ?? null;
@@ -190,7 +235,7 @@ export function PassportImage({ label, src, url }: PassportImageProps) {
   );
 }
 
-// ─── AuditRow ─────────────────────────────────────────────────────────────────
+// ─── AuditRowProps ────────────────────────────────────────────────────────────
 
 export interface AuditRowProps {
   id: string;
@@ -201,105 +246,138 @@ export interface AuditRowProps {
   date: string;
 }
 
-export function AuditRow({
-  id,
-  action,
-  by,
-  target,
-  status,
-  date,
-}: AuditRowProps) {
-  return (
-    <tr className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-      <td className="px-4 py-2.5 text-xs font-mono text-primary">{id}</td>
-      <td className="px-4 py-2.5 text-sm text-foreground">{action}</td>
-      <td className="px-4 py-2.5 text-sm text-foreground">{by}</td>
-      <td className="px-4 py-2.5 text-sm text-foreground">{target}</td>
-      <td className="px-4 py-2.5">
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/30 px-2 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          {status}
-        </span>
-      </td>
-      <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
-        {date}
-      </td>
-      <td className="px-4 py-2.5">
-        <button className="p-1 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors">
-          <Eye size={13} />
-        </button>
-      </td>
-    </tr>
+// ─── StatusBadge ──────────────────────────────────────────────────────────────
+
+export function StatusBadge({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  const variant =
+    normalized === "success" || normalized === "completed"
+      ? "default"
+      : normalized === "failed" || normalized === "error"
+        ? "destructive"
+        : normalized === "pending"
+          ? "secondary"
+          : "outline";
+
+  return <Badge variant={variant}>{status}</Badge>;
+}
+
+// ─── useAuditColumns ──────────────────────────────────────────────────────────
+
+export function useAuditColumns(
+  onView?: (log: AuditRowProps) => void,
+): ColumnDef<AuditRowProps>[] {
+  const { t } = useTranslation();
+
+  return useMemo(
+    () => [
+      {
+        accessorKey: "id",
+        header: "ID",
+        cell: ({ row }) => (
+          <span className="text-xs font-mono text-muted-foreground">
+            {row.original.id}
+          </span>
+        ),
+        size: 130,
+      },
+      {
+        accessorKey: "action",
+        header: t("audit.columns.action", "AMALYŇ ADY"),
+        cell: ({ row }) => (
+          <span className="text-sm font-medium text-primary">
+            {row.original.action}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "by",
+        header: t("audit.columns.by", "KIM TARAPYNDAN"),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">{row.original.by}</span>
+        ),
+      },
+      {
+        accessorKey: "target",
+        header: t("audit.columns.target", "AMALYŇ NYŞANY"),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground">{row.original.target}</span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: t("audit.columns.status", "AMALYŇ STATUSY"),
+        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        size: 160,
+      },
+      {
+        accessorKey: "date",
+        header: t("audit.columns.date", "SENE"),
+        cell: ({ row }) => (
+          <span className="text-sm text-foreground whitespace-nowrap">
+            {row.original.date}
+          </span>
+        ),
+        size: 160,
+      },
+      {
+        id: "actions",
+        header: "",
+        enableHiding: false,
+        size: 60,
+        cell: ({ row }) =>
+          onView ? (
+            <div className="flex items-center justify-end">
+              <button
+                onClick={() => onView(row.original)}
+                className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                title={t("common.view", "Görmek")}
+              >
+                <Eye size={15} />
+              </button>
+            </div>
+          ) : null,
+      },
+    ],
+    [t, onView],
   );
 }
 
-// ─── AuditLog (full collapsible table) ───────────────────────────────────────
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
 
 export interface AuditLogProps {
   logs: AuditRowProps[];
-  defaultOpen?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+  onPageChange?: (page: number) => void;
+  isLoading?: boolean;
+  onView?: (log: AuditRowProps) => void;
 }
 
-export function AuditLog({ logs, defaultOpen = true }: AuditLogProps) {
-  const { t } = useTranslation();
-
-  const columns = [
-    "ID",
-    t("audit.columns.action", "AMALYŇ ADY"),
-    t("audit.columns.by", "KIM TARAPYNDAN"),
-    t("audit.columns.target", "AMALYŇ NYŞANY (TARIBESI)"),
-    t("audit.columns.status", "AMALYŇ STATUSY"),
-    t("audit.columns.date", "SENE"),
-    "",
-  ];
+export function AuditLog({
+  logs,
+  currentPage,
+  totalPages,
+  totalCount,
+  onPageChange,
+  isLoading,
+  onView,
+}: AuditLogProps) {
+  const columns = useAuditColumns(onView);
 
   return (
-    <div className="mb-6">
-      <details open={defaultOpen}>
-        <summary className="text-base font-semibold text-foreground mb-2 cursor-pointer select-none list-none flex items-center gap-1.5 w-fit">
-          {t("loanOrders.sections.audit", "Ammallar")}
-          <ChevronRight size={15} className="text-muted-foreground" />
-        </summary>
-        <div className="bg-card border border-border rounded-xl overflow-hidden mt-2">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  {columns.map((col, i) => (
-                    <th
-                      key={i}
-                      className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                    >
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {logs.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={columns.length}
-                      className="text-center py-10 text-muted-foreground text-sm"
-                    >
-                      {t("common.noData", "Maglumat ýok")}
-                    </td>
-                  </tr>
-                ) : (
-                  logs.map((log) => <AuditRow key={log.id} {...log} />)
-                )}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex items-center justify-between px-4 py-2.5 border-t border-border text-xs text-muted-foreground">
-            <span>{t("common.prev", "Öňki")}</span>
-            <span>
-              1–{logs.length} / {logs.length}
-            </span>
-            <span>{t("common.next", "Soňky")}</span>
-          </div>
-        </div>
-      </details>
+    <div className="bg-card rounded-md">
+      <DataTable
+        columns={columns}
+        data={logs}
+        isLoading={isLoading}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+        getRowId={(row) => row.id}
+      />
     </div>
   );
 }

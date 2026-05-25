@@ -219,14 +219,19 @@ export default function OperatorsPage() {
       {/* Delete dialog */}
       <ConfirmDialog
         open={!!deleteTarget}
-        onOpenChange={(o) => { if (!o) setDeleteTarget(null) }}
+        onOpenChange={(o) => {
+          if (!o) setDeleteTarget(null);
+        }}
         title={t("operators.deleteTitle", "Operatory pozmak")}
-        description={t("operators.deleteDescription", 'Siz "{name}" operatoryny pozjakmy?').replace("{name}", deleteTarget?.name ?? "")}
+        description={t(
+          "operators.deleteDescription",
+          'Siz "{name}" operatoryny pozjakmy?',
+        ).replace("{name}", deleteTarget?.name ?? "")}
         confirmLabel={t("common.delete", "Poz")}
         onConfirm={() => {
           if (deleteTarget) {
-            deleteMutation.mutate(deleteTarget.id)
-            setDeleteTarget(null)
+            deleteMutation.mutate(deleteTarget.id);
+            setDeleteTarget(null);
           }
         }}
         isLoading={deleteMutation.isPending}

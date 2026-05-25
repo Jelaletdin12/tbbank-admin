@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, ChevronDown, XCircle, CheckCircle2 } from 'lucide-react'
+import { Pencil, Trash2, XCircle, CheckCircle2, Inbox } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/confirmDialog'
-import { BentoGrid, BentoCard, InfoRow, AuditLog } from '@/components/viewPageComponents'
+import { BentoGrid, BentoCard, InfoRow, AuditLog, CollapsibleSection } from '@/components/viewPageComponents'
 import { DataTable, type ColumnDef } from '@/components/dataTable'
 import { DataTableToolbar } from '@/components/dataTableToolbar'
 import { useClient, useDeleteClient } from '@/features/clients/hooks/useClients'
@@ -21,73 +21,21 @@ function ActiveIndicator({ active }: { active: boolean }) {
   );
 }
 
-// ─── CollapsibleSection ───────────────────────────────────────────────────────
-
-interface CollapsibleSectionProps {
-  title: string
-  actionLabel: string
-  onAction: () => void
-  children: React.ReactNode
-}
-
-function CollapsibleSection({ title, actionLabel, onAction, children }: CollapsibleSectionProps) {
-  const [open, setOpen] = useState(true)
-  return (
-    <div>
-      <div
-        className="flex items-center gap-2 mb-2 cursor-pointer select-none w-fit"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <h2 className="text-base font-semibold text-foreground">{title}</h2>
-        <ChevronDown
-          size={15}
-          className={`text-muted-foreground transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
-        />
-      </div>
-      {open && (
-        <div className="bg-card border border-border rounded-xl overflow-hidden p-4 space-y-3">
-          <div className="flex justify-end">
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 text-xs"
-              onClick={onAction}
-            >
-              {actionLabel}
-            </Button>
-          </div>
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ─── EmptyState ───────────────────────────────────────────────────────────────
 
 interface EmptyStateProps {
-  label: string
-  actionLabel: string
-  onAction: () => void
+  label: string;
 }
 
-function EmptyState({ label, actionLabel, onAction }: EmptyStateProps) {
+function EmptyState({ label }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 gap-4">
       <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="text-muted-foreground">
-          <rect x="4" y="8" width="24" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M4 13h24" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M10 8V6M22 8V6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          <circle cx="16" cy="20" r="3" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M19 23l2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
+        <Inbox size={32} className="text-muted-foreground" />
       </div>
       <p className="text-sm text-muted-foreground text-center">{label}</p>
-      <Button size="sm" variant="outline" className="h-8 text-xs" onClick={onAction}>
-        {actionLabel}
-      </Button>
     </div>
-  )
+  );
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -284,116 +232,86 @@ export default function ClientDetailPage() {
       </BentoGrid>
 
       {/* ── Rollar ───────────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t('clients.sections.roles', 'Rollar')}
-        actionLabel={t('clients.addRole', 'Rol birikdiriň')}
-        onAction={() => {}}
-      >
+      <CollapsibleSection title={t('clients.sections.roles', 'Rollar')}>
         <DataTableToolbar
           searchValue={roleSearch}
           onSearchChange={setRoleSearch}
           searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={[]} columnVisibility={{}} onColumnVisibilityChange={() => {}}
-          columnOrder={[]} onColumnOrderChange={() => {}} hideAction
+          columnOrder={[]} onColumnOrderChange={() => {}}
+          actionLabel={t('clients.addRole', 'Rol birikdiriň')}
+          onAction={() => {}}
         />
         {filteredRoles.length > 0 ? (
           <DataTable columns={roleColumns} data={filteredRoles} getRowId={(r) => String(r.id)} enableRowSelection />
         ) : (
-          <EmptyState
-            label={t('clients.noRoles', 'Berlen kriterýalara Rol gabat gelmedi.')}
-            actionLabel={t('clients.addRole', 'Rol birikdiriň')}
-            onAction={() => {}}
-          />
+          <EmptyState label={t('clients.noRoles', 'Berlen kriterýalara Rol gabat gelmedi.')} />
         )}
       </CollapsibleSection>
 
       {/* ── Rugsatlar ────────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t('clients.sections.permissions', 'Rugsatlar')}
-        actionLabel={t('clients.addPermission', 'Rugsat birikdiriň')}
-        onAction={() => {}}
-      >
+      <CollapsibleSection title={t('clients.sections.permissions', 'Rugsatlar')}>
         <DataTableToolbar
           searchValue={permSearch}
           onSearchChange={setPermSearch}
           searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={[]} columnVisibility={{}} onColumnVisibilityChange={() => {}}
-          columnOrder={[]} onColumnOrderChange={() => {}} hideAction
+          columnOrder={[]} onColumnOrderChange={() => {}}
+          actionLabel={t('clients.addPermission', 'Rugsat birikdiriň')}
+          onAction={() => {}}
         />
         {(client.permissions ?? []).length === 0 && (
-          <EmptyState
-            label={t('clients.noPermissions', 'Berlen kriterýalara Rugsat gabat gelmedi.')}
-            actionLabel={t('clients.addPermission', 'Rugsat birikdiriň')}
-            onAction={() => {}}
-          />
+          <EmptyState label={t('clients.noPermissions', 'Berlen kriterýalara Rugsat gabat gelmedi.')} />
         )}
       </CollapsibleSection>
 
       {/* ── Şahamçalar ───────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t('clients.sections.branches', 'Şahamçalar')}
-        actionLabel={t('clients.addBranch', 'Şahamça birikdiriň')}
-        onAction={() => {}}
-      >
+      <CollapsibleSection title={t('clients.sections.branches', 'Şahamçalar')}>
         <DataTableToolbar
           searchValue={branchSearch}
           onSearchChange={setBranchSearch}
           searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={[]} columnVisibility={{}} onColumnVisibilityChange={() => {}}
-          columnOrder={[]} onColumnOrderChange={() => {}} hideAction
+          columnOrder={[]} onColumnOrderChange={() => {}}
+          actionLabel={t('clients.addBranch', 'Şahamça birikdiriň')}
+          onAction={() => {}}
         />
         {filteredBranches.length > 0 ? (
           <DataTable columns={branchColumns} data={filteredBranches} getRowId={(r) => String(r.id)} enableRowSelection />
         ) : (
-          <EmptyState
-            label={t('clients.noBranches', 'Berlen kriterýalara Şahamça gabat gelmedi.')}
-            actionLabel={t('clients.addBranch', 'Şahamça birikdiriň')}
-            onAction={() => {}}
-          />
+          <EmptyState label={t('clients.noBranches', 'Berlen kriterýalara Şahamça gabat gelmedi.')} />
         )}
       </CollapsibleSection>
 
       {/* ── Karz sargyt ──────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t('clients.sections.loanOrders', 'Karz sargyt')}
-        actionLabel={t('clients.addLoanOrder', 'Karz sargyt dörediň')}
-        onAction={() => {}}
-      >
+      <CollapsibleSection title={t('clients.sections.loanOrders', 'Karz sargyt')}>
         <DataTableToolbar
           searchValue={loanSearch}
           onSearchChange={setLoanSearch}
           searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={[]} columnVisibility={{}} onColumnVisibilityChange={() => {}}
-          columnOrder={[]} onColumnOrderChange={() => {}} hideAction
+          columnOrder={[]} onColumnOrderChange={() => {}}
+          actionLabel={t('clients.addLoanOrder', 'Karz sargyt dörediň')}
+          onAction={() => {}}
         />
         {(client.loanOrders ?? []).length === 0 && (
-          <EmptyState
-            label={t('clients.noLoanOrders', 'Berlen kriterýalara Karz sargyt gabat gelmedi.')}
-            actionLabel={t('clients.addLoanOrder', 'Karz sargyt dörediň')}
-            onAction={() => {}}
-          />
+          <EmptyState label={t('clients.noLoanOrders', 'Berlen kriterýalara Karz sargyt gabat gelmedi.')} />
         )}
       </CollapsibleSection>
 
       {/* ── Kart sargyt ──────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t('clients.sections.cardOrders', 'Kart sargyt')}
-        actionLabel={t('clients.addCardOrder', 'Kart sargyt dörediň')}
-        onAction={() => {}}
-      >
+      <CollapsibleSection title={t('clients.sections.cardOrders', 'Kart sargyt')}>
         <DataTableToolbar
           searchValue={cardSearch}
           onSearchChange={setCardSearch}
           searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={[]} columnVisibility={{}} onColumnVisibilityChange={() => {}}
-          columnOrder={[]} onColumnOrderChange={() => {}} hideAction
+          columnOrder={[]} onColumnOrderChange={() => {}}
+          actionLabel={t('clients.addCardOrder', 'Kart sargyt dörediň')}
+          onAction={() => {}}
         />
         {(client.cardOrders ?? []).length === 0 && (
-          <EmptyState
-            label={t('clients.noCardOrders', 'Berlen kriterýalara Kart sargyt gabat gelmedi.')}
-            actionLabel={t('clients.addCardOrder', 'Kart sargyt dörediň')}
-            onAction={() => {}}
-          />
+          <EmptyState label={t('clients.noCardOrders', 'Berlen kriterýalara Kart sargyt gabat gelmedi.')} />
         )}
       </CollapsibleSection>
 
