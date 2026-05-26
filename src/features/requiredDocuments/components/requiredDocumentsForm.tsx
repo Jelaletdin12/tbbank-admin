@@ -40,11 +40,7 @@ interface RequiredDocumentFormProps {
 
 // ─── Lang tabs ────────────────────────────────────────────────────────────────
 
-const LOCALES: { code: Locale; label: string }[] = [
-  { code: 'tk', label: 'Türkmen' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'en', label: 'English' },
-]
+const LOCALES: Locale[] = ['tk', 'ru', 'en']
 
 // ─── Tiptap Toolbar ───────────────────────────────────────────────────────────
 
@@ -148,9 +144,10 @@ interface LangTabsProps {
 }
 
 function LangTabs({ active, onChange }: LangTabsProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center justify-end gap-3 mb-2">
-      {LOCALES.map(({ code, label }) => (
+      {LOCALES.map((code) => (
         <button
           key={code}
           type="button"
@@ -162,7 +159,7 @@ function LangTabs({ active, onChange }: LangTabsProps) {
               : 'text-muted-foreground hover:text-foreground'
           )}
         >
-          {label}
+          {t('languages.' + code, code === 'tk' ? 'Türkmen' : code === 'ru' ? 'Русский' : 'English')}
         </button>
       ))}
     </div>
@@ -326,9 +323,9 @@ export function RequiredDocumentForm({ mode, initialData }: RequiredDocumentForm
               error={errors[`name_${nameLang}`]}
             />
             {/* Show errors for other locales as hints */}
-            {LOCALES.filter((l) => l.code !== nameLang && errors[`name_${l.code}`]).map(({ code, label }) => (
+            {LOCALES.filter((l) => l !== nameLang && errors[`name_${l}`]).map((code) => (
               <p key={code} className="mt-1 text-xs text-destructive/70">
-                {label}: {errors[`name_${code}`]}
+                {t('languages.' + code, code === 'tk' ? 'Türkmen' : code === 'ru' ? 'Русский' : 'English')}: {errors[`name_${code}`]}
               </p>
             ))}
           </div>
@@ -347,9 +344,9 @@ export function RequiredDocumentForm({ mode, initialData }: RequiredDocumentForm
               onChange={(val) => setDescription((prev) => ({ ...prev, [descLang]: val }))}
               error={errors[`desc_${descLang}`]}
             />
-            {LOCALES.filter((l) => l.code !== descLang && errors[`desc_${l.code}`]).map(({ code, label }) => (
+            {LOCALES.filter((l) => l !== descLang && errors[`desc_${l}`]).map((code) => (
               <p key={code} className="mt-1 text-xs text-destructive/70">
-                {label}: {errors[`desc_${code}`]}
+                {t('languages.' + code, code === 'tk' ? 'Türkmen' : code === 'ru' ? 'Русский' : 'English')}: {errors[`desc_${code}`]}
               </p>
             ))}
           </div>

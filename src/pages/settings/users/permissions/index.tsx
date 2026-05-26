@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
@@ -19,20 +19,18 @@ import {
 import { usePermissions, useDeletePermission } from '@/features/permissions/hooks/usePermissions'
 import type { Permission } from '@/features/permissions/api/permissionsApi'
 
-// ─── Column meta for toolbar ──────────────────────────────────────────────────
-
-const COLUMN_META = [
-  { id: 'id',         label: 'ID' },
-  { id: 'code',       label: 'Kod' },
-  { id: 'name',       label: 'Ady' },
-  { id: 'guard_name', label: 'Guard name' },
-]
-
 // ─── PermissionsPage ──────────────────────────────────────────────────────────
 
 export default function PermissionsPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
+
+  const columnMeta = useMemo(() => [
+    { id: 'id', label: t('common.id', 'ID') },
+    { id: 'code', label: t('permissions.fields.code', 'Kod') },
+    { id: 'name', label: t('permissions.fields.name', 'Ady') },
+    { id: 'guard_name', label: t('permissions.fields.guardName', 'Guard name') },
+  ], [t])
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search,           setSearch]           = useState('')
@@ -50,7 +48,7 @@ export default function PermissionsPage() {
   const columns: ColumnDef<Permission>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       size: 70,
       cell: ({ row }) => (
         <span className="text-primary font-semibold">{row.original.id}</span>
@@ -67,7 +65,7 @@ export default function PermissionsPage() {
     },
     {
       accessorKey: 'guard_name',
-      header: 'Guard name',
+      header: t('permissions.fields.guardName', 'Guard name'),
     },
     {
       id: 'actions',
@@ -132,7 +130,7 @@ export default function PermissionsPage() {
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1) }}
         searchPlaceholder={t('permissions.searchPlaceholder', 'Gözlemek...')}
-        columns={COLUMN_META}
+        columns={columnMeta}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}
         columnOrder={columnOrder}

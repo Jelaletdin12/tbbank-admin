@@ -25,12 +25,6 @@ interface CardPinFormProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const STATUS_OPTIONS = [
-  { value: 'pending',  label: 'Garaşylýar'  },
-  { value: 'approved', label: 'Tassyklandy' },
-  { value: 'rejected', label: 'Ret edildi'  },
-]
-
 const CARD_TYPE_OPTIONS = [
   { value: 'altyn_asyr', label: 'Altyn Asyr' },
   { value: 'visa',       label: 'Visa'        },
@@ -120,6 +114,12 @@ interface StepContentProps {
 // ─── Step panels ──────────────────────────────────────────────────────────────
 
 function StepCard({ form, errors, set, t }: StepContentProps) {
+  const STATUS_OPTIONS = useMemo(() => [
+    { value: 'pending',  label: t('cardPin.status.pending',  'Garaşylýar') },
+    { value: 'approved', label: t('cardPin.status.approved', 'Tassyklandy') },
+    { value: 'rejected', label: t('cardPin.status.rejected', 'Ret edildi') },
+  ], [t])
+
   return (
     <div className="space-y-4">
       <BentoGrid cols={2}>

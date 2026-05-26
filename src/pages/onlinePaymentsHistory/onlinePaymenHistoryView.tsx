@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Section, InfoRow } from "@/components/viewPageComponents";
 import { useGetOnlinePaymentById } from "@/features/onlinePaymentHistory/hooks/useOnlinePaymentsHistory";
 import { PaymentStatusBadge } from "../../features/onlinePaymentHistory/components/PaymentStatusBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── OnlinePaymentDetailPage ──────────────────────────────────────────────────
 
@@ -20,8 +21,8 @@ export default function OnlinePaymentDetailPage() {
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
-        <div className="h-6 w-96 bg-muted rounded animate-pulse" />
-        <div className="h-[560px] bg-muted rounded-xl animate-pulse" />
+        <Skeleton className="h-6 w-96" />
+        <Skeleton className="h-[560px] w-full rounded-xl" />
       </div>
     );
   }
@@ -41,14 +42,14 @@ export default function OnlinePaymentDetailPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6">
+    <div>
       <h1 className="text-xl font-semibold text-foreground mb-6 break-all">
         {title}
       </h1>
 
       {/* Detail Card */}
       <Section>
-        <InfoRow label="ID" value={payment.id} />
+        <InfoRow label={t("common.id", "ID")} value={payment.id} />
         <InfoRow
           label={t("onlinePayments.fields.amount", "amount")}
           value={payment.amount}

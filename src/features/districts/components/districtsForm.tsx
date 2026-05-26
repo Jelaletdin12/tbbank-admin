@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Checkbox } from '@/components/ui/checkbox'
 import { FormActions } from '@/components/formActions'
 import { FormInput } from '@/components/formInput'
+import { MultiLangInput } from '@/components/multiLangInput'
 import type { District } from '../api/districtsApi'
 import { useCreateDistrict, useUpdateDistrict } from '../hooks/useDistricts'
 import { createDistrictFormSchema, DEFAULT_FORM_VALUES, buildPayload } from '../schemas/district.schema'
@@ -22,20 +23,10 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
   return result
 }
 
-type FormErrors = FlatErrors
-
 export interface DistrictFormProps {
   mode: 'create' | 'edit'
   initialData?: District
 }
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
 
 function mapInitial(data: District): DistrictFormData {
   return {
@@ -72,8 +63,6 @@ export function DistrictForm({ mode, initialData }: DistrictFormProps) {
   const form = watch()
   const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors])
 
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
-
   const set = useCallback(<K extends keyof DistrictFormData>(key: K) =>
     (value: DistrictFormData[K]) => {
       (setValue as (name: K, val: DistrictFormData[K]) => void)(key, value)
@@ -104,11 +93,11 @@ export function DistrictForm({ mode, initialData }: DistrictFormProps) {
     }
   }
 
-  const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as
-    | 'nameTk'
-    | 'nameRu'
-    | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FormErrors
+  const nameFields = {
+    tk: { value: form.nameTk, onChange: set('nameTk'), error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: set('nameRu'), error: errors.nameRu },
+    en: { value: form.nameEn, onChange: set('nameEn'), error: errors.nameEn },
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -118,36 +107,13 @@ export function DistrictForm({ mode, initialData }: DistrictFormProps) {
           : t('districts.editTitle', 'Etrap üýtgetmek')}
       </h1>
       <div>
-      <div className="flex gap-3 justify-end mb-4">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`text-sm transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">
-          <span className="text-sm text-muted-foreground">
+        <div className="grid grid-cols-[220px_1fr] items-start px-4 py-4 border-b border-border">
+          <span className="text-sm text-muted-foreground pt-2">
             {t('districts.fields.name', 'Ady')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
-          <FormInput
-            type="text"
-            value={form[nameFieldKey]}
-            onChange={set(nameFieldKey)}
-            placeholder={t('districts.fields.name', 'Ady')}
-            error={errors[nameErrorKey]}
-          />
+          <MultiLangInput fields={nameFields} placeholder={t('districts.fields.name', 'Ady')} />
         </div>
 
         <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">

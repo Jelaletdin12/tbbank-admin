@@ -21,15 +21,15 @@ import type { Backup, BackupStatus } from '@/features/backups/api/backupsApi'
 
 const PER_PAGE = 25
 
-const STATUS_CONFIG: Record<BackupStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
-  completed:   { label: 'Tamamlandy', variant: 'success', icon: CheckCircle2 },
-  failed:      { label: 'Şowsuz',     variant: 'error',   icon: XCircle },
-  in_progress: { label: 'Dowam edýär', variant: 'warning', icon: Clock },
-}
-
 function BackupStatusBadge({ status }: { status: BackupStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  const { t } = useTranslation()
+  const cfg: Record<BackupStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
+    completed:   { label: t('backups.status.completed', 'Tamamlandy'),    variant: 'success', icon: CheckCircle2 },
+    failed:      { label: t('backups.status.failed', 'Şowsuz'),           variant: 'error',   icon: XCircle },
+    in_progress: { label: t('backups.status.inProgress', 'Dowam edýär'), variant: 'warning', icon: Clock },
+  }
+  const currentCfg = cfg[status]
+  return <StatusBadge label={currentCfg.label} variant={currentCfg.variant} icon={currentCfg.icon} />
 }
 
 export default function BackupsPage() {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Pencil, Trash2, CheckCircle2, XCircle, Inbox } from "lucide-react";
+import { Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,26 +18,10 @@ import {
   Section,
   InfoRow,
   CollapsibleSection,
+  EmptyState,
 } from "@/components/viewPageComponents";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { useUser, useDeleteUser } from "@/features/allUsers/hooks/useAllUsers";
-
-// ─── EmptyState ───────────────────────────────────────────────────────────────
-
-interface EmptyStateProps {
-  label: string;
-}
-
-function EmptyState({ label }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-3">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-        <Inbox size={32} className="text-muted-foreground" />
-      </div>
-      <p className="text-sm text-muted-foreground">{label}</p>
-    </div>
-  );
-}
 
 // ─── UserViewPage ─────────────────────────────────────────────────────────────
 

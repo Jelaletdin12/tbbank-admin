@@ -37,7 +37,7 @@ export default function ClientsPage() {
   const columns: ColumnDef<Client>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => (
         <span
           className="text-primary font-semibold cursor-pointer hover:underline text-sm"

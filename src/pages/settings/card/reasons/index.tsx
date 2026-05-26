@@ -55,7 +55,7 @@ export function CardReasonsListPage() {
   const filterFields: FilterField[] = [
     {
       id: 'isActive',
-      label: t('CardReasons.fields.isActive', 'Işjeň'),
+      label: t('cardReasons.fields.isActive', 'Işjeň'),
       options: [
         { value: 'true', label: t('common.active', 'Işjeň') },
         { value: 'false', label: t('common.inactive', 'Işjeň däl') },
@@ -79,7 +79,7 @@ export function CardReasonsListPage() {
   const columns: ColumnDef<CardReason>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => (
         <span className="text-primary font-mono text-sm font-medium">
           {row.original.id}
@@ -90,14 +90,14 @@ export function CardReasonsListPage() {
     {
       accessorKey: 'name',
       id: 'name',
-      header: t('CardReasons.fields.name', 'ADY').toUpperCase(),
+      header: t('cardReasons.fields.name', 'ADY').toUpperCase(),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.name[lang]}</span>
       ),
     },
     {
       accessorKey: 'value',
-      header: t('CardReasons.fields.value', 'BAHA').toUpperCase(),
+      header: t('cardReasons.fields.value', 'BAHA').toUpperCase(),
       cell: ({ row }) => (
         <span className="text-sm text-foreground">{row.original.value}</span>
       ),
@@ -105,7 +105,7 @@ export function CardReasonsListPage() {
     },
     {
       accessorKey: 'description',
-      header: t('CardReasons.fields.description', 'BELLIKLER').toUpperCase(),
+      header: t('cardReasons.fields.description', 'BELLIKLER').toUpperCase(),
       cell: ({ row }) => (
         <span className="text-sm text-muted-foreground">
           {row.original.description ?? '—'}
@@ -115,7 +115,7 @@ export function CardReasonsListPage() {
     {
       accessorKey: 'isActive',
       id: 'isActive',
-      header: t('CardReasons.fields.isActive', 'IŞJEŇ').toUpperCase(),
+      header: t('cardReasons.fields.isActive', 'IŞJEŇ').toUpperCase(),
       cell: ({ row }) =>
         row.original.isActive ? (
           <CheckCircle2 size={18} className="text-emerald-500" />
@@ -176,7 +176,7 @@ export function CardReasonsListPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {t('CardReasons.title', 'Kartyň çykarylmagynyň sebäpleri')}
+            {t('cardReasons.title', 'Kartyň çykarylmagynyň sebäpleri')}
           </h1>
         </div>
       </div>
@@ -198,7 +198,7 @@ export function CardReasonsListPage() {
         onFilterReset={handleFilterReset}
         perPage={perPage}
         onPerPageChange={(v) => { setPerPage(v); setPage(1) }}
-        actionLabel={t('CardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')}
+        actionLabel={t('cardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')}
         onAction={() => navigate('/settings/card/card-reasons/create')}
       />
 
@@ -228,7 +228,7 @@ export function CardReasonsListPage() {
               {t('common.confirmDelete', 'Öçürmegi tassyklaň')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t('CardReasons.deleteConfirm', 'Bu kartyň çykarylmagynyň sebäbini öçürmek isleýärsiňizmi?')}
+              {t('cardReasons.deleteConfirm', 'Bu kartyň çykarylmagynyň sebäbini öçürmek isleýärsiňizmi?')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

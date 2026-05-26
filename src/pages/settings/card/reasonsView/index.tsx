@@ -41,7 +41,7 @@ export function CardReasonViewPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {isLoading
               ? '...'
-              : `${t('CardReasons.view.title', 'Kartyň çykarylmagynyň sebäbi giňişleýin')}: ${data?.name[lang] ?? ''}`}
+              : `${t('cardReasons.viewTitle', 'Kartyň çykarylmagynyň sebäbi giňişleýin')}: ${data?.name[lang] ?? ''}`}
           </h1>
         </div>
 
@@ -80,23 +80,23 @@ export function CardReasonViewPage() {
         </div>
       ) : data ? (
         <Section>
-          <InfoRow label="ID" value={data.id} />
+          <InfoRow label={t('common.id', 'ID')} value={data.id} />
 
-          <MultiLangRow label={t('CardReasons.fields.name', 'Ady')} value={data.name} />
+          <MultiLangRow label={t('cardReasons.fields.name', 'Ady')} value={data.name} />
 
           <InfoRow
-            label={t('CardReasons.fields.value', 'Baha')}
+            label={t('cardReasons.fields.value', 'Baha')}
             value={data.value}
           />
           <InfoRow
-            label={t('CardReasons.fields.description', 'Bellikler')}
+            label={t('cardReasons.fields.description', 'Bellikler')}
             value={data.description ?? undefined}
           />
 
           {/* isActive custom row */}
           <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,42%)_minmax(0,58%)] items-start sm:items-center py-2.5 px-4 gap-1 sm:gap-0">
             <span className="text-xs sm:text-sm text-muted-foreground leading-snug">
-              {t('CardReasons.fields.isActive', 'Işjeň')}
+              {t('cardReasons.fields.isActive', 'Işjeň')}
             </span>
             {data.isActive ? (
               <CheckCircle2 size={18} className="text-emerald-500" />
@@ -115,7 +115,7 @@ export function CardReasonViewPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('common.confirmDelete', 'Öçürmegi tassyklaň')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('CardReasons.deleteConfirm', 'Bu kartyň çykarylmagynyň sebäbini öçürmek isleýärsiňizmi?')}
+              {t('cardReasons.deleteConfirm', 'Bu kartyň çykarylmagynyň sebäbini öçürmek isleýärsiňizmi?')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

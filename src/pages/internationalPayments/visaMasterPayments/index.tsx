@@ -12,31 +12,7 @@ import { ConfirmDialog } from '@/components/confirmDialog'
 import { MonthSelect } from '@/components/monthSelect'
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge'
 import { AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG = {
-  pending: {
-    label:   'Garaşylýar',
-    variant: 'warning' as StatusBadgeVariant,
-    icon:    AlertCircle,
-  },
-  approved: {
-    label:   'Tassyklandy',
-    variant: 'success' as StatusBadgeVariant,
-    icon:    CheckCircle2,
-  },
-  rejected: {
-    label:   'Ýatyryldy',
-    variant: 'error' as StatusBadgeVariant,
-    icon:    XCircle,
-  },
-} satisfies Record<IntlPaymentStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
-
-function IntlPaymentStatusStatusBadge({ status }: { status: IntlPaymentStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
-  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
-}
+// ─── Status badge (defined inside component for t() access) ───────────────────
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -58,10 +34,21 @@ export default function IntlPaymentsPage() {
   const { data, isLoading } = useIntlPayments({ page, per_page: perPage, search, status: statusFilter, month })
   const { mutate: deletePayment, isPending: isDeleting } = useDeleteIntlPayment()
 
+  function IntlPaymentStatusBadge({ status }: { status: IntlPaymentStatus }) {
+    const STATUS_CONFIG = {
+      pending:  { label: t('intlPayment.status.pending',  'Garaşylýar'), variant: 'warning' as StatusBadgeVariant, icon: AlertCircle },
+      approved: { label: t('intlPayment.status.approved', 'Tassyklandy'), variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
+      rejected: { label: t('intlPayment.status.rejected', 'Ret edildi'),  variant: 'error'   as StatusBadgeVariant, icon: XCircle },
+    }
+    const cfg = STATUS_CONFIG[status]
+    if (!cfg) return <span className="text-xs text-muted-foreground">{status}</span>
+    return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
+  }
+
   const columns: ColumnDef<IntlPaymentItem>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('intlPayment.col.id', 'ID'),
       cell: ({ row }) => (
         <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>
       ),
@@ -109,7 +96,7 @@ export default function IntlPaymentsPage() {
     {
       accessorKey: 'status',
       header: t('intlPayment.status', 'Status'),
-      cell: ({ row }) => <IntlPaymentStatusStatusBadge status={row.original.status} />,
+      cell: ({ row }) => <IntlPaymentStatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
@@ -176,9 +163,9 @@ export default function IntlPaymentsPage() {
             id: 'status',
             label: t('intlPayment.status', 'Status'),
             options: [
-              { value: 'pending',  label: 'Garaşylýar' },
-              { value: 'approved', label: 'Tassyklandy' },
-              { value: 'rejected', label: 'Ret edildi' },
+              { value: 'pending',  label: t('intlPayment.status.pending',  'Garaşylýar') },
+              { value: 'approved', label: t('intlPayment.status.approved', 'Tassyklandy') },
+              { value: 'rejected', label: t('intlPayment.status.rejected', 'Ret edildi') },
             ],
           },
         ]}

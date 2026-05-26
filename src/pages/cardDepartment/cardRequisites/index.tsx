@@ -233,14 +233,14 @@ export default function CardRequisitesPage() {
             setSearch(v);
             setPage(1);
           }}
-          searchPlaceholder={t("Search", "Gözlemek")}
+          searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={columnMeta}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
           actionLabel={t(
-            "Create card requisite order",
+            "cardRequisites.createTitle",
             "Kart rekwiziti üçin sargyt dörediň",
           )}
           onAction={() => navigate("/card-requisites/create")}

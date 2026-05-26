@@ -68,7 +68,7 @@ export function DistrictsListPage() {
   const columns: ColumnDef<District>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => (
         <span className="text-primary font-mono text-sm font-medium">{row.original.id}</span>
       ),

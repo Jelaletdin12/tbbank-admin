@@ -46,7 +46,7 @@ export default function OperatorsPage() {
   const columns: ColumnDef<Operator>[] = [
     {
       accessorKey: "id",
-      header: "ID",
+      header: t("common.id", "ID"),
       cell: ({ row }) => (
         <span
           className="text-primary font-semibold cursor-pointer hover:underline text-sm"

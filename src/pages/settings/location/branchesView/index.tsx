@@ -14,16 +14,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { useBranchById, useDeleteBranch } from '@/features/branches/hooks/useBranches'
 
 export function BranchViewPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const numericId = Number(id)
-  const lang = (i18n.language?.slice(0, 2) ?? 'tk') as 'tk' | 'ru' | 'en'
 
   const { data, isLoading } = useBranchById(numericId)
   const deleteMutation = useDeleteBranch()
@@ -37,7 +36,7 @@ export function BranchViewPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {isLoading
               ? '...'
-              : `${t('branches.view.title', 'Şahamça giňişleýin')}: ${data?.name[lang] ?? ''}`}
+              : `${t('branches.viewTitle', 'Şahamça giňişleýin')}: ${data?.name.tk ?? ''}`}
           </h1>
         </div>
 
@@ -77,33 +76,12 @@ export function BranchViewPage() {
       ) : data ? (
         <>
           <Section title={t('branches.sections.basic', 'Esasy maglumatlar')}>
-            <InfoRow label="ID" value={data.id} />
+            <InfoRow label={t('common.id', 'ID')} value={data.id} />
             <InfoRow label={t('branches.fields.code', 'Kod')} value={data.code} />
 
-            <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-              <span className="text-sm text-muted-foreground pt-1">
-                {t('branches.fields.name', 'Ady')}
-              </span>
-              <div>
-                <div className="flex gap-3 mb-2 justify-end">
-                  {(['tk', 'ru', 'en'] as const).map((l) => (
-                    <span
-                      key={l}
-                      className={`text-sm cursor-default ${
-                        l === lang
-                          ? 'text-primary font-semibold underline underline-offset-4'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {l === 'tk' ? 'Türkmen' : l === 'ru' ? 'Русский' : 'English'}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-sm text-foreground">{data.name[lang]}</span>
-              </div>
-            </div>
+            <MultiLangRow label={t('branches.fields.name', 'Ady')} value={data.name} />
 
-            <InfoRow label={t('branches.fields.district', 'Etrap')} value={data.districtName[lang]} />
+            <MultiLangRow label={t('branches.fields.district', 'Etrap')} value={data.districtName} />
 
             <div className="grid grid-cols-[220px_1fr] items-center py-2.5 px-4">
               <span className="text-sm text-muted-foreground">
@@ -118,28 +96,7 @@ export function BranchViewPage() {
           </Section>
 
           <Section title={t('branches.sections.address', 'Salgy we habarlaşmak')}>
-            <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-              <span className="text-sm text-muted-foreground pt-1">
-                {t('branches.fields.address', 'Salgy')}
-              </span>
-              <div>
-                <div className="flex gap-3 mb-2 justify-end">
-                  {(['tk', 'ru', 'en'] as const).map((l) => (
-                    <span
-                      key={l}
-                      className={`text-sm cursor-default ${
-                        l === lang
-                          ? 'text-primary font-semibold underline underline-offset-4'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {l === 'tk' ? 'Türkmen' : l === 'ru' ? 'Русский' : 'English'}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-sm text-foreground">{data.address[lang]}</span>
-              </div>
-            </div>
+            <MultiLangRow label={t('branches.fields.address', 'Salgy')} value={data.address} />
             <InfoRow label={t('branches.fields.phone', 'Telefon')} value={data.phone} />
             <InfoRow label={t('branches.fields.email', 'E-poçta')} value={data.email} />
           </Section>

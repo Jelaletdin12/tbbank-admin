@@ -32,7 +32,7 @@ function useLoanTypeColumns(
   return [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       size: 60,
       cell: ({ row }) => (
         <span className="text-primary font-semibold text-sm">{row.original.id}</span>

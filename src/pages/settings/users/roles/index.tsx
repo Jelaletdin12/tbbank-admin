@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, Pencil, Trash2 } from 'lucide-react'
@@ -19,20 +19,18 @@ import {
 import { useRoles, useDeleteRole } from '@/features/roles/hooks/useRoles'
 import type { Role } from '@/features/roles/api/rolesApi'
 
-// ─── Column meta for toolbar ──────────────────────────────────────────────────
-
-const COLUMN_META = [
-  { id: 'id',         label: 'ID' },
-  { id: 'code',       label: 'Kod' },
-  { id: 'name',       label: 'Ady' },
-  { id: 'guard_name', label: 'Guard name' },
-]
-
 // ─── RolesPage ────────────────────────────────────────────────────────────────
 
 export default function RolesPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
+
+  const columnMeta = useMemo(() => [
+    { id: 'id', label: t('common.id', 'ID') },
+    { id: 'code', label: t('roles.fields.code', 'Kod') },
+    { id: 'name', label: t('roles.fields.name', 'Ady') },
+    { id: 'guard_name', label: t('roles.fields.guardName', 'Guard name') },
+  ], [t])
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search,           setSearch]           = useState('')
@@ -50,7 +48,7 @@ export default function RolesPage() {
   const columns: ColumnDef<Role>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       size: 70,
       cell: ({ row }) => (
         <span className="text-primary font-semibold">{row.original.id}</span>
@@ -67,7 +65,7 @@ export default function RolesPage() {
     },
     {
       accessorKey: 'guard_name',
-      header: 'Guard name',
+      header: t('roles.fields.guardName', 'Guard name'),
     },
     {
       id: 'actions',
@@ -132,7 +130,7 @@ export default function RolesPage() {
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1) }}
         searchPlaceholder={t('roles.searchPlaceholder', 'Gözlemek...')}
-        columns={COLUMN_META}
+        columns={columnMeta}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}
         columnOrder={columnOrder}

@@ -8,6 +8,7 @@ import { Building2, MapPin, Clock } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { FormInput } from '@/components/formInput'
 import { FormActions } from '@/components/formActions'
+import { MultiLangInput } from '@/components/multiLangInput'
 import { Checkbox } from '@/components/ui/checkbox'
 import { StepBarCards, type StepCardItem } from '@/components/stepBarV2'
 import { useCreateBranch, useUpdateBranch } from '@/features/branches/hooks/useBranches'
@@ -26,14 +27,6 @@ function flattenErrors(errors: Record<string, { message?: string } | undefined>)
   }
   return result
 }
-
-type LangKey = 'tk' | 'ru' | 'en'
-
-const LANG_TABS: { key: LangKey; label: string }[] = [
-  { key: 'tk', label: 'Türkmen' },
-  { key: 'ru', label: 'Русский' },
-  { key: 'en', label: 'English' },
-]
 
 interface StepDef {
   id: string
@@ -85,46 +78,25 @@ interface StepContentProps {
   form: BranchFormData
   errors: FlatErrors
   set: <K extends keyof BranchFormData>(k: K, v: BranchFormData[K]) => void
-  activeLang: LangKey
-  setActiveLang: (l: LangKey) => void
+  t: (key: string, fallback?: string) => string
+  lang: 'tk' | 'ru' | 'en'
 }
 
-function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContentProps) {
-  const nameFieldKey = `name${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'nameTk' | 'nameRu' | 'nameEn'
-  const nameErrorKey = nameFieldKey as keyof FlatErrors
+function StepBasic({ form, errors, set, t, lang }: StepContentProps) {
+  const nameFields = {
+    tk: { value: form.nameTk, onChange: (v: string) => set('nameTk', v), error: errors.nameTk },
+    ru: { value: form.nameRu, onChange: (v: string) => set('nameRu', v), error: errors.nameRu },
+    en: { value: form.nameEn, onChange: (v: string) => set('nameEn', v), error: errors.nameEn },
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-3 justify-end mb-2">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`text-sm transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <MultiLangInput fields={nameFields} placeholder={t('branches.fields.name', 'Şahamçanyň ady')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput
           type="text"
-          label="Şahamçanyň ady"
-          required
-          value={form[nameFieldKey]}
-          onChange={(v) => set(nameFieldKey, v)}
-          placeholder="Şahamçanyň ady"
-          error={errors[nameErrorKey]}
-        />
-        <FormInput
-          type="text"
-          label="Kod"
+          label={t('branches.fields.code', 'Kod')}
           required
           value={form.code}
           onChange={(v) => set('code', v)}
@@ -136,12 +108,12 @@ function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContent
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput
           type="searchable-select"
-          label="Etrap"
+          label={t('branches.fields.district', 'Etrap')}
           required
           value={form.districtId}
           onChange={(v) => set('districtId', v)}
-          options={getDistrictOptions().map((d) => ({ value: String(d.id), label: d.name.tk }))}
-          placeholder="Etrap saýlaň"
+          options={getDistrictOptions().map((d) => ({ value: String(d.id), label: d.name[lang] }))}
+          placeholder={t('branches.fields.district', 'Etrap saýlaň')}
           error={errors.districtId}
         />
         <div className="flex items-end pb-2">
@@ -152,7 +124,7 @@ function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContent
               onCheckedChange={(checked) => set('isActive', !!checked)}
             />
             <label htmlFor="isActive" className="text-sm text-muted-foreground cursor-pointer select-none">
-              Işjeň
+              {t('branches.fields.isActive', 'Işjeň')}
             </label>
           </div>
         </div>
@@ -161,43 +133,21 @@ function StepBasic({ form, errors, set, activeLang, setActiveLang }: StepContent
   )
 }
 
-function StepAddress({ form, errors, set, activeLang, setActiveLang }: StepContentProps) {
-  const addrFieldKey = `address${activeLang.charAt(0).toUpperCase() + activeLang.slice(1)}` as 'addressTk' | 'addressRu' | 'addressEn'
-  const addrErrorKey = addrFieldKey as keyof FlatErrors
+function StepAddress({ form, errors, set, t }: StepContentProps) {
+  const addressFields = {
+    tk: { value: form.addressTk, onChange: (v: string) => set('addressTk', v), error: errors.addressTk },
+    ru: { value: form.addressRu, onChange: (v: string) => set('addressRu', v), error: errors.addressRu },
+    en: { value: form.addressEn, onChange: (v: string) => set('addressEn', v), error: errors.addressEn },
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-3 justify-end mb-2">
-        {LANG_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveLang(tab.key)}
-            className={`text-sm transition-colors ${
-              activeLang === tab.key
-                ? 'text-primary font-semibold underline underline-offset-4'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <FormInput
-        type="text"
-        label="Salgy"
-        required
-        value={form[addrFieldKey]}
-        onChange={(v) => set(addrFieldKey, v)}
-        placeholder="Salgy"
-        error={errors[addrErrorKey]}
-      />
+      <MultiLangInput fields={addressFields} placeholder={t('branches.fields.address', 'Salgy')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput
           type="phone"
-          label="Telefon"
+          label={t('branches.fields.phone', 'Telefon')}
           required
           value={form.phone}
           onChange={(v) => set('phone', v)}
@@ -206,7 +156,7 @@ function StepAddress({ form, errors, set, activeLang, setActiveLang }: StepConte
         />
         <FormInput
           type="email"
-          label="E-poçta"
+          label={t('branches.fields.email', 'E-poçta')}
           required
           value={form.email}
           onChange={(v) => set('email', v)}
@@ -218,13 +168,13 @@ function StepAddress({ form, errors, set, activeLang, setActiveLang }: StepConte
   )
 }
 
-function StepHours({ form, errors, set }: StepContentProps) {
+function StepHours({ form, errors, set, t }: StepContentProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <FormInput
           type="text"
-          label="Iş wagty"
+          label={t('branches.fields.workingHours', 'Iş wagty')}
           required
           value={form.workingHours}
           onChange={(v) => set('workingHours', v)}
@@ -234,7 +184,7 @@ function StepHours({ form, errors, set }: StepContentProps) {
       </div>
       <FormInput
         type="textarea"
-        label="Bellikler"
+        label={t('branches.fields.description', 'Bellikler')}
         value={form.description}
         onChange={(v) => set('description', v)}
         placeholder="Goşmaça maglumatlar..."
@@ -273,13 +223,12 @@ export function BranchForm({ mode, initialData }: BranchFormProps) {
     (key, fallback) => _t(key, fallback ?? key) as string,
     [_t],
   )
+  const lang = (i18n.language?.slice(0, 2) ?? 'tk') as 'tk' | 'ru' | 'en'
   const navigate = useNavigate()
 
   const createMutation = useCreateBranch()
   const updateMutation = useUpdateBranch()
   const isPending = createMutation.isPending || updateMutation.isPending
-
-  const [activeLang, setActiveLang] = useState<LangKey>('tk')
 
   const schema = useMemo(() => createBranchFormSchema(t), [t, i18n.language])
 
@@ -312,7 +261,7 @@ export function BranchForm({ mode, initialData }: BranchFormProps) {
     clearErrors(key)
   }, [setValue, clearErrors])
 
-  const stepProps = useMemo(() => ({ form, errors, set, activeLang, setActiveLang }), [form, errors, set, activeLang])
+  const stepProps = useMemo(() => ({ form, errors, set, t, lang }), [form, errors, set, t, lang])
 
   const markVisited = (i: number) =>
     setVisited((prev) => new Set([...prev, i]))
@@ -409,7 +358,7 @@ export function BranchForm({ mode, initialData }: BranchFormProps) {
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-semibold text-foreground">
-          {mode === 'create' ? t('branches.create.title', 'Şahamça döretmek') : t('branches.edit.title', 'Şahamçany üýtgetmek')}
+          {mode === 'create' ? t('branches.createTitle', 'Şahamça döretmek') : t('branches.editTitle', 'Şahamçany üýtgetmek')}
         </h1>
         <p className="text-sm text-muted-foreground">
           {t('branches.form.subtitle', 'Ähli meýdanlary dolduryp, ädim-ädim öň geçiň.')}

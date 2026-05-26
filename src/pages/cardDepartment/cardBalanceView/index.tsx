@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Download, Trash2, Pencil, ChevronDown } from "lucide-react";
+import { Download, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,7 +19,9 @@ import {
   useDeleteCardBalance,
   useDownloadCardBalance,
 } from "@/features/cardBalance/hooks/useCardBalance";
-import { InfoRow } from "@/components/viewPageComponents";
+import { InfoRow, CollapsibleSection, StatusBadge, EmptyState } from "@/components/viewPageComponents";
+import { DataTable, type ColumnDef } from "@/components/dataTable";
+import { DataTableToolbar } from "@/components/dataTableToolbar";
 
 // ─── Types for operations table ───────────────────────────────────────────────
 
@@ -32,25 +34,6 @@ interface Operation {
   date: string;
 }
 
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-const STATUS_STYLES: Record<string, string> = {
-  FINISHED: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
-  PENDING: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
-  FAILED: "bg-red-500/20 text-red-400 border border-red-500/30",
-};
-
-function OpStatusBadge({ status }: { status: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[status] ?? STATUS_STYLES.PENDING}`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-      {status}
-    </span>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CardBalanceViewPage() {
@@ -59,8 +42,7 @@ export default function CardBalanceViewPage() {
   const navigate = useNavigate();
 
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [opsExpanded, setOpsExpanded] = useState(true);
-  const [opsPage, setOpsPage] = useState(1);
+  const [opsSearch, setOpsSearch] = useState("");
 
   const numericId = Number(id);
   const { data, isLoading } = useCardBalance(numericId);
@@ -69,7 +51,58 @@ export default function CardBalanceViewPage() {
 
   // Placeholder operations — in real app fetch from API using numericId
   const operations: Operation[] = [];
-  const opsTotal = operations.length;
+
+  const filteredOperations = operations.filter(
+    (op) =>
+      op.action_name.toLowerCase().includes(opsSearch.toLowerCase()) ||
+      op.target.toLowerCase().includes(opsSearch.toLowerCase()),
+  );
+
+  // ── Operations columns ──────────────────────────────────────────────────
+
+  const operationColumns: ColumnDef<Operation>[] = [
+    {
+      accessorKey: "id",
+      header: t("ID", "ID"),
+      cell: ({ row }) => (
+        <span className="text-primary font-semibold text-sm">
+          {row.original.id}
+        </span>
+      ),
+      size: 80,
+    },
+    {
+      accessorKey: "action_name",
+      header: t("Action name", "AMALYŇ ADY"),
+      cell: ({ row }) => <span className="text-sm">{row.original.action_name}</span>,
+    },
+    {
+      accessorKey: "performed_by",
+      header: t("Performed by", "KIM TARAPYNDAN"),
+      cell: ({ row }) => <span className="text-sm">{row.original.performed_by}</span>,
+    },
+    {
+      accessorKey: "target",
+      header: t("Target", "AMALYŇ NYŞANY (TARGEDI)"),
+      cell: ({ row }) => <span className="text-sm">{row.original.target}</span>,
+    },
+    {
+      accessorKey: "status",
+      header: t("Status", "AMALYŇ STATUSY"),
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      size: 160,
+    },
+    {
+      accessorKey: "date",
+      header: t("Date", "SENE"),
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {row.original.date}
+        </span>
+      ),
+      size: 160,
+    },
+  ];
 
   const handleDelete = async () => {
     await deleteMutation.mutateAsync(numericId);
@@ -158,100 +191,33 @@ export default function CardBalanceViewPage() {
       </div>
 
       {/* Ammallar (Operations) collapsible section */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        {/* Section toggle header */}
-        <button
-          className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-muted/20 transition-colors"
-          onClick={() => setOpsExpanded((v) => !v)}
-        >
-          <span className="font-semibold text-foreground text-sm">
-            {t("Operations", "Ammallar")}
-          </span>
-          <ChevronDown
-            size={15}
-            className={`text-muted-foreground transition-transform duration-200 ${opsExpanded ? "rotate-180" : ""}`}
+      <CollapsibleSection title={t("Operations", "Ammallar")}>
+        <DataTableToolbar
+          searchValue={opsSearch}
+          onSearchChange={setOpsSearch}
+          searchPlaceholder={t("common.search", "Gözlemek")}
+          columns={[]}
+          columnVisibility={{}}
+          onColumnVisibilityChange={() => {}}
+          columnOrder={[]}
+          onColumnOrderChange={() => {}}
+        />
+        {filteredOperations.length === 0 ? (
+          <EmptyState
+            label={t(
+              "No operations found",
+              "Berlen kriterýalara Amal gabat gelmedi.",
+            )}
           />
-        </button>
-
-        {opsExpanded && (
-          <>
-            <div className="overflow-x-auto border-t border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border">
-                    {[
-                      t("ID", "ID"),
-                      t("Action name", "AMALYŇ ADY"),
-                      t("Performed by", "KIM TARAPYNDAN"),
-                      t("Target", "AMALYŇ NYŞANY (TARGEDI)"),
-                      t("Status", "AMALYŇ STATUSY"),
-                      t("Date", "SENE"),
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {operations.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="text-center py-10 text-muted-foreground text-sm"
-                      >
-                        {t("No operations found", "Amal tapylmady")}
-                      </td>
-                    </tr>
-                  ) : (
-                    operations.map((op) => (
-                      <tr
-                        key={op.id}
-                        className="border-b border-border/50 hover:bg-muted/20 transition-colors"
-                      >
-                        <td className="px-4 py-3 text-primary font-medium">
-                          {op.id}
-                        </td>
-                        <td className="px-4 py-3">{op.action_name}</td>
-                        <td className="px-4 py-3">{op.performed_by}</td>
-                        <td className="px-4 py-3">{op.target}</td>
-                        <td className="px-4 py-3">
-                          <OpStatusBadge status={op.status} />
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {op.date}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Ops pagination */}
-            <div className="flex items-center justify-between px-4 py-2.5 border-t border-border text-sm text-muted-foreground">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={opsPage <= 1}
-                onClick={() => setOpsPage((p) => p - 1)}
-              >
-                {t("Previous", "Öňki")}
-              </Button>
-              <span>
-                {opsTotal === 0 ? "0" : `1–${opsTotal}`} {t("of", "of")}{" "}
-                {opsTotal}
-              </span>
-              <Button variant="ghost" size="sm" disabled={true}>
-                {t("Next", "Indiki")}
-              </Button>
-            </div>
-          </>
+        ) : (
+          <DataTable
+            columns={operationColumns}
+            data={filteredOperations}
+            getRowId={(r) => String(r.id)}
+            enableRowSelection
+          />
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Delete dialog */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

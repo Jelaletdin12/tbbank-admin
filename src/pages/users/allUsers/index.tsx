@@ -74,7 +74,7 @@ export default function UsersListPage() {
   const columns: ColumnDef<UserListItem>[] = [
     {
       accessorKey: "id",
-      header: "ID",
+      header: t("common.id", "ID"),
       size: 80,
       cell: ({ row }) => <span className="text-xs font-mono text-primary font-semibold">{row.original.id}</span>,
     },
@@ -149,7 +149,7 @@ export default function UsersListPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">{t("clients.title", "Ahli Müşderiler")}</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("users.title", "Ähli ulanyjylar")}</h1>
       </div>
       <div className="bg-card border border-border rounded-xl p-4">
         {/* Toolbar */}

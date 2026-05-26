@@ -109,8 +109,8 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
     <div className="flex flex-col gap-5">
       <h1 className="text-xl font-semibold text-foreground">
         {mode === 'create'
-          ? t('reasons.createTitle', 'Sebäp dörediň')
-          : t('reasons.editTitle', 'Sebäp üýtgetmek')}
+          ? t('cardReasons.createTitle', 'Sebäp dörediň')
+          : t('cardReasons.editTitle', 'Sebäp üýtgetmek')}
       </h1>
       <div>
       {/* Form rows */}
@@ -118,23 +118,23 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
         {/* Name row */}
         <div className="grid grid-cols-[220px_1fr] items-start py-4 px-4 border-b border-border">
           <span className="text-sm text-muted-foreground pt-2">
-            {t('CardReasons.fields.name', 'Ady')}
+            {t('cardReasons.fields.name', 'Ady')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
-          <MultiLangInput fields={nameFields} placeholder={t('CardReasons.fields.name', 'Ady')} disabled={isPending} />
+          <MultiLangInput fields={nameFields} placeholder={t('cardReasons.fields.name', 'Ady')} disabled={isPending} />
         </div>
 
         {/* Value row */}
         <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">
           <span className="text-sm text-muted-foreground">
-            {t('CardReasons.fields.value', 'Baha')}
+            {t('cardReasons.fields.value', 'Baha')}
             <span className="text-destructive ml-0.5">*</span>
           </span>
           <FormInput
             type="number"
             value={form.value}
             onChange={(v) => set('value', v)}
-            placeholder={t('CardReasons.fields.value', 'Baha')}
+            placeholder={t('cardReasons.fields.value', 'Baha')}
             error={errors.value}
           />
         </div>
@@ -142,20 +142,20 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
         {/* Description row */}
         <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4 border-b border-border">
           <span className="text-sm text-muted-foreground">
-            {t('CardReasons.fields.description', 'Bellikler')}
+            {t('cardReasons.fields.description', 'Bellikler')}
           </span>
           <FormInput
             type="text"
             value={form.description}
             onChange={(v) => set('description', v)}
-            placeholder={t('CardReasons.fields.description', 'Bellikler')}
+            placeholder={t('cardReasons.fields.description', 'Bellikler')}
           />
         </div>
 
         {/* isActive row */}
         <div className="grid grid-cols-[220px_1fr] items-center py-3 px-4">
           <span className="text-sm text-muted-foreground">
-            {t('CardReasons.fields.isActive', 'Işjeň')}
+            {t('cardReasons.fields.isActive', 'Işjeň')}
           </span>
           <Checkbox
             checked={form.isActive}
@@ -170,8 +170,8 @@ export function CardReasonForm({ mode, initialData }: CardReasonFormProps) {
         onCancel={() => navigate('/resources/card-states')}
         cancelVariant="ghost"
         submitLabel={mode === 'create'
-          ? t('CardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')
-          : t('CardReasons.actions.update', 'Täzelemek')}
+          ? t('cardReasons.actions.create', 'Kartyň çykarylmagynyň sebäbini döretdiň')
+          : t('cardReasons.actions.update', 'Täzelemek')}
         className="mt-6"
       />
     </div>

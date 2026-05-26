@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Pencil, Trash2, XCircle, CheckCircle2, Inbox } from 'lucide-react'
+import { Pencil, Trash2, XCircle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/components/confirmDialog'
-import { BentoGrid, BentoCard, InfoRow, AuditLog, CollapsibleSection } from '@/components/viewPageComponents'
+import { BentoGrid, BentoCard, InfoRow, AuditLog, CollapsibleSection, EmptyState } from '@/components/viewPageComponents'
 import { DataTable, type ColumnDef } from '@/components/dataTable'
 import { DataTableToolbar } from '@/components/dataTableToolbar'
 import { useClient, useDeleteClient } from '@/features/clients/hooks/useClients'
@@ -18,23 +18,6 @@ function ActiveIndicator({ active }: { active: boolean }) {
     <CheckCircle2 size={18} className="text-emerald-500" />
   ) : (
     <XCircle size={18} className="text-destructive" />
-  );
-}
-
-// ─── EmptyState ───────────────────────────────────────────────────────────────
-
-interface EmptyStateProps {
-  label: string;
-}
-
-function EmptyState({ label }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 gap-4">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-        <Inbox size={32} className="text-muted-foreground" />
-      </div>
-      <p className="text-sm text-muted-foreground text-center">{label}</p>
-    </div>
   );
 }
 

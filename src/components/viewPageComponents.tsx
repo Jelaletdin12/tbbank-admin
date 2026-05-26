@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, Eye, ChevronDown } from "lucide-react";
+import { Download, Eye, ChevronDown, Inbox } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
@@ -273,7 +273,7 @@ export function useAuditColumns(
     () => [
       {
         accessorKey: "id",
-        header: "ID",
+        header: t("audit.columns.id", "ID"),
         cell: ({ row }) => (
           <span className="text-xs font-mono text-muted-foreground">
             {row.original.id}
@@ -354,6 +354,25 @@ export interface AuditLogProps {
   isLoading?: boolean;
   onView?: (log: AuditRowProps) => void;
 }
+
+// ─── EmptyState ────────────────────────────────────────────────────────────────
+
+export interface EmptyStateProps {
+  label: string;
+}
+
+export function EmptyState({ label }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-4">
+      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+        <Inbox size={32} className="text-muted-foreground" />
+      </div>
+      <p className="text-sm text-muted-foreground text-center">{label}</p>
+    </div>
+  );
+}
+
+// ─── AuditLog ─────────────────────────────────────────────────────────────────
 
 export function AuditLog({
   logs,

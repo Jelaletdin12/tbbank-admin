@@ -219,7 +219,7 @@ export default function CardPinsPage() {
             setSearch(v);
             setPage(1);
           }}
-          searchPlaceholder={t("cardPin.search", "Gözlemek")}
+          searchPlaceholder={t('common.search', 'Gözlemek')}
           columns={columnMeta}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}

@@ -11,9 +11,10 @@ import { ConfirmDialog } from '@/components/confirmDialog'
 export default function RequiredDocumentsViewPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [deleteOpen, setDeleteOpen] = useState(false)
 
+  const lang = (i18n.language?.slice(0, 2) ?? 'tk') as 'tk' | 'ru' | 'en'
   const docId = Number(id)
   const { data, isLoading } = useGetRequiredDocumentById(docId)
   const deleteMutation = useDeleteRequiredDocument()
@@ -46,7 +47,7 @@ export default function RequiredDocumentsViewPage() {
       {/* Page heading */}
       <div className="flex items-start justify-between mb-4 gap-4">
         <h1 className="text-xl font-semibold text-foreground leading-snug line-clamp-2">
-          {t('loanDocuments.viewTitle', 'Karz gerekli resminamalary giňişleýin')}: {data.name.tk}
+          {t('loanDocuments.viewTitle', 'Karz gerekli resminamalary giňişleýin')}: {data.name[lang]}
         </h1>
         <div className="flex items-center gap-2 shrink-0">
           <Button

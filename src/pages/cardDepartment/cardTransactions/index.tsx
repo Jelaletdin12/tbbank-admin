@@ -164,7 +164,7 @@ export default function CardTransactionsPage() {
       <DataTableToolbar
         searchValue={search}
         onSearchChange={(v) => { setSearch(v); setPage(1) }}
-        searchPlaceholder={t('Search', 'Gözlemek')}
+        searchPlaceholder={t('common.search', 'Gözlemek')}
         columns={columnMeta}
         columnVisibility={columnVisibility}
         onColumnVisibilityChange={setColumnVisibility}

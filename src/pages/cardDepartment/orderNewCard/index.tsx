@@ -19,27 +19,15 @@ import { ConfirmDialog } from '@/components/confirmDialog'
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG = {
-  PENDING: {
-    label:   'Garaşylýar',
-    variant: 'warning' as StatusBadgeVariant,
-    icon:    AlertCircle,
-  },
-  APPROVED: {
-    label:   'Tassyklandy',
-    variant: 'success' as StatusBadgeVariant,
-    icon:    CheckCircle2,
-  },
-  REJECTED: {
-    label:   'Ýatyryldy',
-    variant: 'error' as StatusBadgeVariant,
-    icon:    XCircle,
-  },
-} satisfies Record<CardOrderStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }>
-
 function OrderNewCardStatusBadge({ status }: { status: CardOrderStatus }) {
+  const { t } = useTranslation()
+  const STATUS_CONFIG = {
+    PENDING:  { label: t('cardOrder.status.pending',  'Garaşylýar'),   variant: 'warning' as StatusBadgeVariant, icon: AlertCircle },
+    APPROVED: { label: t('cardOrder.status.approved', 'Tassyklandy'),   variant: 'success' as StatusBadgeVariant, icon: CheckCircle2 },
+    REJECTED: { label: t('cardOrder.status.rejected', 'Ýatyryldy'),    variant: 'error'   as StatusBadgeVariant, icon: XCircle },
+  }
   const cfg = STATUS_CONFIG[status]
-  if (!cfg) return <span className="text-xs text-muted-foreground">{String(status)}</span>
+  if (!cfg) return <span className="text-xs text-muted-foreground">{status}</span>
   return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />
 }
 
@@ -55,25 +43,10 @@ function HighlightText({ value, variant }: { value: string; variant: 'teal' | 'c
   return <span className={cls}>{value}</span>
 }
 
-// ─── Column meta (toolbar toggle) ────────────────────────────────────────────
-
-const COLUMN_META = [
-  { id: 'id',                 label: 'ID'              },
-  { id: 'issuanceReasonName', label: 'Sebäp'           },
-  { id: 'createdAt',          label: 'Döredilen wagty' },
-  { id: 'cardTypeName',       label: 'Görnüşi'         },
-  { id: 'provinceName',       label: 'Welaýat'         },
-  { id: 'branchName',         label: 'Şahamça'         },
-  { id: 'fullName',           label: 'Ady'             },
-  { id: 'status',             label: 'Status'          },
-]
-
 const SPECIAL_BRANCHES = [
   'Köpetdag', 'Türkmenabat', 'Türkmenbaşy',
   'Seýdi', 'Çandybil', 'Balkan', 'Baş bank',
 ]
-
-const DEFAULT_ORDER = COLUMN_META.map((c) => c.id)
 
 // ─── CardOrdersPage ───────────────────────────────────────────────────────────
 
@@ -82,6 +55,22 @@ export default function CardOrdersPage() {
   const navigate   = useNavigate()
   const deleteMutation = useDeleteCardOrder()
   const [deleteId, setDeleteId] = useState<string | null>(null)
+
+  // ── Column meta (toolbar toggle) ──────────────────────────────────────────
+  const COLUMN_META = useMemo(
+    () => [
+      { id: 'id',                 label: t('cardOrder.col.id',        'ID')              },
+      { id: 'issuanceReasonName', label: t('cardOrder.col.reason',   'Sebäp')           },
+      { id: 'createdAt',          label: t('cardOrder.col.createdAt', 'Döredilen wagty') },
+      { id: 'cardTypeName',       label: t('cardOrder.col.cardType', 'Görnüşi')         },
+      { id: 'provinceName',       label: t('cardOrder.col.province', 'Welaýat')         },
+      { id: 'branchName',         label: t('cardOrder.col.branch',   'Şahamça')         },
+      { id: 'fullName',           label: t('cardOrder.col.name',     'Ady')             },
+      { id: 'status',             label: t('cardOrder.col.status',   'Status')          },
+    ],
+    [t]
+  )
+  const DEFAULT_ORDER = useMemo(() => COLUMN_META.map((c) => c.id), [COLUMN_META])
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [search,           setSearch]           = useState('')

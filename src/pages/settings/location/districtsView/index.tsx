@@ -14,16 +14,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Section, InfoRow } from '@/components/viewPageComponents'
+import { Section, InfoRow, MultiLangRow } from '@/components/viewPageComponents'
 import { useDistrictById, useDeleteDistrict } from '@/features/districts/hooks/useDistricts'
 
 export function DistrictViewPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
 
   const numericId = Number(id)
-  const lang = (i18n.language?.slice(0, 2) ?? 'tk') as 'tk' | 'ru' | 'en'
 
   const { data, isLoading } = useDistrictById(numericId)
   const deleteMutation = useDeleteDistrict()
@@ -37,7 +36,7 @@ export function DistrictViewPage() {
           <h1 className="text-2xl font-bold text-foreground">
             {isLoading
               ? '...'
-              : `${t('districts.view.title', 'Etrap giňişleýin')}: ${data?.name[lang] ?? ''}`}
+              : `${t('districts.viewTitle', 'Etrap giňişleýin')}: ${data?.name.tk ?? ''}`}
           </h1>
         </div>
 
@@ -76,30 +75,9 @@ export function DistrictViewPage() {
         </div>
       ) : data ? (
         <Section>
-          <InfoRow label="ID" value={data.id} />
+          <InfoRow label={t('common.id', 'ID')} value={data.id} />
 
-          <div className="grid grid-cols-[220px_1fr] items-start py-2.5 px-4 border-b border-border">
-            <span className="text-sm text-muted-foreground pt-1">
-              {t('districts.fields.name', 'Ady')}
-            </span>
-            <div>
-              <div className="flex gap-3 mb-2 justify-end">
-                {(['tk', 'ru', 'en'] as const).map((l) => (
-                  <span
-                    key={l}
-                    className={`text-sm cursor-default ${
-                      l === lang
-                        ? 'text-primary font-semibold underline underline-offset-4'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    {l === 'tk' ? 'Türkmen' : l === 'ru' ? 'Русский' : 'English'}
-                  </span>
-                ))}
-              </div>
-              <span className="text-sm text-foreground">{data.name[lang]}</span>
-            </div>
-          </div>
+          <MultiLangRow label={t('districts.fields.name', 'Ady')} value={data.name} />
 
           <InfoRow
             label={t('districts.fields.description', 'Bellikler')}

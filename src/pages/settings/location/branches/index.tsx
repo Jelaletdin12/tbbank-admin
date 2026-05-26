@@ -47,7 +47,7 @@ export function BranchesListPage() {
 
   const districtOptions = getDistrictOptions().map((d) => ({
     value: String(d.id),
-    label: d.name.tk,
+    label: d.name[lang],
   }))
 
   const filterFields: FilterField[] = [
@@ -84,7 +84,7 @@ export function BranchesListPage() {
   const columns: ColumnDef<Branch>[] = [
     {
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       cell: ({ row }) => (
         <span className="text-primary font-mono text-sm font-medium">{row.original.id}</span>
       ),

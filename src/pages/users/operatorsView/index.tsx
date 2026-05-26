@@ -5,7 +5,6 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
-  Inbox,
   Eye,
 } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +17,7 @@ import {
   InfoRow,
   AuditLog,
   CollapsibleSection,
+  EmptyState,
 } from "@/components/viewPageComponents";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
@@ -39,23 +39,6 @@ function ActiveIndicator({ active }: { active: boolean }) {
     <CheckCircle2 size={18} className="text-emerald-500" />
   ) : (
     <XCircle size={18} className="text-destructive" />
-  );
-}
-
-// ─── EmptyState ───────────────────────────────────────────────────────────────
-
-interface EmptyStateProps {
-  label: string;
-}
-
-function EmptyState({ label }: EmptyStateProps) {
-  return (
-    <div className="flex flex-col items-center justify-center py-12 gap-4">
-      <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-        <Inbox size={32} className="text-muted-foreground" />
-      </div>
-      <p className="text-sm text-muted-foreground text-center">{label}</p>
-    </div>
   );
 }
 
@@ -228,7 +211,7 @@ export default function OperatorDetailPage() {
       accessorKey: "billingUsernameIbr",
       header: t("branches.fields.billingIbr", "BILLING ULANYJY ADY"),
       cell: ({ row }) => (
-        <span className="text-sm font-mono text-xs">
+        <span className="text-sm font-mono">
           {row.original.billingUsernameIbr}
         </span>
       ),
@@ -237,7 +220,7 @@ export default function OperatorDetailPage() {
       accessorKey: "billingUsernameSber",
       header: t("branches.fields.billingSber", "BILLING USERNAME (SBER)"),
       cell: ({ row }) => (
-        <span className="text-sm font-mono text-xs">
+        <span className="text-sm font-mono ">
           {row.original.billingUsernameSber}
         </span>
       ),
@@ -246,7 +229,7 @@ export default function OperatorDetailPage() {
       accessorKey: "billingUsernameVisa",
       header: t("branches.fields.billingVisa", "BILLING USERNAME (VISA)"),
       cell: ({ row }) => (
-        <span className="text-sm font-mono text-xs">
+        <span className="text-sm font-mono ">
           {row.original.billingUsernameVisa}
         </span>
       ),

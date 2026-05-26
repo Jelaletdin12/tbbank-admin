@@ -15,8 +15,10 @@ const DEFAULT_VISIBILITY: VisibilityState = {}
 const DEFAULT_ORDER = ['id', 'name', 'actions']
 
 export default function RequiredDocumentsListPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+
+  const lang = (i18n.language?.slice(0, 2) ?? 'tk') as 'tk' | 'ru' | 'en'
 
   // ── Table state ─────────────────────────────────────────────────────────────
   const [search, setSearch] = useState('')
@@ -45,7 +47,7 @@ export default function RequiredDocumentsListPage() {
     {
       id: 'id',
       accessorKey: 'id',
-      header: 'ID',
+      header: t('common.id', 'ID'),
       size: 72,
       cell: ({ row }) => (
         <span
@@ -59,9 +61,9 @@ export default function RequiredDocumentsListPage() {
     {
       id: 'name',
       header: t('loanDocuments.columns.name', 'ADY'),
-      accessorFn: (row) => row.name.tk,
+      accessorFn: (row) => row.name[lang],
       cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.name.tk}</span>
+        <span className="text-sm text-foreground">{row.original.name[lang]}</span>
       ),
     },
     {
