@@ -177,7 +177,7 @@ function ToggleColumnsDropdown({
                 id={`col-toggle-${col.id}`}
                 checked={isVisible(col.id)}
                 onChange={() => toggle(col.id)}
-                className="w-4 h-4 rounded cursor-pointer accent-primary"
+                className="w-4 h-4 rounded cursor-pointer accent-[#005f78] dark:accent-primary"
               />
               <label
                 htmlFor={`col-toggle-${col.id}`}
