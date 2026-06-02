@@ -1,22 +1,40 @@
-import { z } from 'zod'
-import type { CreateSberPaymentPayload, PaymentStatus } from '@/features/sberPayments/api/sberPaymentsApi'
+import { z } from "zod";
+import type { CreateSberPaymentPayload, PaymentStatus } from "@/features/sberPayments/api/sberPaymentsApi";
 
-const fileField = z.custom<File | null>((val) => val === null || val instanceof File).nullable()
+const fileField = z.custom<File | null>((val) => val === null || val instanceof File).nullable();
+const VALID_PHONE_PREFIXES = ["61", "62", "63", "64", "65", "71"];
 
 export const sberPaymentFormSchema = z.object({
-  welayat: z.string().min(1, 'validation.required'),
-  sahamca: z.string().min(1, 'validation.required'),
-  firstName: z.string().min(1, 'validation.required'),
-  lastName: z.string().min(1, 'validation.required'),
-  phone: z.string().min(1, 'validation.required'),
+  welayat: z.string().min(1, "validation.required"),
+  sahamca: z.string().min(1, "validation.required"),
+  firstName: z.string().min(1, "validation.required"),
+  lastName: z.string().min(1, "validation.required"),
+  phone: z
+    .string()
+    .min(1, "validation.required")
+    .refine(
+      (val) => {
+        const digits = val.replace(/\D/g, "");
+        return digits.length === 8;
+      },
+      { message: "validation.invalidPhone" },
+    )
+    .refine(
+      (val) => {
+        const digits = val.replace(/\D/g, "");
+        const prefix = digits.slice(0, 2);
+        return VALID_PHONE_PREFIXES.includes(prefix);
+      },
+      { message: "validation.invalidPhonePrefix" },
+    ),
   email: z.string(),
-  address: z.string().min(1, 'validation.required'),
-  status: z.string().min(1, 'validation.required'),
+  address: z.string().min(1, "validation.required"),
+  status: z.string().min(1, "validation.required"),
   bellik: z.string(),
-  accountNumber: z.string().min(1, 'validation.required'),
-  passportSeries: z.string().min(1, 'validation.required'),
-  passportNumber: z.string().min(1, 'validation.required'),
-  fullName: z.string().min(1, 'validation.required'),
+  accountNumber: z.string().min(1, "validation.required"),
+  passportSeries: z.string().min(1, "validation.required"),
+  passportNumber: z.string().min(1, "validation.required"),
+  fullName: z.string().min(1, "validation.required"),
   client_id: z.string().optional(),
   acc_sberbank_card: fileField,
   acc_enrollment: fileField,
@@ -32,54 +50,54 @@ export const sberPaymentFormSchema = z.object({
   snt_relation_doc: fileField,
   snt_new_passport_series: fileField,
   snt_old_passport_series: fileField,
-})
+});
 
-export type SberPaymentFormData = z.infer<typeof sberPaymentFormSchema>
+export type SberPaymentFormData = z.infer<typeof sberPaymentFormSchema>;
 
 export const stepSchemas: Record<number, z.ZodType<Partial<SberPaymentFormData>>> = {
   0: sberPaymentFormSchema.pick({ status: true }),
   1: sberPaymentFormSchema.pick({ welayat: true, sahamca: true }),
   2: sberPaymentFormSchema.pick({ firstName: true, lastName: true, phone: true, address: true }),
   3: sberPaymentFormSchema.pick({ passportSeries: true, passportNumber: true, fullName: true, accountNumber: true }),
-}
+};
 
 export function validateStep(
   stepIndex: number,
   form: SberPaymentFormData,
-  mode: 'create' | 'edit',
+  mode: "create" | "edit",
   t?: (key: string, fallback?: string) => string,
 ): Partial<Record<keyof SberPaymentFormData, string>> {
-  void mode
-  const schema = stepSchemas[stepIndex]
-  if (!schema) return {}
-  const result = schema.safeParse(form)
-  if (result.success) return {}
-  const errors: Partial<Record<keyof SberPaymentFormData, string>> = {}
+  void mode;
+  const schema = stepSchemas[stepIndex];
+  if (!schema) return {};
+  const result = schema.safeParse(form);
+  if (result.success) return {};
+  const errors: Partial<Record<keyof SberPaymentFormData, string>> = {};
   for (const issue of result.error.issues) {
-    const key = issue.path[0] as keyof SberPaymentFormData
+    const key = issue.path[0] as keyof SberPaymentFormData;
     if (!errors[key]) {
-      const msg = issue.message
-      errors[key] = t && msg.startsWith('validation.') ? t(msg, msg) : msg
+      const msg = issue.message;
+      errors[key] = t && msg.startsWith("validation.") ? t(msg, msg) : msg;
     }
   }
-  return errors
+  return errors;
 }
 
 export const DEFAULT_FORM_VALUES: SberPaymentFormData = {
-  client_id: '',
-  welayat: '',
-  sahamca: '',
-  firstName: '',
-  lastName: '',
-  phone: '',
-  email: '',
-  address: '',
-  status: 'GARASYLYYAR',
-  bellik: '',
-  accountNumber: '',
-  passportSeries: '',
-  passportNumber: '',
-  fullName: '',
+  client_id: "",
+  welayat: "",
+  sahamca: "",
+  firstName: "",
+  lastName: "",
+  phone: "",
+  email: "",
+  address: "",
+  status: "GARASYLYYAR",
+  bellik: "",
+  accountNumber: "",
+  passportSeries: "",
+  passportNumber: "",
+  fullName: "",
   acc_sberbank_card: null,
   acc_enrollment: null,
   acc_summons: null,
@@ -94,7 +112,7 @@ export const DEFAULT_FORM_VALUES: SberPaymentFormData = {
   snt_relation_doc: null,
   snt_new_passport_series: null,
   snt_old_passport_series: null,
-}
+};
 
 export function buildPayload(data: SberPaymentFormData): CreateSberPaymentPayload {
   return {
@@ -111,5 +129,5 @@ export function buildPayload(data: SberPaymentFormData): CreateSberPaymentPayloa
     passportSeries: data.passportSeries,
     passportNumber: data.passportNumber,
     fullName: data.fullName,
-  }
+  };
 }

@@ -311,6 +311,7 @@ function StepPersonal({
             label={t("Phone Additional") || "Telefon goşmaça"}
             value={form.phoneExtra}
             onChange={(v) => set("phoneExtra", v)}
+            error={errors.phoneExtra}
           />
         </BentoCard>
         <BentoCard>
