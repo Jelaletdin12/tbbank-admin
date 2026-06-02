@@ -27,21 +27,11 @@ import {
 import { cn } from "@/lib/utils";
 import { FormInput } from "@/components/formInput";
 import { FormActions } from "@/components/formActions";
-import {
-  useCreateRequiredDocument,
-  useUpdateRequiredDocument,
-} from "../hooks/useRequiredDocuments";
-import {
-  createRequiredDocumentFormSchema,
-  DEFAULT_FORM_VALUES,
-  buildPayload,
-  mapInitial,
-} from "../schemas/requiredDocument.schema";
+import { BentoGrid, BentoCard } from "@/components/bento";
+import { useCreateRequiredDocument, useUpdateRequiredDocument } from "../hooks/useRequiredDocuments";
+import { createRequiredDocumentFormSchema, DEFAULT_FORM_VALUES, buildPayload, mapInitial } from "../schemas/requiredDocument.schema";
 import type { RequiredDocumentFormData } from "../schemas/requiredDocument.schema";
-import type {
-  LoanDocument,
-  LoanDocumentTranslation,
-} from "../api/requiredDocumentsApi";
+import type { LoanDocument, LoanDocumentTranslation } from "../api/requiredDocumentsApi";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -78,6 +68,8 @@ function RichTextToolbar({ editor, onFileAttach }: RichTextToolbarProps) {
     }
     setShowLinkModal(false);
   };
+
+  const handleAttachmentClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,14 +151,13 @@ function RichTextToolbar({ editor, onFileAttach }: RichTextToolbarProps) {
     },
     {
       icon: Paperclip,
-      action: () => fileInputRef.current?.click(),
+      action: handleAttachmentClick,
       active: false,
       title: "Attachment",
     },
     {
       icon: Type,
-      action: () =>
-        editor.chain().focus().selectAll().clearNodes().unsetAllMarks().run(),
+      action: () => editor.chain().focus().selectAll().clearNodes().unsetAllMarks().run(),
       active: false,
       title: "Clear format",
     },
@@ -175,52 +166,39 @@ function RichTextToolbar({ editor, onFileAttach }: RichTextToolbarProps) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-border bg-muted/30">
-        {tools.map(({ icon: Icon, action, active, title }) => (
-          <button
-            key={title}
-            type="button"
-            title={title}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              action();
-            }}
-            className={cn(
-              "flex items-center justify-center w-7 h-7 rounded text-muted-foreground",
-              "hover:bg-muted hover:text-foreground transition-colors",
-              active && "bg-primary/10 text-primary",
-            )}
-          >
-            <Icon size={14} />
-          </button>
-        ))}
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+        {
+          // eslint-disable-next-line react-hooks/refs
+          tools.map(({ icon: Icon, action, active, title }) => (
+            <button
+              key={title}
+              type="button"
+              title={title}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                action();
+              }}
+              className={cn(
+                "flex items-center justify-center w-7 h-7 rounded text-muted-foreground",
+                "hover:bg-muted hover:text-foreground transition-colors",
+                active && "bg-primary/10 text-primary",
+              )}
+            >
+              <Icon size={14} />
+            </button>
+          ))
+        }
+        <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
       </div>
 
       {/* Link modal */}
-      {showLinkModal && (
-        <LinkModal
-          onConfirm={handleLinkConfirm}
-          onClose={() => setShowLinkModal(false)}
-        />
-      )}
+      {showLinkModal && <LinkModal onConfirm={handleLinkConfirm} onClose={() => setShowLinkModal(false)} />}
     </>
   );
 }
 
 // ─── Link Modal ───────────────────────────────────────────────────────────────
 
-function LinkModal({
-  onConfirm,
-  onClose,
-}: {
-  onConfirm: (url: string) => void;
-  onClose: () => void;
-}) {
+function LinkModal({ onConfirm, onClose }: { onConfirm: (url: string) => void; onClose: () => void }) {
   const [url, setUrl] = useState("");
   return (
     <div
@@ -244,11 +222,7 @@ function LinkModal({
           className="border border-input rounded px-2 py-1.5 text-sm w-full focus:outline-none focus:ring-1 focus:ring-ring"
         />
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm px-3 py-1 rounded hover:bg-muted text-muted-foreground"
-          >
+          <button type="button" onClick={onClose} className="text-sm px-3 py-1 rounded hover:bg-muted text-muted-foreground">
             Ýatyr
           </button>
           <button
@@ -273,12 +247,7 @@ interface RichTextEditorProps {
   onFileAttach?: (file: File) => void;
 }
 
-function RichTextEditor({
-  value,
-  onChange,
-  error,
-  onFileAttach,
-}: RichTextEditorProps) {
+function RichTextEditor({ value, onChange, error, onFileAttach }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -346,20 +315,11 @@ function AttachedFilesList({ files, onRemove }: AttachedFilesListProps) {
   return (
     <div className="mt-2 flex flex-col gap-1">
       {files.map((file, i) => (
-        <div
-          key={`${file.name}-${i}`}
-          className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1.5"
-        >
+        <div key={`${file.name}-${i}`} className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded px-2 py-1.5">
           <FileText size={12} className="shrink-0 text-primary" />
           <span className="flex-1 truncate">{file.name}</span>
-          <span className="shrink-0 text-muted-foreground/60">
-            {(file.size / 1024).toFixed(1)} KB
-          </span>
-          <button
-            type="button"
-            onClick={() => onRemove(i)}
-            className="shrink-0 hover:text-destructive transition-colors ml-1"
-          >
+          <span className="shrink-0 text-muted-foreground/60">{(file.size / 1024).toFixed(1)} KB</span>
+          <button type="button" onClick={() => onRemove(i)} className="shrink-0 hover:text-destructive transition-colors ml-1">
             <X size={12} />
           </button>
         </div>
@@ -386,15 +346,10 @@ function LangTabs({ active, onChange }: LangTabsProps) {
           onClick={() => onChange(code)}
           className={cn(
             "text-sm transition-colors",
-            active === code
-              ? "text-primary font-semibold underline underline-offset-4"
-              : "text-muted-foreground hover:text-foreground",
+            active === code ? "text-primary font-semibold underline underline-offset-4" : "text-muted-foreground hover:text-foreground",
           )}
         >
-          {t(
-            "languages." + code,
-            code === "tk" ? "Türkmen" : code === "ru" ? "Русский" : "English",
-          )}
+          {t("languages." + code, code === "tk" ? "Türkmen" : code === "ru" ? "Русский" : "English")}
         </button>
       ))}
     </div>
@@ -414,9 +369,7 @@ const RHF_TO_LEGACY_KEY: Record<string, LegacyErrorKey> = {
   descEn: "desc_en",
 };
 
-function flattenErrors(
-  errors: Record<string, { message?: string } | undefined>,
-): Partial<Record<LegacyErrorKey, string>> {
+function flattenErrors(errors: Record<string, { message?: string } | undefined>): Partial<Record<LegacyErrorKey, string>> {
   const result: Partial<Record<LegacyErrorKey, string>> = {};
   for (const [key, err] of Object.entries(errors)) {
     const legacyKey = RHF_TO_LEGACY_KEY[key];
@@ -429,10 +382,7 @@ function flattenErrors(
 
 // ─── RequiredDocumentForm ─────────────────────────────────────────────────────
 
-export function RequiredDocumentForm({
-  mode,
-  initialData,
-}: RequiredDocumentFormProps) {
+export function RequiredDocumentForm({ mode, initialData }: RequiredDocumentFormProps) {
   const { t: _t, i18n } = useTranslation();
   const t: (key: string, fallback?: string) => string = useCallback(
     (key, fallback) => _t(key, fallback ?? key) as string,
@@ -460,10 +410,7 @@ export function RequiredDocumentForm({
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
-  const schema = useMemo(
-    () => createRequiredDocumentFormSchema(t),
-    [t, i18n.language],
-  );
+  const schema = useMemo(() => createRequiredDocumentFormSchema(t), [t, i18n.language]);
 
   const {
     watch,
@@ -473,19 +420,11 @@ export function RequiredDocumentForm({
     trigger,
   } = useForm<RequiredDocumentFormData>({
     resolver: zodResolver(schema),
-    defaultValues: initialData
-      ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) }
-      : DEFAULT_FORM_VALUES,
+    defaultValues: initialData ? { ...DEFAULT_FORM_VALUES, ...mapInitial(initialData) } : DEFAULT_FORM_VALUES,
   });
 
   const form = watch();
-  const errors = useMemo(
-    () =>
-      flattenErrors(
-        rhfErrors as Record<string, { message?: string } | undefined>,
-      ),
-    [rhfErrors],
-  );
+  const errors = useMemo(() => flattenErrors(rhfErrors as Record<string, { message?: string } | undefined>), [rhfErrors]);
 
   useEffect(() => {
     if (Object.keys(rhfErrors).length > 0) trigger();
@@ -576,82 +515,46 @@ export function RequiredDocumentForm({
           : t("loanDocuments.editTitle", "Karz gerekli resminama üýtgetmek")}
       </h1>
       <form onSubmit={handleSubmit} noValidate>
-        <div className="bg-card border border-border rounded-xl overflow-hidden divide-y divide-border">
-          {/* ── Name field ──────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-[220px_1fr] items-start py-4 px-4">
-            <label className="text-sm text-muted-foreground pt-1">
+        <BentoGrid cols={2}>
+          <BentoCard span="full">
+            <p className="text-sm font-semibold text-muted-foreground mb-1">
               {t("loanDocuments.fields.name", "Ady")}
               <span className="text-destructive ml-0.5">*</span>
-            </label>
-            <div>
-              <LangTabs active={nameLang} onChange={setNameLang} />
-              <FormInput
-                type="text"
-                value={name[nameLang]}
-                onChange={(val) =>
-                  setName((prev) => ({ ...prev, [nameLang]: val }))
-                }
-                placeholder={t("loanDocuments.fields.namePlaceholder", "Ady")}
-                error={errors[`name_${nameLang}`]}
-              />
-              {/* Show errors for other locales as hints */}
-              {LOCALES.filter((l) => l !== nameLang && errors[`name_${l}`]).map(
-                (code) => (
-                  <p key={code} className="mt-1 text-xs text-destructive/70">
-                    {t(
-                      "languages." + code,
-                      code === "tk"
-                        ? "Türkmen"
-                        : code === "ru"
-                          ? "Русский"
-                          : "English",
-                    )}
-                    : {errors[`name_${code}`]}
-                  </p>
-                ),
-              )}
-            </div>
-          </div>
-
-          {/* ── Description field ────────────────────────────────────────────── */}
-          <div className="grid grid-cols-[220px_1fr] items-start py-4 px-4">
-            <label className="text-sm text-muted-foreground pt-1">
+            </p>
+            <LangTabs active={nameLang} onChange={setNameLang} />
+            <FormInput
+              type="text"
+              value={name[nameLang]}
+              onChange={(val) => setName((prev) => ({ ...prev, [nameLang]: val }))}
+              placeholder={t("loanDocuments.fields.namePlaceholder", "Ady")}
+              error={errors[`name_${nameLang}`]}
+            />
+            {LOCALES.filter((l) => l !== nameLang && errors[`name_${l}`]).map((code) => (
+              <p key={code} className="text-xs text-destructive/70">
+                {t("languages." + code, code === "tk" ? "Türkmen" : code === "ru" ? "Русский" : "English")}: {errors[`name_${code}`]}
+              </p>
+            ))}
+          </BentoCard>
+          <BentoCard span="full">
+            <p className="text-sm font-semibold text-muted-foreground mb-1">
               {t("loanDocuments.fields.description", "Yazgy")}
               <span className="text-destructive ml-0.5">*</span>
-            </label>
-            <div>
-              <LangTabs active={descLang} onChange={setDescLang} />
-              <RichTextEditor
-                value={description[descLang]}
-                onChange={(val) =>
-                  setDescription((prev) => ({ ...prev, [descLang]: val }))
-                }
-                error={errors[`desc_${descLang}`]}
-                onFileAttach={handleFileAttach}
-              />
-              {/* Attached files list — shown below editor, removable */}
-              <AttachedFilesList
-                files={attachedFiles}
-                onRemove={handleFileRemove}
-              />
-              {LOCALES.filter((l) => l !== descLang && errors[`desc_${l}`]).map(
-                (code) => (
-                  <p key={code} className="mt-1 text-xs text-destructive/70">
-                    {t(
-                      "languages." + code,
-                      code === "tk"
-                        ? "Türkmen"
-                        : code === "ru"
-                          ? "Русский"
-                          : "English",
-                    )}
-                    : {errors[`desc_${code}`]}
-                  </p>
-                ),
-              )}
-            </div>
-          </div>
-        </div>
+            </p>
+            <LangTabs active={descLang} onChange={setDescLang} />
+            <RichTextEditor
+              value={description[descLang]}
+              onChange={(val) => setDescription((prev) => ({ ...prev, [descLang]: val }))}
+              error={errors[`desc_${descLang}`]}
+              onFileAttach={handleFileAttach}
+            />
+            <AttachedFilesList files={attachedFiles} onRemove={handleFileRemove} />
+            {LOCALES.filter((l) => l !== descLang && errors[`desc_${l}`]).map((code) => (
+              <p key={code} className="text-xs text-destructive/70">
+                {t("languages." + code, code === "tk" ? "Türkmen" : code === "ru" ? "Русский" : "English")}: {errors[`desc_${code}`]}
+              </p>
+            ))}
+          </BentoCard>
+        </BentoGrid>
 
         <FormActions
           isPending={isPending}
