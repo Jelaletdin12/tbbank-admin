@@ -3,18 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Download, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ColumnMeta } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useCardBalances, useDeleteCardBalance, useDownloadCardBalance } from "@/features/cardBalance/hooks/useCardBalance";
 import { type CardBalance } from "@/features/cardBalance/api/cardBalanceApi";
@@ -147,6 +140,17 @@ export default function CardBalancesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">{t("Card balances", "Kart galyndylary")}</h1>
       </div>
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder={t("common.search", "Gözlemek")}
+        />
+        <CreateButton label={t("Create card balance", "Kart galyndysy dörediň")} onClick={() => navigate("/card-balances/create")} />
+      </div>
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
           searchValue={search}
@@ -160,8 +164,8 @@ export default function CardBalancesPage() {
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
-          actionLabel={t("Create card balance", "Kart galyndysy dörediň")}
-          onAction={() => navigate("/card-balances/create")}
+          hideSearch
+          hideAction
           perPageOptions={[10, 25, 50, 100]}
           perPage={perPage}
           onPerPageChange={(v) => {
@@ -187,22 +191,16 @@ export default function CardBalancesPage() {
         />
       </div>
 
-      <AlertDialog open={deleteId !== null} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("Are you sure?", "Eminsiňizmi?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("This action cannot be undone.", "Bu amal yzyna gaýtarylmaz. Kart galyndysy hemişelik öçüriler.")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancel", "Ýatyr")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {deleteMutation.isPending ? t("Deleting...", "Öçürilýär...") : t("Delete", "Öçür")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteDialog
+        open={deleteId !== null}
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
+        }}
+        title={t("Are you sure?", "Eminsiňizmi?")}
+        description={t("This action cannot be undone.", "Bu amal yzyna gaýtarylmaz. Kart galyndysy hemişelik öçüriler.")}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

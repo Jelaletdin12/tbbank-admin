@@ -4,19 +4,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Pencil, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 import { Button } from "@/components/ui/button";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import { useGetVisaMasterSettings, useDeleteVisaMasterSetting } from "@/features/visaMasterSberSettings/hooks/useVisaMasterSettings";
 import type { VisaMasterSetting } from "@/features/visaMasterSberSettings/api/visaMasterSberSettingsApi";
 
@@ -117,9 +110,15 @@ export default function VisaMasterSettingsPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div>
+    <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-foreground mb-5">{t("visaMasterSettings.title", "Visa/Master, Sber sazlamalar")}</h1>
-
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput value={search} onChange={handleSearchChange} placeholder={t("common.search", "Gözlemek")} />
+        <CreateButton
+          label={t("visaMasterSettings.actions.create", "Visa/Master, Sber sazlamalar dörediň")}
+          onClick={() => navigate("/visa-master-sber-settings/create")}
+        />
+      </div>
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
           searchValue={search}
@@ -130,8 +129,8 @@ export default function VisaMasterSettingsPage() {
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
-          actionLabel={t("visaMasterSettings.actions.create", "Visa/Master, Sber sazlamalar dörediň")}
-          onAction={() => navigate("/visa-master-sber-settings/create")}
+          hideSearch
+          hideAction
         />
 
         <DataTable
@@ -152,31 +151,16 @@ export default function VisaMasterSettingsPage() {
       </div>
 
       {/* Delete Confirmation */}
-      <AlertDialog
+      <DeleteDialog
         open={deleteId !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeleteId(null);
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("visaMasterSettings.deleteDialog.title", "Pozmak isleýärsiňizmi?")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("visaMasterSettings.deleteDialog.description", "Bu amal yzyna gaýtarylyp bilinmez. Sazlama hemişelik pozular.")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.cancel", "Ýatyr")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending ? t("common.deleting", "Pozulýar...") : t("common.delete", "Pozmak")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title={t("visaMasterSettings.deleteDialog.title", "Pozmak isleýärsiňizmi?")}
+        description={t("visaMasterSettings.deleteDialog.description", "Bu amal yzyna gaýtarylyp bilinmez. Sazlama hemişelik pozular.")}
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

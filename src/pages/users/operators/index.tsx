@@ -2,14 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Trash2, Eye, Pencil, CheckCircle2, XCircle } from "lucide-react";
-import { ConfirmDialog } from "@/components/confirmDialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 import { Button } from "@/components/ui/button";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
-import {
-  useOperators,
-  useDeleteOperator,
-} from "@/features/operators/hooks/useOperators";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
+import { useOperators, useDeleteOperator } from "@/features/operators/hooks/useOperators";
 import type { Operator } from "@/features/operators/api/operatorsApi";
 
 // ─── OperatorsPage ────────────────────────────────────────────────────────────
@@ -60,34 +59,22 @@ export default function OperatorsPage() {
     {
       accessorKey: "username",
       header: t("operators.fields.username", "ULANYJY ADY"),
-      cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.username}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm text-foreground">{row.original.username}</span>,
     },
     {
       accessorKey: "name",
       header: t("operators.fields.name", "ADY"),
-      cell: ({ row }) => (
-        <span className="text-sm text-foreground">{row.original.name}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm text-foreground">{row.original.name}</span>,
     },
     {
       accessorKey: "phone",
       header: t("operators.fields.phone", "TELEFON"),
-      cell: ({ row }) => (
-        <span className="text-sm text-foreground">
-          {row.original.phone ?? "—"}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-sm text-foreground">{row.original.phone ?? "—"}</span>,
     },
     {
       accessorKey: "email",
       header: t("operators.fields.email", "E-POÇTA"),
-      cell: ({ row }) => (
-        <span className="text-sm text-foreground">
-          {row.original.email ?? "—"}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-sm text-foreground">{row.original.email ?? "—"}</span>,
     },
     {
       accessorKey: "isActive",
@@ -140,20 +127,26 @@ export default function OperatorsPage() {
     .filter((c) => "accessorKey" in c && c.accessorKey)
     .map((c) => ({
       id: ("accessorKey" in c ? String(c.accessorKey) : c.id) as string,
-      label:
-        typeof c.header === "string"
-          ? c.header
-          : (("accessorKey" in c ? String(c.accessorKey) : "") ?? ""),
+      label: typeof c.header === "string" ? c.header : (("accessorKey" in c ? String(c.accessorKey) : "") ?? ""),
     }));
 
   // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div>
+    <div className="space-y-4">
       {/* Page header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">
-          {t("operators.title", "Operatorlar")}
-        </h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("operators.title", "Operatorlar")}</h1>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder={t("common.search", "Gözlemek")}
+        />
+        <CreateButton label={t("operators.createBtn", "Operator döredin")} onClick={() => navigate("/operators/create")} />
       </div>
       <div className="bg-card border border-border rounded-xl p-4">
         {/* Toolbar */}
@@ -194,8 +187,8 @@ export default function OperatorsPage() {
             setPerPage(v);
             setPage(1);
           }}
-          actionLabel={t("operators.createBtn", "Operator döredin")}
-          onAction={() => navigate("/operators/create")}
+          hideSearch
+          hideAction
         />
 
         {/* Table */}
@@ -217,17 +210,13 @@ export default function OperatorsPage() {
       </div>
 
       {/* Delete dialog */}
-      <ConfirmDialog
+      <DeleteDialog
         open={!!deleteTarget}
         onOpenChange={(o) => {
           if (!o) setDeleteTarget(null);
         }}
         title={t("operators.deleteTitle", "Operatory pozmak")}
-        description={t(
-          "operators.deleteDescription",
-          'Siz "{name}" operatoryny pozjakmy?',
-        ).replace("{name}", deleteTarget?.name ?? "")}
-        confirmLabel={t("common.delete", "Poz")}
+        description={t("operators.deleteDescription", 'Siz "{name}" operatoryny pozjakmy?').replace("{name}", deleteTarget?.name ?? "")}
         onConfirm={() => {
           if (deleteTarget) {
             deleteMutation.mutate(deleteTarget.id);

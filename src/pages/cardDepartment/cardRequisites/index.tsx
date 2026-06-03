@@ -3,38 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Download, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
-import {
-  DataTableToolbar,
-  type ColumnMeta,
-} from "@/components/dataTableToolbar";
+import { DataTableToolbar, type ColumnMeta } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import type { VisibilityState } from "@tanstack/react-table";
-import {
-  useCardRequisites,
-  useDeleteCardRequisite,
-  useDownloadCardRequisite,
-} from "@/features/cardRequisites/hooks/useCardRequisites";
-import type {
-  CardRequisite,
-  CardRequisiteStatus,
-} from "@/features/cardRequisites/api/cardRequisitesApi";
+import { useCardRequisites, useDeleteCardRequisite, useDownloadCardRequisite } from "@/features/cardRequisites/hooks/useCardRequisites";
+import type { CardRequisite, CardRequisiteStatus } from "@/features/cardRequisites/api/cardRequisitesApi";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_BADGE: Record<
-  CardRequisiteStatus,
-  { label: string; className: string }
-> = {
+const STATUS_BADGE: Record<CardRequisiteStatus, { label: string; className: string }> = {
   pending: {
     label: "Garaşylýar",
     className: "bg-yellow-500/15 text-yellow-500 border-yellow-500/20",
@@ -52,11 +32,7 @@ const STATUS_BADGE: Record<
 function StatusBadge({ status }: { status: CardRequisiteStatus }) {
   const cfg = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
   return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.className}`}
-    >
-      {cfg.label}
-    </span>
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.className}`}>{cfg.label}</span>
   );
 }
 
@@ -103,39 +79,25 @@ export default function CardRequisitesPage() {
       id: "card_type",
       accessorKey: "card_type",
       header: t("Card type", "GÖRNÜŞI"),
-      cell: ({ row }) => (
-        <span className="text-primary font-medium">
-          {row.original.card_type}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-primary font-medium">{row.original.card_type}</span>,
     },
     {
       id: "created_at",
       accessorKey: "created_at",
       header: t("Created at", "DÖREDILEN WAGTY"),
-      cell: ({ row }) => (
-        <span className="text-foreground">{row.original.created_at}</span>
-      ),
+      cell: ({ row }) => <span className="text-foreground">{row.original.created_at}</span>,
     },
     {
       id: "province_name",
       accessorKey: "province_name",
       header: t("Province", "WELAÝAT"),
-      cell: ({ row }) => (
-        <span className="text-foreground">
-          {row.original.province_name ?? "—"}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-foreground">{row.original.province_name ?? "—"}</span>,
     },
     {
       id: "branch_name",
       accessorKey: "branch_name",
       header: t("Branch", "ŞAHAMÇA"),
-      cell: ({ row }) => (
-        <span className="text-primary font-medium">
-          {row.original.branch_name ?? "—"}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-primary font-medium">{row.original.branch_name ?? "—"}</span>,
     },
     {
       id: "first_name",
@@ -161,28 +123,13 @@ export default function CardRequisitesPage() {
       enableHiding: false,
       cell: ({ row }) => (
         <div className="flex items-center gap-1 justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => downloadMutation.mutate(row.original.id)}
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => downloadMutation.mutate(row.original.id)}>
             <Download size={14} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => navigate(`/card-requisites/${row.original.id}`)}
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/card-requisites/${row.original.id}`)}>
             <Eye size={14} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => navigate(`/card-requisites/${row.original.id}/edit`)}
-          >
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/card-requisites/${row.original.id}/edit`)}>
             <Pencil size={14} />
           </Button>
           <Button
@@ -222,9 +169,21 @@ export default function CardRequisitesPage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">
-          {t("Card requisites", "Kart rekwizitler")}
-        </h1>
+        <h1 className="text-xl font-semibold text-foreground">{t("Card requisites", "Kart rekwizitler")}</h1>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder={t("common.search", "Gözlemek")}
+        />
+        <CreateButton
+          label={t("cardRequisites.createTitle", "Kart rekwiziti üçin sargyt dörediň")}
+          onClick={() => navigate("/card-requisites/create")}
+        />
       </div>
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
@@ -233,17 +192,14 @@ export default function CardRequisitesPage() {
             setSearch(v);
             setPage(1);
           }}
-          searchPlaceholder={t('common.search', 'Gözlemek')}
+          searchPlaceholder={t("common.search", "Gözlemek")}
           columns={columnMeta}
           columnVisibility={columnVisibility}
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
-          actionLabel={t(
-            "cardRequisites.createTitle",
-            "Kart rekwiziti üçin sargyt dörediň",
-          )}
-          onAction={() => navigate("/card-requisites/create")}
+          hideSearch
+          hideAction
           perPageOptions={[10, 25, 50, 100]}
           perPage={perPage}
           onPerPageChange={(v) => {
@@ -270,35 +226,16 @@ export default function CardRequisitesPage() {
         />
       </div>
       {/* Delete dialog */}
-      <AlertDialog
+      <DeleteDialog
         open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("Are you sure?", "Eminsiňizmi?")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "This action cannot be undone.",
-                "Bu amal yzyna gaýtarylmaz. Kart rekwiziti hemişelik öçüriler.",
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancel", "Ýatyr")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMutation.isPending
-                ? t("Deleting...", "Öçürilýär...")
-                : t("Delete", "Öçür")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
+        }}
+        title={t("Are you sure?", "Eminsiňizmi?")}
+        description={t("This action cannot be undone.", "Bu amal yzyna gaýtarylmaz. Kart rekwiziti hemişelik öçüriler.")}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

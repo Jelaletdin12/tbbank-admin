@@ -5,12 +5,14 @@ import { Eye, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ActiveFilter } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import { Button } from "@/components/ui/button";
 import type { VisibilityState } from "@tanstack/react-table";
 
 import { useUsers, useDeleteUser } from "@/features/allUsers/hooks/useAllUsers";
 import type { UserListItem } from "@/features/allUsers/api/allUsersApi";
-import { ConfirmDialog } from "@/components/confirmDialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -147,9 +149,13 @@ export default function UsersListPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div>
+    <div className="space-y-4">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">{t("users.title", "Ähli ulanyjylar")}</h1>
+      </div>
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput value={search} onChange={handleSearchChange} placeholder={t("users.searchPlaceholder", "Gözlemek")} />
+        <CreateButton label={t("users.actions.create", "Ulanyjy dörediň")} onClick={() => navigate("/all-users/create")} />
       </div>
       <div className="bg-card border border-border rounded-xl p-4">
         {/* Toolbar */}
@@ -181,8 +187,8 @@ export default function UsersListPage() {
             setPerPage(v);
             setPage(1);
           }}
-          actionLabel={t("users.actions.create", "Ulanyjy dörediň")}
-          onAction={() => navigate("/all-users/create")}
+          hideSearch
+          hideAction
         />
 
         {/* Table */}
@@ -203,7 +209,7 @@ export default function UsersListPage() {
         />
       </div>
 
-      <ConfirmDialog
+      <DeleteDialog
         open={!!deleteTarget}
         onOpenChange={(o) => {
           if (!o) setDeleteTarget(null);
@@ -213,7 +219,6 @@ export default function UsersListPage() {
           "{name}",
           deleteTarget?.username ?? "",
         )}
-        confirmLabel={t("common.delete", "Öçür")}
         onConfirm={handleDeleteConfirm}
         isLoading={deleteUser.isPending}
       />

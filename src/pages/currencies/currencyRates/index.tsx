@@ -6,13 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import { Button } from "@/components/ui/button";
-import {
-  useGetCurrencyRates,
-  useDeleteCurrencyRate,
-} from "@/features/currencyRates/hooks/useCurrencyRates";
+import { useGetCurrencyRates, useDeleteCurrencyRate } from "@/features/currencyRates/hooks/useCurrencyRates";
 import type { CurrencyRate } from "@/features/currencyRates/api/currencyRatesApi";
-import { ConfirmDialog } from "@/components/confirmDialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 
 // ─── Column visibility defaults ───────────────────────────────────────────────
 
@@ -33,8 +32,7 @@ export default function CurrencyRatesPage() {
   const [page, setPage] = useState(1);
   const [perPage] = useState(25);
   const [search, setSearch] = useState("");
-  const [columnVisibility, setColumnVisibility] =
-    useState<Record<string, boolean>>(DEFAULT_VISIBILITY);
+  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(DEFAULT_VISIBILITY);
   const [columnOrder, setColumnOrder] = useState(DEFAULT_ORDER);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -61,9 +59,7 @@ export default function CurrencyRatesPage() {
       cell: ({ row }) => (
         <button
           className="text-primary font-semibold hover:underline"
-          onClick={() =>
-            navigate(`/resources/currency-rates/${row.original.id}`)
-          }
+          onClick={() => navigate(`/resources/currency-rates/${row.original.id}`)}
         >
           {row.original.id}
         </button>
@@ -73,29 +69,17 @@ export default function CurrencyRatesPage() {
     {
       accessorKey: "currencyFrom",
       header: t("currencyRates.columns.currencyFrom", "CURRENCY FROM"),
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">
-          {row.original.currencyFrom}
-        </span>
-      ),
+      cell: ({ row }) => <span className="font-medium text-foreground">{row.original.currencyFrom}</span>,
     },
     {
       accessorKey: "currencyTo",
       header: t("currencyRates.columns.currencyTo", "CURRENCY TO"),
-      cell: ({ row }) => (
-        <span className="font-medium text-foreground">
-          {row.original.currencyTo}
-        </span>
-      ),
+      cell: ({ row }) => <span className="font-medium text-foreground">{row.original.currencyTo}</span>,
     },
     {
       accessorKey: "value",
       header: t("currencyRates.columns.value", "VALUE"),
-      cell: ({ row }) => (
-        <span className="text-foreground tabular-nums">
-          {row.original.value}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-foreground tabular-nums">{row.original.value}</span>,
     },
     {
       id: "actions",
@@ -141,19 +125,21 @@ export default function CurrencyRatesPage() {
     .filter((c) => "accessorKey" in c && c.accessorKey)
     .map((c) => ({
       id: String(("accessorKey" in c ? c.accessorKey : c.id) ?? ""),
-      label:
-        typeof c.header === "string"
-          ? c.header
-          : String(("accessorKey" in c ? c.accessorKey : "") ?? ""),
+      label: typeof c.header === "string" ? c.header : String(("accessorKey" in c ? c.accessorKey : "") ?? ""),
     }));
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-foreground mb-5">
-        {t("currencyRates.title", "Walýuta kursy")}
-      </h1>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold text-foreground mb-5">{t("currencyRates.title", "Walýuta kursy")}</h1>
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput value={search} onChange={handleSearchChange} placeholder={t("common.search", "Gözlemek")} />
+        <CreateButton
+          label={t("currencyRates.actions.create", "Walýuta kursy dörediň")}
+          onClick={() => navigate("/currency-rates/create")}
+        />
+      </div>
       <div className="bg-card border border-border rounded-xl p-4">
         <DataTableToolbar
           searchValue={search}
@@ -164,11 +150,8 @@ export default function CurrencyRatesPage() {
           onColumnVisibilityChange={setColumnVisibility}
           columnOrder={columnOrder}
           onColumnOrderChange={setColumnOrder}
-          actionLabel={t(
-            "currencyRates.actions.create",
-            "Walýuta kursy dörediň",
-          )}
-          onAction={() => navigate("/currency-rates/create")}
+          hideSearch
+          hideAction
         />
 
         <DataTable
@@ -188,12 +171,13 @@ export default function CurrencyRatesPage() {
         />
       </div>
 
-      <ConfirmDialog
+      <DeleteDialog
         open={deleteId !== null}
-        onOpenChange={(o) => { if (!o) setDeleteId(null) }}
+        onOpenChange={(o) => {
+          if (!o) setDeleteId(null);
+        }}
         title={t("currencyRates.deleteDialog.title", "Pozmak isleýärsiňizmi?")}
         description={t("currencyRates.deleteDialog.description", "Bu amal yzyna gaýtarylyp bilinmez. Walýuta kursy hemişelik pozular.")}
-        confirmLabel={deleteMutation.isPending ? t("common.deleting", "Pozulýar...") : t("common.delete", "Pozmak")}
         onConfirm={handleDeleteConfirm}
         isLoading={deleteMutation.isPending}
       />

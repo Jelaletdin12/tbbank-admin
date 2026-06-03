@@ -6,9 +6,11 @@ import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 
 import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar, type ActiveFilter, type FilterField } from "@/components/dataTableToolbar";
+import { TableSearchInput } from "@/components/tableSearch";
+import { CreateButton } from "@/components/createButton";
 import { useLoanPaidOffLetters, useDeleteLoanPaidOffLetter } from "@/features/loanPaidOffLetters/hooks/useLoanPaidOffLetters";
 import type { LoanPaidOffLetter } from "@/features/loanPaidOffLetters/api/loanPaidOffLettersApi";
-import { ConfirmDialog } from "@/components/confirmDialog";
+import { DeleteDialog } from "@/components/deleteDialog";
 
 // ─── Column IDs ────────────────────────────────────────────────────────────────
 
@@ -173,10 +175,25 @@ export default function LoanPaidOffLettersPage() {
 
   // ──────────────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
       {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">{t("loanPaidOffLetters.title", "Karzyň ýapylandygy barada güwanamalar")}</h1>
+        <h1 className="text-xl font-semibold text-foreground">{t("loanPaidOffLetters.title", "Karzyň ýapylandygy barada güwanamalar")} </h1>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 justify-between">
+        <TableSearchInput
+          value={search}
+          onChange={(v) => {
+            setSearch(v);
+            setPage(1);
+          }}
+          placeholder={t("common.search", "Gözlemek")}
+        />
+        <CreateButton
+          label={t("loanPaidOffLetters.createButton", "Karzyň ýapylandygy barada güwanama almak dörediň")}
+          onClick={handleCreate}
+        />
       </div>
 
       {/* Table Card */}
@@ -205,8 +222,8 @@ export default function LoanPaidOffLettersPage() {
             setPerPage(v);
             setPage(1);
           }}
-          actionLabel={t("loanPaidOffLetters.createButton", "Karzyň ýapylandygy barada güwanama almak dörediň")}
-          onAction={handleCreate}
+          hideSearch
+          hideAction
         />
 
         {/* Empty state OR table */}
@@ -231,13 +248,12 @@ export default function LoanPaidOffLettersPage() {
         )}
       </div>
 
-      <ConfirmDialog
+      <DeleteDialog
         open={deleteId !== null}
         onOpenChange={(o) => {
           if (!o) setDeleteId(null);
         }}
         title={t("loanPaidOffLetters.deleteConfirm", "Bu ýazgy pozulsynmy?")}
-        confirmLabel={t("common.delete", "Poz")}
         onConfirm={confirmDelete}
         isLoading={deleteMutation.isPending}
       />
