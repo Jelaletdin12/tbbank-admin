@@ -1215,5 +1215,6 @@
   "visaMasterSberSettings.createTitle": "Create setting",
   "visaMasterSberSettings.editTitle": "Edit setting",
   "onlinePayments.viewTitle": "Payment detail",
-  "cardTypes.viewTitle": "Card type detail"
+  "cardTypes.viewTitle": "Card type detail",
+  "profile.title": "My Profile"
 }

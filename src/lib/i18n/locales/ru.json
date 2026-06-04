@@ -1216,5 +1216,6 @@
   "visaMasterSberSettings.createTitle": "Создать настройку",
   "visaMasterSberSettings.editTitle": "Редактировать настройку",
   "onlinePayments.viewTitle": "Детали платежа",
-  "cardTypes.viewTitle": "Детали типа карты"
+  "cardTypes.viewTitle": "Детали типа карты",
+  "profile.title": "Мой профиль"
 }

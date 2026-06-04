@@ -108,6 +108,7 @@ const BackupsPage = lazy(() => import("@/pages/backups"));
 const BranchCreatePage = lazy(() => import("@/pages/settings/location/branchesCreate"));
 const BranchesViewPage = lazy(() => import("@/pages/settings/location/branchesView"));
 const BranchEditPage = lazy(() => import("@/pages/settings/location/branchesEdit"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
 
 // ─── Guards ───────────────────────────────────────────────────────────────────
 
@@ -145,8 +146,6 @@ type AppRoute = Omit<RouteObject, "handle" | "children"> & {
   children?: AppRoute[];
 };
 
-
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 // Wraps a lazy page in Suspense — keeps route definitions clean
@@ -178,9 +177,7 @@ const routes: AppRoute[] = [
     children: [
       {
         element: <AuthLayout />,
-        children: [
-          { path: "/login", element: page(LoginPage) },
-        ],
+        children: [{ path: "/login", element: page(LoginPage) }],
       },
     ],
   },
@@ -574,6 +571,13 @@ const routes: AppRoute[] = [
                 element: page(OnlinePaymentsHistoryViewPage),
               },
             ],
+          },
+
+          // ── PROFIL ────────────────────────────────────────────────────────
+          {
+            path: "/profile",
+            handle: { title: (t) => t("profile.title", "Meniň profilim") },
+            element: page(ProfilePage),
           },
 
           // ── BEKAPLAR ──────────────────────────────────────────────────────

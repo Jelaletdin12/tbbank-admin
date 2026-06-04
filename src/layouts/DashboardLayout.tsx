@@ -474,17 +474,19 @@ function AppSidebar() {
       {/* Footer — user block */}
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <Collapsible>
-          {/* Items — trigger'dan ÖNCE render edilir, yukarı doğru açılır */}
           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
             <div className="mb-1 rounded-lg  py-1 group-data-[collapsible=icon]:hidden">
               <div className="px-3 py-2 border-b border-sidebar-border/50 mb-1">
                 <p className="truncate text-xs font-medium text-sidebar-foreground">{user?.name ?? "Admin"}</p>
                 <p className="truncate text-[11px] text-sidebar-foreground/40">{user?.email ?? ""}</p>
               </div>
-              <button className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-foreground hover:bg-sidebar-accent/10 transition-colors">
+              <Link
+                to="/profile"
+                className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-foreground hover:bg-sidebar-accent/10 transition-colors"
+              >
                 <User size={14} />
-                <span>My profile</span>
-              </button>
+                <span>{t("profile.title", "Meniň profilim")}</span>
+              </Link>
               <button
                 onClick={logout}
                 className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
@@ -495,7 +497,6 @@ function AppSidebar() {
             </div>
           </CollapsibleContent>
 
-          {/* Trigger — profil butonu */}
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -571,8 +572,6 @@ function DashboardHeader() {
         isClickable: !!handle.indexPath,
       };
     });
-
-  // DashboardHeader içindeki breadcrumb render kısmı
 
   const generateBreadcrumbs = () => {
     if (breadcrumbs.length === 0) return null;
@@ -706,7 +705,7 @@ export function DashboardLayout() {
               <Outlet />
             </main>
 
-            <div className="text-center text-[11px] text-muted-foreground/30 py-3 ">© 2026 TBBANK.GOV.TM</div>
+            <div className="text-center text-[11px] text-muted-foreground/30 py-3">© {new Date().getFullYear()} TBBANK.GOV.TM</div>
           </div>
         </div>
       </SidebarProvider>
