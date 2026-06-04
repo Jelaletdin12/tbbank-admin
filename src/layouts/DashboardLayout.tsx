@@ -86,9 +86,11 @@ function NavSubGroup({ subItem, pathname }: { subItem: NavSubItem; pathname: str
   const active = subItem.items?.some((s) => pathname === s.url) ?? false;
   const [open, setOpen] = useState(active);
 
-  useEffect(() => {
+  const [prevActive, setPrevActive] = useState(active);
+  if (active !== prevActive) {
+    setPrevActive(active);
     if (active) setOpen(true);
-  }, [active]);
+  }
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -139,9 +141,13 @@ function NavGroupItem({ item }: { item: NavItem }) {
   const active = isActiveItem(item, pathname);
   const [open, setOpen] = useState(active);
 
-  useEffect(() => {
+  const [prevActive, setPrevActive] = useState(active);
+  const [prevCollapsed, setPrevCollapsed] = useState(collapsed);
+  if (active !== prevActive || collapsed !== prevCollapsed) {
+    setPrevActive(active);
+    setPrevCollapsed(collapsed);
     if (active && !collapsed) setOpen(true);
-  }, [active, collapsed]);
+  }
 
   return (
     <Collapsible open={!collapsed && open} onOpenChange={(v) => !collapsed && setOpen(v)}>
@@ -693,7 +699,7 @@ export function DashboardLayout() {
         <div className="flex  w-full  text-foreground ">
           <AppSidebar />
 
-          <div className="flex-1 p-2 flex bg-sidebar flex-col min-w-0">
+          <div className="flex-1 p-0 md:p-2 flex bg-sidebar flex-col min-w-0">
             <DashboardHeader />
 
             <main className="flex-1 p-4 rounded-b-md mb-1  bg-background">
