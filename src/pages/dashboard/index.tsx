@@ -7,36 +7,16 @@ import {
   Users,
   DollarSign,
   Activity,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-} from "@/components/ui/chart";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/statusBadge";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -67,17 +47,17 @@ const barData = [
 
 const pieData = [
   { name: "Kanagatlandyrylan", value: 6746, key: "approved" },
-  { name: "Garaşylýar",        value: 208,  key: "pending" },
-  { name: "Işlenilýär",        value: 157,  key: "processing" },
-  { name: "Ýatyrylan",         value: 245,  key: "rejected" },
-  { name: "Bellige alyndy",    value: 450,  key: "registered" },
+  { name: "Garaşylýar", value: 208, key: "pending" },
+  { name: "Işlenilýär", value: 157, key: "processing" },
+  { name: "Ýatyrylan", value: 245, key: "rejected" },
+  { name: "Bellige alyndy", value: 450, key: "registered" },
 ];
 
 const recentActivity = [
-  { id: "#KS-2841", name: "Serdar Annagurban",  amount: "12 500 TMT", status: "approved", time: "2 min öň" },
-  { id: "#KS-2840", name: "Aýgül Myradowa",     amount: "8 000 TMT",  status: "pending",  time: "14 min öň" },
-  { id: "#KS-2839", name: "Kakajan Durdyýew",   amount: "25 000 TMT", status: "approved", time: "31 min öň" },
-  { id: "#KS-2838", name: "Ogulgerek Sähedowa", amount: "5 500 TMT",  status: "rejected", time: "1 sa öň" },
+  { id: "#KS-2841", name: "Serdar Annagurban", amount: "12 500 TMT", status: "approved", time: "2 min öň" },
+  { id: "#KS-2840", name: "Aýgül Myradowa", amount: "8 000 TMT", status: "pending", time: "14 min öň" },
+  { id: "#KS-2839", name: "Kakajan Durdyýew", amount: "25 000 TMT", status: "approved", time: "31 min öň" },
+  { id: "#KS-2838", name: "Ogulgerek Sähedowa", amount: "5 500 TMT", status: "rejected", time: "1 sa öň" },
   { id: "#KS-2837", name: "Merdan Hojamyradow", amount: "18 000 TMT", status: "approved", time: "2 sa öň" },
 ];
 
@@ -90,27 +70,31 @@ const areaConfig = {
 
 const barConfig = {
   approved: { label: "Tassyklanan", color: "var(--chart-1)" },
-  rejected: { label: "Ýatyryldy",  color: "var(--chart-5)" },
+  rejected: { label: "Ýatyryldy", color: "var(--chart-5)" },
 } satisfies Record<string, { label: string; color: string }>;
 
 const pieConfig = {
-  approved:   { label: "Kanagatlandyrylan", color: "var(--chart-2)" },
-  pending:    { label: "Garaşylýar",        color: "var(--chart-4)" },
-  processing: { label: "Işlenilýär",        color: "var(--chart-1)" },
-  rejected:   { label: "Ýatyrylan",         color: "var(--chart-5)" },
-  registered: { label: "Bellige alyndy",    color: "var(--chart-3)" },
+  approved: { label: "Kanagatlandyrylan", color: "var(--chart-2)" },
+  pending: { label: "Garaşylýar", color: "var(--chart-4)" },
+  processing: { label: "Işlenilýär", color: "var(--chart-1)" },
+  rejected: { label: "Ýatyrylan", color: "var(--chart-5)" },
+  registered: { label: "Bellige alyndy", color: "var(--chart-3)" },
 } satisfies Record<string, { label: string; color: string }>;
 
 // ─── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({
-  title, value, change, icon: Icon, accent,
+  title,
+  value,
+  change,
+  icon: Icon,
+  accent,
 }: {
-  title: string
-  value: string
-  change: number
-  icon: React.ElementType
-  accent: string
+  title: string;
+  value: string;
+  change: number;
+  icon: React.ElementType;
+  accent: string;
 }) {
   const positive = change >= 0;
   return (
@@ -123,10 +107,12 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <p className="text-3xl font-semibold tracking-tight">{value}</p>
-        <p className={cn(
-          "mt-1 flex items-center gap-1 text-xs font-medium",
-          positive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
-        )}>
+        <p
+          className={cn(
+            "mt-1 flex items-center gap-1 text-xs font-medium",
+            positive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
+          )}
+        >
           {positive ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
           {Math.abs(change)}% geçen aýa garanyňda
         </p>
@@ -152,22 +138,16 @@ function StatCardSkeleton() {
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    approved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 hover:bg-emerald-100",
-    pending:  "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 hover:bg-amber-100",
-    rejected: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400 hover:bg-red-100",
-  };
-  const labels: Record<string, string> = {
-    approved: "Tassyklandy",
-    pending:  "Garaşylýar",
-    rejected: "Ýatyryldy",
-  };
-  return (
-    <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0", styles[status])}>
-      {labels[status]}
-    </Badge>
-  );
+const STATUS_CONFIG: Record<string, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
+  approved: { label: "Tassyklandy", variant: "success", icon: CheckCircle2 },
+  pending: { label: "Garaşylýar", variant: "warning", icon: AlertCircle },
+  rejected: { label: "Ýatyryldy", variant: "error", icon: XCircle },
+};
+
+function DashboardStatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status];
+  if (!cfg) return <span className="text-xs text-muted-foreground">{status}</span>;
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -185,7 +165,9 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <StatCardSkeleton key={i} />)}
+          {[...Array(4)].map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -198,13 +180,17 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
             <CardContent>
               <div className="h-[220px] w-full flex flex-col justify-end relative">
                 <div className="absolute left-0 top-0 h-full flex flex-col justify-between pb-6">
-                  {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-2.5 w-6" />)}
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-2.5 w-6" />
+                  ))}
                 </div>
                 <div className="ml-8 flex-1 relative overflow-hidden rounded-md">
                   <Skeleton className="absolute inset-0" />
                 </div>
                 <div className="ml-8 mt-2 flex justify-between">
-                  {[...Array(12)].map((_, i) => <Skeleton key={i} className="h-2.5 w-6" />)}
+                  {[...Array(12)].map((_, i) => (
+                    <Skeleton key={i} className="h-2.5 w-6" />
+                  ))}
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-4">
@@ -256,7 +242,9 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
             <CardContent>
               <div className="h-[180px] w-full flex flex-col justify-end relative">
                 <div className="absolute left-0 top-0 h-full flex flex-col justify-between pb-6">
-                  {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-2.5 w-6" />)}
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-2.5 w-6" />
+                  ))}
                 </div>
                 <div className="ml-8 flex items-end justify-between gap-1.5 h-[148px]">
                   {[65, 85, 50, 95, 75, 40, 30].map((h, i) => (
@@ -267,7 +255,9 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
                   ))}
                 </div>
                 <div className="ml-8 mt-2 flex justify-between">
-                  {[...Array(7)].map((_, i) => <Skeleton key={i} className="h-2.5 w-4" />)}
+                  {[...Array(7)].map((_, i) => (
+                    <Skeleton key={i} className="h-2.5 w-4" />
+                  ))}
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-4">
@@ -317,20 +307,40 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
     <div className="w-full space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {t("Dashboard", "Baş sahypa")}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {t("Overview of all operations", "Ähli amallaryň gysgaça görünüşi")}
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("Dashboard", "Baş sahypa")}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t("Overview of all operations", "Ähli amallaryň gysgaça görünüşi")}</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title={t("Loan orders", "Karz sargytlary")}    value="2 841" change={12.4}  icon={FileText}   accent="bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400" />
-        <StatCard title={t("Active cards", "Işjeň kartlar")}      value="6 968" change={5.1}   icon={CreditCard} accent="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400" />
-        <StatCard title={t("Active clients", "Işjeň müşderiler")} value="1 204" change={-3.2}  icon={Users}      accent="bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400" />
-        <StatCard title={t("Online payments", "Onlaýn tölegler")} value="438"   change={18.7}  icon={DollarSign} accent="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400" />
+        <StatCard
+          title={t("Loan orders", "Karz sargytlary")}
+          value="2 841"
+          change={12.4}
+          icon={FileText}
+          accent="bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+        />
+        <StatCard
+          title={t("Active cards", "Işjeň kartlar")}
+          value="6 968"
+          change={5.1}
+          icon={CreditCard}
+          accent="bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400"
+        />
+        <StatCard
+          title={t("Active clients", "Işjeň müşderiler")}
+          value="1 204"
+          change={-3.2}
+          icon={Users}
+          accent="bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
+        />
+        <StatCard
+          title={t("Online payments", "Onlaýn tölegler")}
+          value="438"
+          change={18.7}
+          icon={DollarSign}
+          accent="bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+        />
       </div>
 
       {/* Area chart + Pie chart */}
@@ -345,11 +355,11 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
               <AreaChart data={areaData} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="fillLoans" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="var(--color-loans)" stopOpacity={0.2} />
+                    <stop offset="5%" stopColor="var(--color-loans)" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="var(--color-loans)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="fillCards" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="var(--color-cards)" stopOpacity={0.2} />
+                    <stop offset="5%" stopColor="var(--color-cards)" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="var(--color-cards)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -373,7 +383,17 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
           <CardContent>
             <ChartContainer config={pieConfig} className="h-[160px] w-full">
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={2} dataKey="value" nameKey="name" strokeWidth={0}>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={48}
+                  outerRadius={72}
+                  paddingAngle={2}
+                  dataKey="value"
+                  nameKey="name"
+                  strokeWidth={0}
+                >
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={`var(--color-${entry.key})`} />
                   ))}
@@ -388,9 +408,7 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
                     <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: `var(--color-${d.key})` }} />
                     {d.name}
                   </span>
-                  <span className="font-medium tabular-nums">
-                    {((d.value / total) * 100).toFixed(0)}%
-                  </span>
+                  <span className="font-medium tabular-nums">{((d.value / total) * 100).toFixed(0)}%</span>
                 </div>
               ))}
             </div>
@@ -413,7 +431,7 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="approved" fill="var(--color-approved)" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                <Bar dataKey="rejected"  fill="var(--color-rejected)"  radius={[4, 4, 0, 0]} maxBarSize={20} />
+                <Bar dataKey="rejected" fill="var(--color-rejected)" radius={[4, 4, 0, 0]} maxBarSize={20} />
                 <ChartLegend content={<ChartLegendContent />} />
               </BarChart>
             </ChartContainer>
@@ -424,9 +442,7 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <div>
               <CardTitle>{t("Recent activity", "Soňky hereketler")}</CardTitle>
-              <CardDescription className="mt-0.5">
-                {t("Latest loan orders", "Iň soňky karz sargytlary")}
-              </CardDescription>
+              <CardDescription className="mt-0.5">{t("Latest loan orders", "Iň soňky karz sargytlary")}</CardDescription>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Activity size={12} />
@@ -442,11 +458,13 @@ export default function DashboardPage({ isLoading = false }: { isLoading?: boole
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.id} · {item.time}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.id} · {item.time}
+                    </p>
                   </div>
                   <div className="text-right shrink-0 space-y-0.5">
                     <p className="text-sm font-medium tabular-nums">{item.amount}</p>
-                    <StatusBadge status={item.status} />
+                    <DashboardStatusBadge status={item.status} />
                   </div>
                 </div>
               ))}

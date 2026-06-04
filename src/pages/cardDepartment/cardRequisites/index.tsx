@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Download } from "lucide-react";
+import { Download, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 import { DeleteDialog } from "@/components/deleteDialog";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ColumnMeta } from "@/components/dataTableToolbar";
@@ -11,29 +11,20 @@ import { TableActions } from "@/components/tableActions";
 import type { VisibilityState } from "@tanstack/react-table";
 import { useCardRequisites, useDeleteCardRequisite, useDownloadCardRequisite } from "@/features/cardRequisites/hooks/useCardRequisites";
 import type { CardRequisite, CardRequisiteStatus } from "@/features/cardRequisites/api/cardRequisitesApi";
+import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/statusBadge";
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
-const STATUS_BADGE: Record<CardRequisiteStatus, { label: string; className: string }> = {
-  pending: {
-    label: "Garaşylýar",
-    className: "bg-yellow-500/15 text-yellow-500 border-yellow-500/20",
-  },
-  approved: {
-    label: "Tassyklanan",
-    className: "bg-emerald-500/15 text-emerald-500 border-emerald-500/20",
-  },
-  rejected: {
-    label: "Ret edilen",
-    className: "bg-red-500/15 text-red-500 border-red-500/20",
-  },
+const STATUS_CONFIG: Record<CardRequisiteStatus, { label: string; variant: StatusBadgeVariant; icon: React.ElementType }> = {
+  pending: { label: "Garaşylýar", variant: "warning", icon: AlertCircle },
+  approved: { label: "Tassyklanan", variant: "success", icon: CheckCircle2 },
+  rejected: { label: "Ret edilen", variant: "error", icon: XCircle },
 };
 
-function StatusBadge({ status }: { status: CardRequisiteStatus }) {
-  const cfg = STATUS_BADGE[status] ?? STATUS_BADGE.pending;
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.className}`}>{cfg.label}</span>
-  );
+function CardRequisiteStatusBadge({ status }: { status: CardRequisiteStatus }) {
+  const cfg = STATUS_CONFIG[status];
+  if (!cfg) return <span className="text-xs text-muted-foreground">{status}</span>;
+  return <StatusBadge label={cfg.label} variant={cfg.variant} icon={cfg.icon} />;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -115,7 +106,7 @@ export default function CardRequisitesPage() {
       id: "status",
       accessorKey: "status",
       header: t("Status", "STATUS"),
-      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+      cell: ({ row }) => <CardRequisiteStatusBadge status={row.original.status} />,
     },
     {
       id: "actions",
