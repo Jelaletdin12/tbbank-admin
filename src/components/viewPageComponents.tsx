@@ -60,11 +60,22 @@ export function InfoRow({ label, value, children, isLink, href }: InfoRowProps) 
       {content != null && content !== "" ? (
         typeof content === "string" ? (
           isLink && href ? (
-            <Link to={href} className="text-sm break-words min-w-0 text-[#2bbae6] font-medium cursor-pointer hover:underline">
-              {content}
-            </Link>
+            href.startsWith("http") ? (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm wrap-break-words min-w-0 text-[#2bbae6] font-medium cursor-pointer hover:underline"
+              >
+                {content}
+              </a>
+            ) : (
+              <Link to={href} className="text-sm wrap-break-words min-w-0 text-[#2bbae6] font-medium cursor-pointer hover:underline">
+                {content}
+              </Link>
+            )
           ) : (
-            <span className={`text-sm break-words min-w-0 ${isLink ? "text-primary font-medium" : "text-foreground"}`}>{content}</span>
+            <span className={`text-sm wrap-break-words min-w-0 ${isLink ? "text-primary font-medium" : "text-foreground"}`}>{content}</span>
           )
         ) : (
           <div className="text-sm min-w-0">{content}</div>

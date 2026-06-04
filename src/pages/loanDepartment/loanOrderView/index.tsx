@@ -128,12 +128,22 @@ export default function LoanOrderViewPage() {
             <LoanOrderMobileStatusBadge status={order.status} />
           </InfoRow>
           <InfoRow label={t("loanOrders.fields.amount", "Berlik")} value={order.amount ? String(order.amount) : undefined} />
-          <InfoRow label={t("loanOrders.fields.createdBy", "Sargyt eden")} value={order.createdBy ?? undefined} isLink />
+          <InfoRow
+            label={t("loanOrders.fields.createdBy", "Sargyt eden")}
+            value={order.createdBy ?? undefined}
+            isLink
+            href={order.createdById ? `/all-users/${order.createdById}` : "/all-users"}
+          />
         </BentoCard>
 
         {/* Loan */}
         <BentoCard title={t("loanOrders.sections.loan", "Karz")}>
-          <InfoRow label={t("loanOrders.columns.loanType", "Karz görnüşi")} value={order.loanType} isLink />
+          <InfoRow
+            label={t("loanOrders.columns.loanType", "Karz görnüşi")}
+            value={order.loanType}
+            isLink
+            href={order.loanTypeId ? `/settings/loan/loan-types/${order.loanTypeId}` : "/settings/loan/loan-types"}
+          />
           <InfoRow
             label={t("loanOrders.fields.loanAmount", "Karz mukdary")}
             value={order.loanAmount ? String(order.loanAmount) : undefined}
@@ -143,7 +153,12 @@ export default function LoanOrderViewPage() {
         {/* Location */}
         <BentoCard title={t("loanOrders.sections.location", "Lokasiýa")}>
           <InfoRow label={t("loanOrders.columns.region", "Welaýat")} value={order.region} />
-          <InfoRow label={t("loanOrders.columns.branch", "Şahamça")} value={order.branch} isLink />
+          <InfoRow
+            label={t("loanOrders.columns.branch", "Şahamça")}
+            value={order.branch}
+            isLink
+            href={order.branchId ? `/settings/location/branches/${order.branchId}` : "/settings/location/branches"}
+          />
         </BentoCard>
       </BentoGrid>
 
@@ -175,7 +190,12 @@ export default function LoanOrderViewPage() {
           <InfoRow label={t("loanOrders.fields.employer", "Kärhananyň ady")} value={order.employer ?? undefined} />
           <InfoRow label={t("loanOrders.fields.deptPhone", "Işgärler bölüminiň belgisi")} value={order.deptPhone ?? undefined} />
           <InfoRow label={t("loanOrders.fields.workRegion", "Işleýän welaýaty")} value={order.workRegion ?? undefined} />
-          <InfoRow label={t("loanOrders.fields.workCity", "Işleýän etraby")} value={order.workCity ?? undefined} isLink />
+          <InfoRow
+            label={t("loanOrders.fields.workCity", "Işleýän etraby")}
+            value={order.workCity ?? undefined}
+            isLink
+            href={order.workCityId ? `/settings/location/districts/${order.workCityId}` : "/settings/location/districts"}
+          />
           <InfoRow label={t("loanOrders.fields.position", "Wezipe")} value={order.position ?? undefined} />
           <InfoRow label={t("loanOrders.fields.salary", "Zähmet haky")} value={order.salary ? String(order.salary) : undefined} />
           <InfoRow label={t("loanOrders.fields.employedSince", "Işe başlan wagty")} value={order.employedSince ?? undefined} />

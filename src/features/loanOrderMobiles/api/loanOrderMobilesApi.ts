@@ -10,6 +10,10 @@ export interface LoanOrderMobile {
   createdAt: string;
   region: string;
   branch: string;
+  branchId?: number | string;
+  loanTypeId?: number | string;
+  workCityId?: number | string;
+  createdById?: number | string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -148,6 +152,10 @@ const MOCK_DATA: LoanOrderMobile[] = [
     createdAt: "2025-01-15 09:42",
     region: "Aşgabat",
     branch: "Merkezi şahamça",
+    branchId: 1,
+    loanTypeId: 1,
+    workCityId: 1,
+    createdById: "U-1001",
     firstName: "Oraz",
     lastName: "Annaýew",
     phone: "+99361123456",
@@ -196,6 +204,10 @@ const MOCK_DATA: LoanOrderMobile[] = [
     createdAt: "2025-01-18 11:05",
     region: "Ahal",
     branch: "Änew şahamçasy",
+    branchId: 2,
+    loanTypeId: 2,
+    workCityId: 2,
+    createdById: "U-1002",
     firstName: "Merjen",
     lastName: "Hudaýewa",
     phone: "+99362234567",
@@ -237,6 +249,10 @@ const MOCK_DATA: LoanOrderMobile[] = [
     createdAt: "2025-01-20 14:30",
     region: "Balkan",
     branch: "Balkanabat şahamçasy",
+    branchId: 3,
+    loanTypeId: 3,
+    workCityId: 7,
+    createdById: "U-1003",
     firstName: "Serdar",
     lastName: "Durdyýew",
     phone: "+99363345678",
