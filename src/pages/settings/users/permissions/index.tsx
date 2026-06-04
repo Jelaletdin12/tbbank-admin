@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2 } from "lucide-react";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
-import { Button } from "@/components/ui/button";
+import { TableActions } from "@/components/tableActions";
 import { DeleteDialog } from "@/components/deleteDialog";
 import { usePermissions, useDeletePermission } from "@/features/permissions/hooks/usePermissions";
 import type { Permission } from "@/features/permissions/api/permissionsApi";
@@ -68,32 +67,12 @@ export default function PermissionsPage() {
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-primary"
-            onClick={() => navigate(`/settings/users/permissions/${row.original.id}`)}
-          >
-            <Eye size={15} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-blue-500"
-            onClick={() => navigate(`/settings/users/permissions/${row.original.id}/edit`)}
-          >
-            <Pencil size={15} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => setDeleteId(row.original.id)}
-          >
-            <Trash2 size={15} />
-          </Button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/settings/users/permissions/${row.original.id}`)}
+          onEdit={() => navigate(`/settings/users/permissions/${row.original.id}/edit`)}
+          onDelete={() => setDeleteId(row.original.id)}
+          isDeleting={deletePermission.isPending}
+        />
       ),
     },
   ];
@@ -114,7 +93,7 @@ export default function PermissionsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">{t("permissions.title", "Rugsatlar")}</h1>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

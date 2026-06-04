@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ActiveFilter } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
-import { Button } from "@/components/ui/button";
+import { TableActions } from "@/components/tableActions";
 import type { VisibilityState } from "@tanstack/react-table";
 
 import { useUsers, useDeleteUser } from "@/features/allUsers/hooks/useAllUsers";
@@ -120,22 +120,12 @@ export default function UsersListPage() {
       size: 100,
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/all-users/${row.original.id}`)}>
-            <Eye size={14} />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/all-users/${row.original.id}/edit`)}>
-            <Pencil size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/all-users/${row.original.id}`)}
+          onEdit={() => navigate(`/all-users/${row.original.id}/edit`)}
+          onDelete={() => setDeleteTarget(row.original)}
+          isDeleting={deleteUser.isPending}
+        />
       ),
     },
   ];
@@ -153,7 +143,7 @@ export default function UsersListPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">{t("users.title", "Ähli ulanyjylar")}</h1>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput value={search} onChange={handleSearchChange} placeholder={t("users.searchPlaceholder", "Gözlemek")} />
         <CreateButton label={t("users.actions.create", "Ulanyjy dörediň")} onClick={() => navigate("/all-users/create")} />
       </div>

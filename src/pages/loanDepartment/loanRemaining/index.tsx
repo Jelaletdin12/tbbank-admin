@@ -1,13 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 
 import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar, type ActiveFilter, type FilterField } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { useLoanRemaining, useDeleteLoanRemaining } from "@/features/loanRemaining/hooks/useLoanRemaining";
 import type { LoanRemaining } from "@/features/loanRemaining/api/loanRemainingApi";
 import { DeleteDialog } from "@/components/deleteDialog";
@@ -94,30 +95,12 @@ export default function LoanRemainingPage() {
         header: "",
         enableHiding: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 justify-end">
-            <button
-              onClick={() => navigate(`/loan-remaining/${row.original.id}`)}
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t("common.view", "Görmek")}
-            >
-              <Eye size={15} />
-            </button>
-            <button
-              onClick={() => navigate(`/loan-remaining/${row.original.id}/edit`)}
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t("common.edit", "Üýtgetmek")}
-            >
-              <Pencil size={15} />
-            </button>
-            <button
-              onClick={() => handleDelete(row.original.id)}
-              disabled={deleteMutation.isPending}
-              className="p-1.5 cursor-pointer rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-              title={t("common.delete", "Pozmak")}
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
+          <TableActions
+            onView={() => navigate(`/loan-remaining/${row.original.id}`)}
+            onEdit={() => navigate(`/loan-remaining/${row.original.id}/edit`)}
+            onDelete={() => handleDelete(row.original.id)}
+            isDeleting={deleteMutation.isPending}
+          />
         ),
         size: 100,
       },
@@ -138,7 +121,7 @@ export default function LoanRemainingPage() {
         <h1 className="text-xl font-semibold text-foreground">{t("loanRemaining.title", "Karzyň galyndysy")}</h1>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

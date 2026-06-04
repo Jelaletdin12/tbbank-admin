@@ -1,13 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 
 import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar, type ActiveFilter, type FilterField } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { useCardOrders, useDeleteCardOrder, useProvinces, useBranches } from "@/features/orderNewCard/hooks/useOrderNewCard";
 import type { CardOrderListItem, CardOrderStatus } from "@/features/orderNewCard/api/orderNewCardApi";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/statusBadge";
@@ -183,30 +184,12 @@ export default function CardOrdersPage() {
         header: "",
         enableHiding: false,
         cell: ({ row }) => (
-          <div className="flex items-center gap-1.5 justify-end">
-            <button
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t("common.view", "Görkez")}
-              onClick={() => navigate(`/order-new-card/${row.original.id}`)}
-            >
-              <Eye size={15} />
-            </button>
-            <button
-              className="p-1.5 cursor-pointer rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-              title={t("common.edit", "Düzet")}
-              onClick={() => navigate(`/order-new-card/${row.original.id}/edit`)}
-            >
-              <Pencil size={15} />
-            </button>
-            <button
-              onClick={() => handleDelete(row.original.id)}
-              disabled={deleteMutation.isPending}
-              className="p-1.5 cursor-pointer rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-              title={t("common.delete", "Poz")}
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
+          <TableActions
+            onView={() => navigate(`/order-new-card/${row.original.id}`)}
+            onEdit={() => navigate(`/order-new-card/${row.original.id}/edit`)}
+            onDelete={() => handleDelete(row.original.id)}
+            isDeleting={deleteMutation.isPending}
+          />
         ),
         size: 100,
       },
@@ -247,7 +230,7 @@ export default function CardOrdersPage() {
         <h1 className="text-xl font-semibold text-foreground tracking-tight">{t("cardOrder.title", "Kart sargytlary")}</h1>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

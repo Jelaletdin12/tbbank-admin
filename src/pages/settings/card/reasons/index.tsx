@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { Eye, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { DeleteDialog } from "@/components/deleteDialog";
 import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import type { FilterField, ActiveFilter } from "@/components/dataTableToolbar";
 import { useCardReasons, useDeleteCardReason } from "@/features/cardReasons/hooks/useCardReasons";
 import type { CardReason } from "@/features/cardReasons/api/cardReasonsApi";
@@ -103,29 +104,11 @@ export function CardReasonsListPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 justify-end">
-          <button
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => navigate(`/settings/card/card-reasons/${row.original.id}`)}
-            title={t("common.view", "Görmek")}
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => navigate(`/settings/card/card-reasons/${row.original.id}/edit`)}
-            title={t("common.edit", "Üýtgetmek")}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-            onClick={() => setDeleteId(row.original.id)}
-            title={t("common.delete", "Öçürmek")}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/settings/card/card-reasons/${row.original.id}`)}
+          onEdit={() => navigate(`/settings/card/card-reasons/${row.original.id}/edit`)}
+          onDelete={() => setDeleteId(row.original.id)}
+        />
       ),
       enableSorting: false,
       enableHiding: false,
@@ -150,7 +133,7 @@ export function CardReasonsListPage() {
           <h1 className="text-2xl font-bold text-foreground">{t("cardReasons.title", "Kartyň çykarylmagynyň sebäpleri")}</h1>
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

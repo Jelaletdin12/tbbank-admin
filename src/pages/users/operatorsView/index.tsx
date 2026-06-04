@@ -1,45 +1,21 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  Pencil,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Eye,
-} from "lucide-react";
+import { TableActions } from "@/components/tableActions";
+import { Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/confirmDialog";
-import {
-  BentoGrid,
-  BentoCard,
-  InfoRow,
-  AuditLog,
-  CollapsibleSection,
-  EmptyState,
-} from "@/components/viewPageComponents";
+import { BentoGrid, BentoCard, InfoRow, AuditLog, CollapsibleSection, EmptyState } from "@/components/viewPageComponents";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
-import {
-  useOperator,
-  useDeleteOperator,
-} from "@/features/operators/hooks/useOperators";
-import type {
-  OperatorRole,
-  OperatorBranch,
-  OperatorAuditLog,
-  OperatorPermission,
-} from "@/features/operators/api/operatorsApi";
+import { useOperator, useDeleteOperator } from "@/features/operators/hooks/useOperators";
+import type { OperatorRole, OperatorBranch, OperatorAuditLog, OperatorPermission } from "@/features/operators/api/operatorsApi";
 
 // ─── ActiveIndicator ──────────────────────────────────────────────────────────
 
 function ActiveIndicator({ active }: { active: boolean }) {
-  return active ? (
-    <CheckCircle2 size={18} className="text-emerald-500" />
-  ) : (
-    <XCircle size={18} className="text-destructive" />
-  );
+  return active ? <CheckCircle2 size={18} className="text-emerald-500" /> : <XCircle size={18} className="text-destructive" />;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -64,11 +40,7 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "id",
       header: t("common.id", "ID"),
-      cell: ({ row }) => (
-        <span className="text-primary font-semibold text-sm">
-          {row.original.id}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 80,
     },
     {
@@ -84,40 +56,13 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "guardName",
       header: t("roles.fields.guardName", "GUARD NAME"),
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.guardName}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm">{row.original.guardName}</span>,
     },
     {
       id: "actions",
       header: "",
       size: 120,
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1 justify-end">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate(`/roles/${row.original.id}`)}
-          >
-            <Eye size={14} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          >
-            <Pencil size={13} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 size={13} />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => <TableActions onView={() => navigate(`/roles/${row.original.id}`)} />,
     },
   ];
 
@@ -127,11 +72,7 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "id",
       header: t("common.id", "ID"),
-      cell: ({ row }) => (
-        <span className="text-primary font-semibold text-sm">
-          {row.original.id}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 80,
     },
     {
@@ -142,9 +83,7 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "guardName",
       header: t("permissions.fields.guardName", "GUARD NAME"),
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.guardName}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm">{row.original.guardName}</span>,
     },
     {
       id: "actions",
@@ -152,11 +91,7 @@ export default function OperatorDetailPage() {
       size: 60,
       cell: () => (
         <div className="flex items-center justify-end">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          >
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive">
             <Trash2 size={13} />
           </Button>
         </div>
@@ -170,11 +105,7 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "id",
       header: t("common.id", "ID"),
-      cell: ({ row }) => (
-        <span className="text-primary font-semibold text-sm">
-          {row.original.id}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-primary font-semibold text-sm">{row.original.id}</span>,
       size: 60,
     },
     {
@@ -190,16 +121,12 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "district",
       header: t("branches.fields.district", "ETRAP"),
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.district}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm">{row.original.district}</span>,
     },
     {
       accessorKey: "uniqueCode",
       header: t("branches.fields.uniqueCode", "UNIKAL BELGI"),
-      cell: ({ row }) => (
-        <span className="text-sm">{row.original.uniqueCode}</span>
-      ),
+      cell: ({ row }) => <span className="text-sm">{row.original.uniqueCode}</span>,
     },
     {
       accessorKey: "isActive",
@@ -210,29 +137,17 @@ export default function OperatorDetailPage() {
     {
       accessorKey: "billingUsernameIbr",
       header: t("branches.fields.billingIbr", "BILLING ULANYJY ADY"),
-      cell: ({ row }) => (
-        <span className="text-sm font-mono">
-          {row.original.billingUsernameIbr}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-sm font-mono">{row.original.billingUsernameIbr}</span>,
     },
     {
       accessorKey: "billingUsernameSber",
       header: t("branches.fields.billingSber", "BILLING USERNAME (SBER)"),
-      cell: ({ row }) => (
-        <span className="text-sm font-mono ">
-          {row.original.billingUsernameSber}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-sm font-mono ">{row.original.billingUsernameSber}</span>,
     },
     {
       accessorKey: "billingUsernameVisa",
       header: t("branches.fields.billingVisa", "BILLING USERNAME (VISA)"),
-      cell: ({ row }) => (
-        <span className="text-sm font-mono ">
-          {row.original.billingUsernameVisa}
-        </span>
-      ),
+      cell: ({ row }) => <span className="text-sm font-mono ">{row.original.billingUsernameVisa}</span>,
     },
     {
       id: "actions",
@@ -240,11 +155,7 @@ export default function OperatorDetailPage() {
       size: 60,
       cell: () => (
         <div className="flex items-center justify-end">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          >
+          <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive">
             <Trash2 size={13} />
           </Button>
         </div>
@@ -260,10 +171,7 @@ export default function OperatorDetailPage() {
         <Skeleton className="h-7 w-64" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3"
-            >
+            <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
               <Skeleton className="h-3 w-24 mb-1" />
               {Array.from({ length: 3 }).map((_, j) => (
                 <Skeleton key={j} className="h-4 w-full" />
@@ -287,18 +195,12 @@ export default function OperatorDetailPage() {
   }));
 
   const filteredRoles = (operator.roles ?? []).filter(
-    (r) =>
-      r.name.toLowerCase().includes(roleSearch.toLowerCase()) ||
-      r.code.toLowerCase().includes(roleSearch.toLowerCase()),
+    (r) => r.name.toLowerCase().includes(roleSearch.toLowerCase()) || r.code.toLowerCase().includes(roleSearch.toLowerCase()),
   );
 
-  const filteredPermissions = (operator.permissions ?? []).filter((p) =>
-    p.name.toLowerCase().includes(permSearch.toLowerCase()),
-  );
+  const filteredPermissions = (operator.permissions ?? []).filter((p) => p.name.toLowerCase().includes(permSearch.toLowerCase()));
 
-  const filteredBranches = (operator.branches ?? []).filter((b) =>
-    b.name.toLowerCase().includes(branchSearch.toLowerCase()),
-  );
+  const filteredBranches = (operator.branches ?? []).filter((b) => b.name.toLowerCase().includes(branchSearch.toLowerCase()));
 
   return (
     <div className="flex flex-col gap-6">
@@ -331,28 +233,16 @@ export default function OperatorDetailPage() {
       <BentoGrid cols={2}>
         <BentoCard title={t("operators.sections.basic", "Esasy maglumatlar")}>
           <InfoRow label={t("common.id", "ID")} value={operator.id} />
-          <InfoRow
-            label={t("operators.fields.username", "Ulanyjy ady")}
-            value={operator.username}
-          />
-          <InfoRow
-            label={t("operators.fields.name", "Ady")}
-            value={operator.name}
-          />
+          <InfoRow label={t("operators.fields.username", "Ulanyjy ady")} value={operator.username} />
+          <InfoRow label={t("operators.fields.name", "Ady")} value={operator.name} />
           <InfoRow label={t("operators.fields.isActive", "Işjeň")}>
             <ActiveIndicator active={operator.isActive} />
           </InfoRow>
         </BentoCard>
 
         <BentoCard title={t("operators.sections.contact", "Kontakt")}>
-          <InfoRow
-            label={t("operators.fields.phone", "Telefon")}
-            value={operator.phone ?? "—"}
-          />
-          <InfoRow
-            label={t("operators.fields.email", "E-poçta")}
-            value={operator.email ?? "—"}
-          />
+          <InfoRow label={t("operators.fields.phone", "Telefon")} value={operator.phone ?? "—"} />
+          <InfoRow label={t("operators.fields.email", "E-poçta")} value={operator.email ?? "—"} />
         </BentoCard>
       </BentoGrid>
 
@@ -372,18 +262,11 @@ export default function OperatorDetailPage() {
             /* modal aç ya da navigate */
           }}
         />
-        <DataTable
-          columns={roleColumns}
-          data={filteredRoles}
-          getRowId={(r) => String(r.id)}
-          enableRowSelection
-        />
+        <DataTable columns={roleColumns} data={filteredRoles} getRowId={(r) => String(r.id)} enableRowSelection />
       </CollapsibleSection>
 
       {/* ── Rugsatlar ────────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t("operators.sections.permissions", "Rugsatlar")}
-      >
+      <CollapsibleSection title={t("operators.sections.permissions", "Rugsatlar")}>
         <DataTableToolbar
           searchValue={permSearch}
           onSearchChange={setPermSearch}
@@ -397,26 +280,14 @@ export default function OperatorDetailPage() {
           onAction={() => {}}
         />
         {filteredPermissions.length === 0 ? (
-          <EmptyState
-            label={t(
-              "operators.noPermissions",
-              "Berlen kriterýalara Rugsat gabat gelmedi.",
-            )}
-          />
+          <EmptyState label={t("operators.noPermissions", "Berlen kriterýalara Rugsat gabat gelmedi.")} />
         ) : (
-          <DataTable
-            columns={permissionColumns}
-            data={filteredPermissions}
-            getRowId={(p) => String(p.id)}
-            enableRowSelection
-          />
+          <DataTable columns={permissionColumns} data={filteredPermissions} getRowId={(p) => String(p.id)} enableRowSelection />
         )}
       </CollapsibleSection>
 
       {/* ── Şahamçalar ───────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t("operators.sections.branches", "Şahamçalar")}
-      >
+      <CollapsibleSection title={t("operators.sections.branches", "Şahamçalar")}>
         <DataTableToolbar
           searchValue={branchSearch}
           onSearchChange={setBranchSearch}
@@ -429,18 +300,11 @@ export default function OperatorDetailPage() {
           actionLabel={t("operators.addBranch", "Şahamça birikdiriň")}
           onAction={() => {}}
         />
-        <DataTable
-          columns={branchColumns}
-          data={filteredBranches}
-          getRowId={(r) => String(r.id)}
-          enableRowSelection
-        />
+        <DataTable columns={branchColumns} data={filteredBranches} getRowId={(r) => String(r.id)} enableRowSelection />
       </CollapsibleSection>
 
       {/* ── Karz sargyt ──────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t("operators.sections.loanLimits", "Karz sargyt")}
-      >
+      <CollapsibleSection title={t("operators.sections.loanLimits", "Karz sargyt")}>
         <DataTableToolbar
           searchValue=""
           onSearchChange={() => {}}
@@ -454,19 +318,12 @@ export default function OperatorDetailPage() {
           hideSearch
         />
         {(operator.loanLimits ?? []).length === 0 && (
-          <EmptyState
-            label={t(
-              "operators.noLoanLimits",
-              "Berlen kriterýalara Karz sargyt gabat gelmedi.",
-            )}
-          />
+          <EmptyState label={t("operators.noLoanLimits", "Berlen kriterýalara Karz sargyt gabat gelmedi.")} />
         )}
       </CollapsibleSection>
 
       {/* ── Kart sargyt ──────────────────────────────────────────────────── */}
-      <CollapsibleSection
-        title={t("operators.sections.cardLimits", "Kart sargyt")}
-      >
+      <CollapsibleSection title={t("operators.sections.cardLimits", "Kart sargyt")}>
         <DataTableToolbar
           searchValue=""
           onSearchChange={() => {}}
@@ -480,12 +337,7 @@ export default function OperatorDetailPage() {
           hideSearch
         />
         {(operator.cardLimits ?? []).length === 0 && (
-          <EmptyState
-            label={t(
-              "operators.noCardLimits",
-              "Berlen kriterýalara Kart sargyt gabat gelmedi.",
-            )}
-          />
+          <EmptyState label={t("operators.noCardLimits", "Berlen kriterýalara Kart sargyt gabat gelmedi.")} />
         )}
       </CollapsibleSection>
 
@@ -496,11 +348,7 @@ export default function OperatorDetailPage() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title={t("operators.deleteTitle", "Operatory pozmak")}
-        description={t(
-          "operators.deleteConfirm",
-          "{{name}} operatoryny pozmak isleýärsiňizmi?",
-          { name: operator.name },
-        )}
+        description={t("operators.deleteConfirm", "{{name}} operatoryny pozmak isleýärsiňizmi?", { name: operator.name })}
         confirmLabel={t("common.delete", "Poz")}
         onConfirm={() =>
           deleteMutation.mutate(operatorId, {

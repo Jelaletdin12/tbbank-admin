@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { format } from "date-fns";
-import { Eye, Edit, ArrowUpDown, Trash2 } from "lucide-react";
+import { Edit, ArrowUpDown } from "lucide-react";
 import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar, type ColumnMeta, type FilterField, type ActiveFilter } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { MonthSelect } from "@/components/monthSelect";
 import { useSberPaymentOrders, useDeleteSberPayment } from "@/features/sberPayments/hooks/useSberPayments";
 import {
@@ -213,29 +214,13 @@ export default function SberPaymentsListPage() {
           const order = row.original;
 
           return (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => navigate(`/sber-payments/${order.id}`)}
-                className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                title={t("common.view", "View")}
-              >
-                <Eye size={16} />
-              </button>
-              <button
-                onClick={() => navigate(`/sber-payments/${order.id}/edit`)}
-                className="p-1.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                title={t("common.edit", "Edit")}
-              >
-                <Edit size={16} />
-              </button>
-              <button
-                onClick={() => setDeleteTarget(order)}
-                className="p-1.5 rounded hover:bg-accent text-destructive hover:bg-destructive/10 transition-colors"
-                title={t("common.delete", "Delete")}
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
+            <TableActions
+              onView={() => navigate(`/sber-payments/${order.id}`)}
+              onEdit={() => navigate(`/sber-payments/${order.id}/edit`)}
+              onDelete={() => setDeleteTarget(order)}
+              isDeleting={deleteMutation.isPending}
+              editIcon={Edit}
+            />
           );
         },
       },
@@ -292,7 +277,7 @@ export default function SberPaymentsListPage() {
     <div className="space-y-4">
       {/* Page Title */}
       <h1 className="text-xl font-semibold text-foreground">{t("sberPayments.list.title", "Sber tölegler (talyplar üçin)")}</h1>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(val) => {

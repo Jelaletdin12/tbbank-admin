@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Download, Eye, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { DeleteDialog } from "@/components/deleteDialog";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ColumnMeta } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import type { VisibilityState } from "@tanstack/react-table";
 import {
   useCardTransactions,
@@ -86,44 +86,13 @@ export default function CardTransactionsPage() {
       header: "",
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1 justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => downloadMutation.mutate(row.original.id)}
-            title={t("Download", "Ýükle")}
-          >
-            <Download size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => navigate(`/card-transactions/${row.original.id}`)}
-            title={t("View", "Görmek")}
-          >
-            <Eye size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => navigate(`/card-transactions/${row.original.id}/edit`)}
-            title={t("Edit", "Üýtgetmek")}
-          >
-            <Pencil size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setDeleteId(row.original.id)}
-            title={t("Delete", "Öçürmek")}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TableActions
+          extraActions={[{ icon: Download, title: t("Download", "Ýükle"), onClick: () => downloadMutation.mutate(row.original.id) }]}
+          onView={() => navigate(`/card-transactions/${row.original.id}`)}
+          onEdit={() => navigate(`/card-transactions/${row.original.id}/edit`)}
+          onDelete={() => setDeleteId(row.original.id)}
+          isDeleting={deleteMutation.isPending}
+        />
       ),
     },
   ];
@@ -155,7 +124,7 @@ export default function CardTransactionsPage() {
         <h1 className="text-xl font-semibold text-foreground">{t("Card transactions", "Kart hereketleri")}</h1>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

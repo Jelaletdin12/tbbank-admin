@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { useGetLoanTypes, useDeleteLoanType } from "@/features/loanTypes/hooks/useLoanTypes";
 import type { LoanType } from "@/features/loanTypes/api/loanTypesApi";
 import { DeleteDialog } from "@/components/deleteDialog";
@@ -71,29 +72,11 @@ function useLoanTypeColumns(
       size: 120,
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => onView(row.original.id)}
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            title={t("common.view", "Görmek")}
-          >
-            <Eye size={14} />
-          </button>
-          <button
-            onClick={() => onEdit(row.original.id)}
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            title={t("common.edit", "Redaktirlemek")}
-          >
-            <Pencil size={14} />
-          </button>
-          <button
-            onClick={() => onDelete(row.original.id)}
-            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-            title={t("common.delete", "Pozmak")}
-          >
-            <Trash2 size={14} />
-          </button>
-        </div>
+        <TableActions
+          onView={() => onView(row.original.id)}
+          onEdit={() => onEdit(row.original.id)}
+          onDelete={() => onDelete(row.original.id)}
+        />
       ),
     },
   ];
@@ -138,7 +121,7 @@ export default function LoanTypesListPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-foreground mb-5">{t("loanTypes.title", "Karz görnüşleri")}</h1>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

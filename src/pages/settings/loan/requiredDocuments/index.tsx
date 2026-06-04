@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2 } from "lucide-react";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { useGetRequiredDocuments, useDeleteRequiredDocument } from "@/features/requiredDocuments/hooks/useRequiredDocuments";
 import type { LoanDocument } from "@/features/requiredDocuments/api/requiredDocumentsApi";
 import type { VisibilityState } from "@tanstack/react-table";
@@ -72,30 +72,12 @@ export default function RequiredDocumentsListPage() {
       size: 100,
       enableSorting: false,
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => navigate(`/settings/loan/required-documents/${row.original.id}`)}
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            title={t("common.view", "Görüntüle")}
-          >
-            <Eye size={15} />
-          </button>
-          <button
-            onClick={() => navigate(`/settings/loan/required-documents/${row.original.id}/edit`)}
-            className="p-1.5 rounded hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
-            title={t("common.edit", "Düzet")}
-          >
-            <Pencil size={15} />
-          </button>
-          <button
-            onClick={() => handleDelete(row.original.id)}
-            disabled={deleteMutation.isPending}
-            className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-            title={t("common.delete", "Öçür")}
-          >
-            <Trash2 size={15} />
-          </button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/settings/loan/required-documents/${row.original.id}`)}
+          onEdit={() => navigate(`/settings/loan/required-documents/${row.original.id}/edit`)}
+          onDelete={() => handleDelete(row.original.id)}
+          isDeleting={deleteMutation.isPending}
+        />
       ),
     },
   ];
@@ -108,7 +90,7 @@ export default function RequiredDocumentsListPage() {
     <div className="space-y-4">
       {/* Page heading */}
       <h1 className="text-xl font-semibold text-foreground mb-4">{t("loanDocuments.title", "Karz gerekli resminamalary")}</h1>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

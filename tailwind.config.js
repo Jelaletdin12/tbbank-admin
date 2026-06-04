@@ -20,11 +20,10 @@ export default {
         },
       },
       animation: {
-        "collapsible-down":
-          "collapsible-down 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+        "collapsible-down": "collapsible-down 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         "collapsible-up": "collapsible-up 0.18s cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [require("@tailwindcss/typography"), require("@tailwindcss/container-queries")],
 };

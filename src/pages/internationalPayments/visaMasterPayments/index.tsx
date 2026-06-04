@@ -6,14 +6,13 @@ import { DataTable } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
-import { useIntlPayments, useDeleteIntlPayment } from "@/features/visaMasterPayments/hooks/useVisaMasterPayments";
-import type { IntlPaymentItem, IntlPaymentStatus } from "@/features/visaMasterPayments/api/visaMasterPaymentsApi";
-import { Button } from "@/components/ui/button";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { TableActions } from "@/components/tableActions";
 import { DeleteDialog } from "@/components/deleteDialog";
 import { MonthSelect } from "@/components/monthSelect";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/statusBadge";
 import { AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { useIntlPayments, useDeleteIntlPayment } from "@/features/visaMasterPayments/hooks/useVisaMasterPayments";
+import type { IntlPaymentStatus, IntlPaymentItem } from "@/features/visaMasterPayments/api/visaMasterPaymentsApi";
 // ─── Status badge (defined inside component for t() access) ───────────────────
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -94,22 +93,12 @@ export default function IntlPaymentsPage() {
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigate(`/visa-master/${row.original.id}`)}>
-            <Eye size={14} />
-          </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigate(`/visa-master/${row.original.id}/edit`)}>
-            <Pencil size={14} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/visa-master/${row.original.id}`)}
+          onEdit={() => navigate(`/visa-master/${row.original.id}/edit`)}
+          onDelete={() => setDeleteTarget(row.original)}
+          isDeleting={isDeleting}
+        />
       ),
     },
   ];
@@ -127,7 +116,7 @@ export default function IntlPaymentsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-foreground">{t("intlPayment.title", "Halkara tölegler (Visa/Mastercard)")}</h1>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Download, Trash2, Database, CheckCircle2, XCircle, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, Database, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { DeleteDialog } from "@/components/deleteDialog";
+import { TableActions } from "@/components/tableActions";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar, type ColumnMeta } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
@@ -79,27 +79,17 @@ export default function BackupsPage() {
       header: "",
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center gap-1 justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => downloadBackup.mutate(row.original.id)}
-            disabled={row.original.status === "in_progress"}
-            title={t("common.download", "Ýükle")}
-          >
-            <Download size={14} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={() => setDeleteId(row.original.id)}
-            title={t("common.delete", "Poz")}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TableActions
+          extraActions={[
+            {
+              icon: Download,
+              title: t("common.download", "Ýükle"),
+              onClick: () => downloadBackup.mutate(row.original.id),
+              disabled: row.original.status === "in_progress",
+            },
+          ]}
+          onDelete={() => setDeleteId(row.original.id)}
+        />
       ),
     },
   ];
@@ -128,7 +118,7 @@ export default function BackupsPage() {
           {t("backups.title", "Bekaplar")}
         </h1>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {

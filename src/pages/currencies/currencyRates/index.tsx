@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Pencil, Trash2 } from "lucide-react";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
-import { Button } from "@/components/ui/button";
+import { TableActions } from "@/components/tableActions";
 import { useGetCurrencyRates, useDeleteCurrencyRate } from "@/features/currencyRates/hooks/useCurrencyRates";
 import type { CurrencyRate } from "@/features/currencyRates/api/currencyRatesApi";
 import { DeleteDialog } from "@/components/deleteDialog";
@@ -87,35 +86,12 @@ export default function CurrencyRatesPage() {
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate(`/currency-rates/${row.original.id}`)}
-            title={t("common.view", "Görmek")}
-          >
-            <Eye size={15} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate(`/currency-rates/${row.original.id}/edit`)}
-            title={t("common.edit", "Üýtgetmek")}
-          >
-            <Pencil size={15} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => setDeleteId(row.original.id)}
-            title={t("common.delete", "Pozmak")}
-          >
-            <Trash2 size={15} />
-          </Button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/currency-rates/${row.original.id}`)}
+          onEdit={() => navigate(`/currency-rates/${row.original.id}/edit`)}
+          onDelete={() => setDeleteId(row.original.id)}
+          isDeleting={deleteMutation.isPending}
+        />
       ),
       size: 120,
     },
@@ -133,7 +109,7 @@ export default function CurrencyRatesPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-foreground mb-5">{t("currencyRates.title", "Walýuta kursy")}</h1>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput value={search} onChange={handleSearchChange} placeholder={t("common.search", "Gözlemek")} />
         <CreateButton
           label={t("currencyRates.actions.create", "Walýuta kursy dörediň")}

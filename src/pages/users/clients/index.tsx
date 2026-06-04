@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Trash2, Eye, Pencil, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { DeleteDialog } from "@/components/deleteDialog";
-import { Button } from "@/components/ui/button";
 import { DataTable, type ColumnDef } from "@/components/dataTable";
 import { DataTableToolbar } from "@/components/dataTableToolbar";
 import { TableSearchInput } from "@/components/tableSearch";
 import { CreateButton } from "@/components/createButton";
+import { TableActions } from "@/components/tableActions";
 import { useClients, useDeleteClient } from "@/features/clients/hooks/useClients";
 import type { Client } from "@/features/clients/api/clientsApi";
 
@@ -85,32 +85,12 @@ export default function ClientsPage() {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <div className="flex items-center gap-1 justify-end">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate(`/clients/${row.original.id}`)}
-          >
-            <Eye size={14} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            onClick={() => navigate(`/clients/${row.original.id}/edit`)}
-          >
-            <Pencil size={14} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={() => setDeleteTarget(row.original)}
-          >
-            <Trash2 size={14} />
-          </Button>
-        </div>
+        <TableActions
+          onView={() => navigate(`/clients/${row.original.id}`)}
+          onEdit={() => navigate(`/clients/${row.original.id}/edit`)}
+          onDelete={() => setDeleteTarget(row.original)}
+          isDeleting={deleteMutation.isPending}
+        />
       ),
       size: 120,
       enableSorting: false,
@@ -129,7 +109,7 @@ export default function ClientsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-foreground">{t("clients.title", "Müşderiler")}</h1>
       </div>
-      <div className="flex flex-wrap items-center gap-3 justify-between">
+      <div className="flex items-center gap-3 justify-between">
         <TableSearchInput
           value={search}
           onChange={(v) => {
