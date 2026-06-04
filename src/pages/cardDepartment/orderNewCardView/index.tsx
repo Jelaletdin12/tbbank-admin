@@ -111,8 +111,8 @@ export default function CardOrderDetailPage() {
       {/* ── Row 1: Meta + Kart + Lokasiýa ───────────────────────────────── */}
       <BentoGrid cols={3}>
         <BentoCard title={t("cardOrder.section.meta", "Esasy maglumatlar")}>
-          <InfoRow label={t("common.id", "ID")}>{order.id}</InfoRow>
-          <InfoRow label={t("cardOrder.field.createdAt", "Döredilen wagty")}>{order.createdAt}</InfoRow>
+          <InfoRow label={t("common.id", "ID")} value={order.id} />
+          <InfoRow label={t("cardOrder.field.createdAt", "Döredilen wagty")} value={order.createdAt} />
           <InfoRow label={t("cardOrder.field.status", "Status")}>
             <CardOrderStatusBadge status={order.status} />
           </InfoRow>
@@ -123,45 +123,38 @@ export default function CardOrderDetailPage() {
               {order.isPaid ? "✓" : "✕"}
             </span>
           </InfoRow>
-          <InfoRow label={t("cardOrder.field.note", "Bellik")}>{order.note ?? "—"}</InfoRow>
-          <InfoRow label={t("cardOrder.field.createdBy", "Sargyt eden")}>
-            <span className="text-primary font-medium">{order.createdBy}</span>
-          </InfoRow>
+          <InfoRow label={t("cardOrder.field.note", "Bellik")} value={order.note ?? undefined} />
+          <InfoRow label={t("cardOrder.field.createdBy", "Sargyt eden")} value={order.createdBy} isLink />
         </BentoCard>
 
         <BentoCard title={t("cardOrder.section.card", "Kart")}>
-          <InfoRow label={t("cardOrder.field.issuanceReason", "Kartyň çykarylmagynyň sebäbi")}>
-            <span className="text-primary font-medium">{order.issuanceReasonName}</span>
-          </InfoRow>
-          <InfoRow label={t("cardOrder.field.cardType", "Kart görnüşi")}>
-            <span className="text-cyan-400 font-medium">{order.cardTypeName}</span>
-          </InfoRow>
+          <InfoRow label={t("cardOrder.field.issuanceReason", "Kartyň çykarylmagynyň sebäbi")} value={order.issuanceReasonName} isLink />
+          <InfoRow label={t("cardOrder.field.cardType", "Kart görnüşi")} value={order.cardTypeName} />
         </BentoCard>
 
         <BentoCard title={t("cardOrder.section.location", "Lokasiýa")}>
-          <InfoRow label={t("cardOrder.field.province", "Welaýat")}>{order.provinceName}</InfoRow>
-          <InfoRow label={t("cardOrder.field.branch", "Şahamça")}>
-            <span className="text-cyan-400 font-medium">{order.branchName}</span>
-          </InfoRow>
+          <InfoRow label={t("cardOrder.field.province", "Welaýat")} value={order.provinceName} />
+          <InfoRow label={t("cardOrder.field.branch", "Şahamça")} value={order.branchName} />
         </BentoCard>
       </BentoGrid>
 
       {/* ── Row 2: Şahsy maglumatlar (full width — many fields) ─────────── */}
       <BentoGrid cols={2}>
         <BentoCard title={t("cardOrder.section.personal", "Şahsy maglumatlar")}>
-          <InfoRow label={t("cardOrder.field.fullName", "Doly ady")}>
-            {[order.lastName, order.firstName, order.middleName].filter(Boolean).join(" ")}
-          </InfoRow>
-          <InfoRow label={t("cardOrder.field.birthDate", "Doglan güni")}>{order.birthDate}</InfoRow>
-          <InfoRow label={t("cardOrder.field.citizenship", "Raýatlyk")}>{order.citizenship}</InfoRow>
-          <InfoRow label={t("cardOrder.field.registeredAddress", "Ýazgy edilen salgy")}>{order.registeredAddress}</InfoRow>
-          <InfoRow label={t("cardOrder.field.currentAddress", "Häzirki ýaşaýyş ýeri")}>{order.currentAddress}</InfoRow>
-          <InfoRow label={t("cardOrder.field.workplace", "Işleýän ýeri we wezipesi")}>{order.workplace}</InfoRow>
+          <InfoRow
+            label={t("cardOrder.field.fullName", "Doly ady")}
+            value={[order.lastName, order.firstName, order.middleName].filter(Boolean).join(" ")}
+          />
+          <InfoRow label={t("cardOrder.field.birthDate", "Doglan güni")} value={order.birthDate} />
+          <InfoRow label={t("cardOrder.field.citizenship", "Raýatlyk")} value={order.citizenship} />
+          <InfoRow label={t("cardOrder.field.registeredAddress", "Ýazgy edilen salgy")} value={order.registeredAddress} />
+          <InfoRow label={t("cardOrder.field.currentAddress", "Häzirki ýaşaýyş ýeri")} value={order.currentAddress} />
+          <InfoRow label={t("cardOrder.field.workplace", "Işleýän ýeri we wezipesi")} value={order.workplace} />
         </BentoCard>
 
         <BentoCard title={t("cardOrder.section.contacts", "Kontakt")}>
-          <InfoRow label={t("cardOrder.field.phone", "Telefon")}>{order.phone}</InfoRow>
-          <InfoRow label={t("cardOrder.field.phoneExtra", "Telefon goşmaça")}>{order.phoneExtra ?? "—"}</InfoRow>
+          <InfoRow label={t("cardOrder.field.phone", "Telefon")} value={order.phone} />
+          <InfoRow label={t("cardOrder.field.phoneExtra", "Telefon goşmaça")} value={order.phoneExtra ?? undefined} />
         </BentoCard>
       </BentoGrid>
 
