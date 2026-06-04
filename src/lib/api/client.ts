@@ -17,23 +17,23 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Request Interceptor (Token ekleme)
-apiClient.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => Promise.reject(error));
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().token;
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
-// Response Interceptor (Senior Hata Yönetimi)
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 1. 401 Unauthorized & Refresh Token Yönetimi
     if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -50,16 +50,13 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Sessizce yeni token almayı dene (Zustand içindeki refresh action'ı)
         const newToken = await useAuthStore.getState().refreshToken();
         processQueue(null, newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        // Refresh de patladıysa kullanıcıyı temizce çıkışa zorla
         useAuthStore.getState().logout();
-        // SPA dostu yönlendirme: Sayfa yenilemeden custom bir event veya global history ile
         window.dispatchEvent(new Event("auth:unauthorized"));
         return Promise.reject(refreshError);
       } finally {
@@ -67,13 +64,12 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 2. 403 Forbidden Yönetimi (Kullanıcıyı haberdar et, akışı durdur)
     if (status === 403) {
       window.dispatchEvent(new Event("auth:forbidden"));
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

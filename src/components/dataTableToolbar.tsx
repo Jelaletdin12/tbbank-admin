@@ -245,7 +245,6 @@ function FilterDropdown({
               <div key={field.id} className="space-y-1">
                 <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{field.label}</label>
 
-                {/* MonthSelect ile aynı pattern: manuel span + sentinel */}
                 <div className="flex items-center gap-1">
                   <Select value={current || "__all__"} onValueChange={(val) => onFilterChange(field.id, val === "__all__" ? "" : val)}>
                     <SelectTrigger
@@ -254,7 +253,6 @@ function FilterDropdown({
                         isFieldActive ? "border-primary text-primary [&>svg:last-child]:text-primary" : "text-muted-foreground",
                       )}
                     >
-                      {/* SelectValue kullanmıyoruz — MonthSelect gibi manuel */}
                       <span className="flex-1 text-left truncate">
                         {isFieldActive ? field.options.find((o) => o.value === current)?.label : "—"}
                       </span>
@@ -271,7 +269,6 @@ function FilterDropdown({
                     </SelectContent>
                   </Select>
 
-                  {/* Field bazlı temizle — MonthSelect'teki X butonu ile aynı */}
                   {isFieldActive && (
                     <button
                       type="button"
@@ -306,7 +303,6 @@ function FilterDropdown({
             </div>
           )}
 
-          {/* Reset — tüm filtreler, sadece aktif filter varsa göster */}
           {hasActive && (
             <button
               type="button"

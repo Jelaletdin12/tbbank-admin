@@ -534,7 +534,6 @@ function FileInput({
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // fileValue prop'u değişince preview'i güncelle + memory leak önle
   useEffect(() => {
     let url: string | null = null;
     let timer: ReturnType<typeof setTimeout>;
@@ -552,7 +551,6 @@ function FileInput({
     };
   }, [fileValue]);
 
-  // handleFile sadece onFileChange'i çağırıyor — preview useEffect hallediyor
   const handleFile = (file: File | null) => {
     onFileChange?.(file);
   };
