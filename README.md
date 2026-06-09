@@ -32,25 +32,25 @@ A full-featured internal banking administration panel built with **React 19 + Vi
 
 ## Tech Stack
 
-| Layer | Library | Version |
-|---|---|---|
-| UI Framework | React | ^19.2.5 |
-| Build Tool | Vite | ^8.0 |
-| Language | TypeScript | ~6.0 |
-| Styling | Tailwind CSS v4 | ^4.2 |
-| UI Components | shadcn/ui (Radix-UI) | ^1.4 |
-| State Management | Zustand | ^5.0 |
-| Data Fetching | TanStack React Query | ^5.100 |
-| HTTP Client | Axios | ^1.15 |
-| Routing | React Router DOM | ^7.14 |
-| Forms | React Hook Form + Zod | ^7.75 / ^4.4 |
-| Tables | TanStack React Table | ^8.21 |
-| Notifications | Sonner | ^2.0 |
-| i18n | i18next + react-i18next | ^26 / ^17 |
-| Charts | Recharts | ^3.8 |
-| Rich Text | Tiptap | ^3.23 |
-| Icons | Lucide React | ^1.14 |
-| Fonts | Geist + Inter (variable) | ^5.2 |
+| Layer            | Library                  | Version      |
+| ---------------- | ------------------------ | ------------ |
+| UI Framework     | React                    | ^19.2.5      |
+| Build Tool       | Vite                     | ^8.0         |
+| Language         | TypeScript               | ~6.0         |
+| Styling          | Tailwind CSS v4          | ^4.2         |
+| UI Components    | shadcn/ui (Radix-UI)     | ^1.4         |
+| State Management | Zustand                  | ^5.0         |
+| Data Fetching    | TanStack React Query     | ^5.100       |
+| HTTP Client      | Axios                    | ^1.15        |
+| Routing          | React Router DOM         | ^7.14        |
+| Forms            | React Hook Form + Zod    | ^7.75 / ^4.4 |
+| Tables           | TanStack React Table     | ^8.21        |
+| Notifications    | Sonner                   | ^2.0         |
+| i18n             | i18next + react-i18next  | ^26 / ^17    |
+| Charts           | Recharts                 | ^3.8         |
+| Rich Text        | Tiptap                   | ^3.23        |
+| Icons            | Lucide React             | ^1.14        |
+| Fonts            | Geist + Inter (variable) | ^5.2         |
 
 ---
 
@@ -204,6 +204,7 @@ GlobalErrorBoundary
 ```
 
 **Why this order matters:**
+
 - `GlobalErrorBoundary` catches JS crashes from _any_ child including providers.
 - `ThemeProvider` must wrap everything so CSS variables resolve before first paint.
 - `QueryProvider` creates the single shared `queryClient` with centralized `QueryCache` / `MutationCache` error handlers — so individual hooks do _not_ need their own `toast.error()`.
@@ -216,16 +217,17 @@ GlobalErrorBoundary
 
 **Guards (Outlet-based):**
 
-| Guard | Behavior |
-|---|---|
+| Guard         | Behavior                                            |
+| ------------- | --------------------------------------------------- |
 | `PublicGuard` | If already authenticated → redirect to `/dashboard` |
-| `AuthGuard` | If not authenticated → redirect to `/login` |
+| `AuthGuard`   | If not authenticated → redirect to `/login`         |
 
 **Lazy Loading:** Every page component is wrapped in `React.lazy()` + `<Suspense fallback={<PageLoader />}>`. This keeps the initial bundle tiny — only the login page is loaded on first visit.
 
 **Error Element:** `<PageErrorFallback />` is set on all route levels so any render-time exception shows a recovery UI instead of a blank screen.
 
 **Adding a new route:**
+
 1. Create a `lazy()` import at the top of `router/index.tsx`.
 2. Add the route object inside the `AuthGuard → DashboardLayout` children array.
 3. Follow the pattern: list `/feature`, create `/feature/create`, view `/feature/:id`, edit `/feature/:id/edit`.
@@ -237,6 +239,7 @@ GlobalErrorBoundary
 There is currently **one layout**: `DashboardLayout`.
 
 `DashboardLayout` (`src/layouts/DashboardLayout.tsx`) renders:
+
 - **`<AppSidebar />`** — collapsible 3-level navigation using shadcn `Sidebar` + Radix Collapsible. Auto-expands the active section based on `useLocation()`.
 - **`<DashboardHeader />`** — breadcrumbs auto-generated from the URL path, language switcher (EN/RU/TK), theme toggle, and notifications bell.
 - **`<Outlet />`** — the matched page is rendered here.
@@ -250,11 +253,11 @@ The sidebar nav structure is a `NavGroup[]` array defined inside `AppSidebar`. W
 
 All stores live in `src/app/store/` and use the `persist` middleware (localStorage).
 
-| Store | Key | What it holds |
-|---|---|---|
-| `authStore` | `tbbank-auth` | `token`, `user`, `isAuthenticated`, `setAuth()`, `logout()`, `refreshToken()` |
+| Store        | Key            | What it holds                                                                                                    |
+| ------------ | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `authStore`  | `tbbank-auth`  | `token`, `user`, `isAuthenticated`, `setAuth()`, `logout()`, `refreshToken()`                                    |
 | `themeStore` | `tbbank-theme` | `theme: 'light' \| 'dark'`, `setTheme()`, `toggleTheme()`. Applies class to `<html>` immediately on rehydration. |
-| `i18nStore` | `tbbank-lang` | `language: 'en' \| 'ru' \| 'tk'`, `setLanguage()`. Calls `i18n.changeLanguage()` on change. |
+| `i18nStore`  | `tbbank-lang`  | `language: 'en' \| 'ru' \| 'tk'`, `setLanguage()`. Calls `i18n.changeLanguage()` on change.                      |
 
 > **Rule:** Zustand is for **global persistent UI state only**. Server data lives in React Query. Never put API responses into Zustand.
 
@@ -302,10 +305,12 @@ export function useCreate[Feature]() {
 `src/lib/api/client.ts` exports a single Axios instance (`apiClient`).
 
 **Request Interceptor:**
+
 - Reads `token` from `authStore.getState()` on every request.
 - Injects `Authorization: Bearer <token>` header.
 
 **Response Interceptor (401 handling):**
+
 1. Catches `401 Unauthorized`.
 2. If a refresh is already in progress, queues the failed request.
 3. Calls `authStore.getState().refreshToken()` — which POSTs to `/auth/refresh` using a _separate_ plain `axios` instance (avoids circular dependency with `apiClient`).
@@ -329,6 +334,7 @@ export function useCreate[Feature]() {
 > **Hard-coded strings in JSX are forbidden.** Every user-facing string must have an entry in all three locale files.
 
 **Adding a new translation key:**
+
 1. Add the key-value pair to `en.json`.
 2. Add the same key with the translated value to `ru.json` and `tk.json`.
 3. Use `t('your.key')` in the component.
@@ -347,10 +353,10 @@ export function useCreate[Feature]() {
 
 Two error boundary wrappers are exported from `src/app/providers/ErrorBoundary.tsx`:
 
-| Component | Where used | Fallback |
-|---|---|---|
-| `GlobalErrorBoundary` | `main.tsx` — wraps the entire app | Full-screen error message + Reload button |
-| `PageErrorBoundary` | Set as `errorElement` on each route | Same, but scoped to the content area |
+| Component             | Where used                          | Fallback                                  |
+| --------------------- | ----------------------------------- | ----------------------------------------- |
+| `GlobalErrorBoundary` | `main.tsx` — wraps the entire app   | Full-screen error message + Reload button |
+| `PageErrorBoundary`   | Set as `errorElement` on each route | Same, but scoped to the content area      |
 
 > **Blank screens are forbidden.** Every boundary renders a meaningful fallback UI.
 
@@ -387,58 +393,65 @@ Each feature lives under `src/features/[feature]/` with this internal structure:
 
 **Currently implemented features:**
 
-| Feature | Module path |
-|---|---|
-| Authentication | `features/auth` |
-| Loan Orders | `features/loanOrders` |
-| Loan Order Mobiles | `features/loanOrderMobiles` |
-| Loan Remaining | `features/loanRemaining` |
-| Loan Paid-Off Letters | `features/loanPaidOffLetters` |
-| Loan Types (Settings) | `features/loanTypes` |
-| Required Documents (Settings) | `features/requiredDocuments` |
-| Order New Card | `features/orderNewCard` |
-| Card Transactions | `features/cardTransactions` |
-| Card Requisites | `features/cardRequisites` |
-| Card Balance | `features/cardBalance` |
-| Card Pins | `features/cardPins` |
-| Card Reasons (Settings) | `features/cardReasons` |
-| Card Types (Settings) | `features/cardTypes` |
-| Visa/Master Payments | `features/visaMasterPayments` |
-| Sber Payments | `features/sberPayments` |
-| Visa/Master/Sber Settings | `features/visaMasterSberSettings` |
-| Operators | `features/operators` |
-| All Users | `features/allUsers` |
-| Clients | `features/clients` |
-| Currency Rates | `features/currencyRates` |
-| Online Payment History | `features/onlinePaymentHistory` |
-| Roles (Settings) | `features/roles` |
-| Permissions (Settings) | `features/permissions` |
-| Districts (Settings) | `features/districts` |
-| Branches (Settings) | `features/branches` |
+| Feature                       | Module path                       |
+| ----------------------------- | --------------------------------- |
+| Authentication                | `features/auth`                   |
+| Loan Orders                   | `features/loanOrders`             |
+| Loan Order Mobiles            | `features/loanOrderMobiles`       |
+| Loan Remaining                | `features/loanRemaining`          |
+| Loan Paid-Off Letters         | `features/loanPaidOffLetters`     |
+| Loan Types (Settings)         | `features/loanTypes`              |
+| Required Documents (Settings) | `features/requiredDocuments`      |
+| Order New Card                | `features/orderNewCard`           |
+| Card Transactions             | `features/cardTransactions`       |
+| Card Requisites               | `features/cardRequisites`         |
+| Card Balance                  | `features/cardBalance`            |
+| Card Pins                     | `features/cardPins`               |
+| Card Reasons (Settings)       | `features/cardReasons`            |
+| Card Types (Settings)         | `features/cardTypes`              |
+| Visa/Master Payments          | `features/visaMasterPayments`     |
+| Sber Payments                 | `features/sberPayments`           |
+| Visa/Master/Sber Settings     | `features/visaMasterSberSettings` |
+| Operators                     | `features/operators`              |
+| All Users                     | `features/allUsers`               |
+| Clients                       | `features/clients`                |
+| Currency Rates                | `features/currencyRates`          |
+| Online Payment History        | `features/onlinePaymentHistory`   |
+| Roles (Settings)              | `features/roles`                  |
+| Permissions (Settings)        | `features/permissions`            |
+| Districts (Settings)          | `features/districts`              |
+| Branches (Settings)           | `features/branches`               |
 
 ---
 
 ## Shared Components
 
 ### `DataTable` (`src/components/dataTable.tsx`)
+
 Generic paginated table built on TanStack React Table v8. Accepts `ColumnDef[]`, `data[]`, loading state, column visibility/order, pagination controls.
 
 ### `DataTableToolbar` (`src/components/dataTableToolbar.tsx`)
+
 Toolbar placed above `DataTable`. Provides: search input, dynamic filter dropdowns, column visibility toggle, column drag-to-reorder, per-page selector, and an action button (usually "Create").
 
 ### `FormInput` (`src/components/formInput.tsx`)
+
 Comprehensive single-step form builder. Renders `text`, `select`, `date`, `textarea`, `rich-text` (Tiptap), and `file-upload` fields from a config array. Always paired with RHF + Zod.
 
 ### `StepBarV2` (`src/components/stepBarV2.tsx`)
+
 Multi-step form shell with a step indicator bar. Use this when a create/edit form has more than one logical group of fields (Progressive Disclosure).
 
 ### `ViewPageComponents` (`src/components/viewPageComponents.tsx`)
+
 `<InfoRow label="...">value</InfoRow>` — the standard layout for detail/view pages. Renders a two-column label-value grid inside a `bg-card` container.
 
 ### `StatusBadge` (`src/components/ui/statusBadge.tsx`)
+
 Colored pill badge. Variants: `success` | `warning` | `error` | `info`.
 
 ### `FormActions` (`src/components/formActions.tsx`)
+
 Sticky Save / Cancel action bar. Handles the loading state of the submit button.
 
 ---
@@ -593,16 +606,16 @@ All authenticated routes are nested under `DashboardLayout`. The full list:
 
 ### Strict rules
 
-| Rule | Detail |
-|---|---|
-| No `any` | Use `unknown` or define proper interfaces/types. |
-| No hard-coded strings | Every text must go through `t('key')`. |
-| No duplicate forms | Create/Edit pages must share one `[Feature]Form` component. |
-| No bare `try/catch` that swallows errors | Always `console.error` or rethrow. |
-| No `toast.error()` in hooks | Global `MutationCache.onError` handles it. Use `meta: { silent: true }` to opt out. |
-| Always show loading states | Use `<Spinner />` or `<Skeleton />` while data loads. |
-| Disable buttons during mutation | `disabled={mutation.isPending}` on submit buttons. |
-| `PageErrorBoundary` on every route | Already set via `errorElement` in the router. |
+| Rule                                     | Detail                                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| No `any`                                 | Use `unknown` or define proper interfaces/types.                                    |
+| No hard-coded strings                    | Every text must go through `t('key')`.                                              |
+| No duplicate forms                       | Create/Edit pages must share one `[Feature]Form` component.                         |
+| No bare `try/catch` that swallows errors | Always `console.error` or rethrow.                                                  |
+| No `toast.error()` in hooks              | Global `MutationCache.onError` handles it. Use `meta: { silent: true }` to opt out. |
+| Always show loading states               | Use `<Spinner />` or `<Skeleton />` while data loads.                               |
+| Disable buttons during mutation          | `disabled={mutation.isPending}` on submit buttons.                                  |
+| `PageErrorBoundary` on every route       | Already set via `errorElement` in the router.                                       |
 
 ---
 
@@ -610,19 +623,16 @@ All authenticated routes are nested under `DashboardLayout`. The full list:
 
 These items exist in the sidebar nav or codebase but are **not yet implemented** — good starting points for the next developer:
 
-| Item | Status | Notes |
-|---|---|---|
-| **`/settings/language/locale-manager`** | ❌ No route or page | Sidebar entry exists but leads nowhere |
-| **`/settings/language/resources`** | ❌ No route or page | Same as above |
-| **`/backups`** | ❌ No route or page | Sidebar entry exists |
-| **`/logs`** | ❌ No route or page | Sidebar entry exists |
-| **`client.ts` uses `any`** | ⚠️ | `failedQueue: any[]` violates the no-`any` rule — should be typed |
-| **`authStore` role type** | ⚠️ | `role: 'admin' \| 'manager' \| 'viewer'` — actual role enforcement (RBAC) not wired to UI |
-| **`auth:unauthorized` / `auth:forbidden` events** | ⚠️ | Dispatched in `client.ts` but no global listener is registered in `App.tsx` or the router |
-| **`useLoanOrders` toast duplication** | ⚠️ | The hook calls `toast.error()` inside `onError` while the global `MutationCache` also does — results in double toasts. Other features may have the same pattern. |
-| **`DashboardLayout` sidebar strings** | ⚠️ | Nav item titles use `t("English", "Fallback")` instead of proper i18n keys — inconsistent with the project standard |
-| **`AuthLayout`** | ❌ Missing | No dedicated layout for the login page; it renders without a wrapper layout |
-| **Mock data** | ⚠️ | All API functions currently return **mock in-memory data**. When connecting a real backend, replace the functions in `[feature]Api.ts` with real `apiClient.get/post/put/delete()` calls. |
+| Item                                    | Status              | Notes                                                                                                                                                                                     |
+| --------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`/settings/language/locale-manager`** | ❌ No route or page | Sidebar entry exists but leads nowhere                                                                                                                                                    |
+| **`/settings/language/resources`**      | ❌ No route or page | Same as above                                                                                                                                                                             |
+| **`/logs`**                             | ❌ No route or page | Sidebar entry exists                                                                                                                                                                      |
+| **`client.ts` uses `any`**              | ⚠️                  | `failedQueue: any[]` violates the no-`any` rule — should be typed                                                                                                                         |
+| **`authStore` role type**               | ⚠️                  | `role: 'admin' \| 'manager' \| 'viewer'` — actual role enforcement (RBAC) not wired to UI                                                                                                 |
+| **`DashboardLayout` sidebar strings**   | ⚠️                  | Nav item titles use `t("English", "Fallback")` instead of proper i18n keys — inconsistent with the project standard                                                                       |
+| **`AuthLayout`**                        | ❌ Missing          | No dedicated layout for the login page; it renders without a wrapper layout                                                                                                               |
+| **Mock data**                           | ⚠️                  | All API functions currently return **mock in-memory data**. When connecting a real backend, replace the functions in `[feature]Api.ts` with real `apiClient.get/post/put/delete()` calls. |
 
 ---
 
@@ -637,14 +647,14 @@ All API logic is isolated in `src/features/[feature]/api/[feature]Api.ts`. To go
 ```ts
 // Before (mock)
 export async function fetchLoanOrders(params: LoanOrdersParams) {
-  await delay(600)
-  return { data: mockStore, total: mockStore.length, page: 1, perPage: 25 }
+  await delay(600);
+  return { data: mockStore, total: mockStore.length, page: 1, perPage: 25 };
 }
 
 // After (real)
 export async function fetchLoanOrders(params: LoanOrdersParams) {
-  const { data } = await apiClient.get<LoanOrdersResponse>('/loan-orders', { params })
-  return data
+  const { data } = await apiClient.get<LoanOrdersResponse>("/loan-orders", { params });
+  return data;
 }
 ```
 
@@ -653,4 +663,4 @@ export async function fetchLoanOrders(params: LoanOrdersParams) {
 
 ---
 
-*Last updated: 2026-05-15 — TBBank Admin v2.0*
+_Last updated: 2026-05-15 — TBBank Admin v2.0_
